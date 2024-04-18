@@ -40,6 +40,10 @@ class CustomUser(AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
 
+    @property
+    def id(self):
+        return self.user_id
+
     class Meta:
         db_table = 'users'
 
