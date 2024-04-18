@@ -48,13 +48,15 @@ class CustomUser(AbstractBaseUser):
 
 
 class Investor(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, primary_key=True)
+    investor_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
     full_name = models.CharField(max_length=128)
     location = models.CharField(max_length=128)
     contact_phone = models.CharField(max_length=128)
     contact_email = models.CharField(max_length=128)
     investment_amount = models.DecimalField(max_digits=12, decimal_places=2)
     interests = models.CharField(max_length=500)
+    number_for_investor_validation = models.IntegerField(null=True)
 
     class Meta:
         db_table = 'investors'
