@@ -16,7 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from users import views
+from rest_framework import routers
+
+router = routers.DefaultRouter()
+router.register(r'login', views.CustomUserView)  # Замінив UserViewSet на CustomUserView
 
 urlpatterns = [
-    path("", views.simple_json_view_users, name="mainpage"),
+    # path("", views.simple_json_view_users, name="mainpage"),
+    path('', include(router.urls)),
 ]
+
+
