@@ -38,8 +38,7 @@ class CustomUser(AbstractBaseUser):
 
     objects = CustomUserManager()
 
-    # Указание email в качестве основного поля для аутентификации
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'email'
 
     class Meta:
         db_table = 'users'
