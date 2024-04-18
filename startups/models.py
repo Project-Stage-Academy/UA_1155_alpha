@@ -5,7 +5,7 @@ from django.db.models.functions import Now
 class Startup(models.Model):
     company_id = models.AutoField(primary_key=True)
     owner = models.ForeignKey('users.CustomUser', related_name='owner', on_delete=models.CASCADE)
-    startup_name = models.CharField(max_length=255, blank=True)
+    startup_name = models.CharField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True)
     industries = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True)
@@ -29,7 +29,6 @@ class Project(models.Model):
     ]
 
     startup = models.ForeignKey(Startup, on_delete=models.CASCADE, related_name='projects')
-    name = models.CharField(max_length=100)
     project_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     goals = models.CharField(max_length=255)

@@ -25,7 +25,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=128)
+    username = models.CharField(max_length=128, unique=True)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
     profile_img_url = models.CharField(max_length=1000, blank=True)
