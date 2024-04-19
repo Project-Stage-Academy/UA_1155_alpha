@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from users import views
+from .views import register_user
 
 urlpatterns = [
-    path("", views.simple_json_view_users, name="mainpage"),
+    path('register/', register_user, name='register'),
 ]
