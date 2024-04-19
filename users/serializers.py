@@ -6,8 +6,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ['id',
-                  'email', 
+        fields = ['email', 
                   'username', 
                   'password', 
                   'password2',
@@ -19,27 +18,31 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                   'is_active',
                   'is_staff',
                   'registration_date']
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {'password': {'write_only': True}, 'registration_date': {'required': False}}
         
-      
-    def create(self):
-        password = self.validated_data['password']  
-        password2 = self.validated_data['password2']  
+    def create(self, validated_data):
+        password = validated_data['password']
+        password2 = validated_data['password2']
         
+        # Check if the passwords match
         if password != password2:
             raise serializers.ValidationError({'Error': 'Passwords do not match'})
         
-        if self.objects.filter(email=self.validated_data['email']).exists():
-             raise ValueError('User with this email already exist.')
-
-        if CustomUser.objects.filter(username=self.validated_data['username']).exists():
-            raise ValueError('User with this username already exist.')
-        
-        user = CustomUser(
-            username=self.validated_data['username'],
-            email=self.validated_data['email']
+        # Creating new user
+        user_manager = CustomUser.objects
+        user = user_manager.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            username=validated_data['username'],
+            is_email_valid=validated_data.get('is_email_valid', False),
+            profile_img_url=validated_data.get('profile_img_url', ''),
+            is_active_for_proposals=validated_data.get('is_active_for_proposals', False),
+            is_investor=validated_data.get('is_investor', False),
+            is_startup=validated_data.get('is_startup', False),
+            is_active=validated_data.get('is_active', True),
+            is_staff=validated_data.get('is_staff', False)
         )
-        user.set_password(self.validated_data['password'])
-        user.save()
+        
         return user
+
                 

@@ -47,32 +47,6 @@ class CustomUser(AbstractBaseUser):
         return f"ID: {self.user_id}, Email: {self.email}"
     
     
-    # @staticmethod
-    # def create(self, email, username, password, password2, **extra_fields):
-    #     """
-    #     Метод для створення нового користувача з використанням наданих електронної пошти, імені користувача та пароля.
-    #     Додаткові поля (extra_fields) можуть бути передані для налаштування інших атрибутів користувача.
-    #     """
-    #     if self.objects.filter(email=email).exists():
-    #         raise ValueError('User with this email already exist.')
-
-    #     if self.objects.filter(username=username).exists():
-    #         raise ValueError('User with this username already exist.')
-        
-    #     password = self.validated_data['password']  
-    #     password2 = self.validated_data['password2'] 
-
-    #     user = self(email=email, username=username, **extra_fields)
-    #     user.password = make_password(password) 
-    #     user.registration_date = datetime.now()
-    #     user.save()
-    #     return user
-    
-
-
-
-
-
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
