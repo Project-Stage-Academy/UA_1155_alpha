@@ -23,7 +23,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser):
-    user_id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=128, unique=True)
     password = models.CharField(max_length=128)
@@ -39,10 +39,6 @@ class CustomUser(AbstractBaseUser):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-
-    @property
-    def id(self):
-        return self.user_id
 
     class Meta:
         db_table = 'users'
