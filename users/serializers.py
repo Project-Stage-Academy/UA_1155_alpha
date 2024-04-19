@@ -1,48 +1,47 @@
 from .models import CustomUser, Investor
 from rest_framework import serializers
+import re
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
     
     class Meta:
         model = CustomUser
-        fields = ['email', 
-                  'username', 
+        fields = ('email', 
+                  'first_name', 
+                  'surname', 
                   'password', 
                   'password2',
-                  'is_email_valid', 
                   'profile_img_url', 
                   'is_active_for_proposals',
                   'is_investor',
-                  'is_startup',
-                  'is_active',
-                  'is_staff',
-                  'registration_date']
-        extra_kwargs = {'password': {'write_only': True}, 'registration_date': {'required': False}}
+                  'is_startup')
+        extra_kwargs = {'password': {'write_only': True}, }
+      
         
-    def create(self, validated_data):
-        password = validated_data['password']
-        password2 = validated_data['password2']
+    def validate(self, data):
+        email = data.get("email")
+        password = data.get('password')
+        password2 = data.pop('password2')
+        
+        regex_for_password = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$'
+        regex_for_email = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        
+        # Check if the passwords match pattern
+        if not re.match(regex_for_password, password):
+            raise serializers.ValidationError({'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
         
         # Check if the passwords match
         if password != password2:
             raise serializers.ValidationError({'Error': 'Passwords do not match'})
         
-        # Creating new user
-        user_manager = CustomUser.objects
-        user = user_manager.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            username=validated_data['username'],
-            is_email_valid=validated_data.get('is_email_valid', False),
-            profile_img_url=validated_data.get('profile_img_url', ''),
-            is_active_for_proposals=validated_data.get('is_active_for_proposals', False),
-            is_investor=validated_data.get('is_investor', False),
-            is_startup=validated_data.get('is_startup', False),
-            is_active=validated_data.get('is_active', True),
-            is_staff=validated_data.get('is_staff', False)
-        )
+        # Check if user with the same email already exists
+        if CustomUser.objects.filter(email = email).exists():
+            raise serializers.ValidationError({"Error": "Email already exist"})
         
-        return user
+        # Check if the email match pattern
+        if not re.match(regex_for_email, email):
+            raise serializers.ValidationError({"Error": "Invalid email address"})
 
-                
+        return data
+
