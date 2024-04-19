@@ -48,7 +48,7 @@ class CustomUser(AbstractBaseUser):
 
 
 class Investor(models.Model):
-    investor_id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
     full_name = models.CharField(max_length=128)
     location = models.CharField(max_length=128)
