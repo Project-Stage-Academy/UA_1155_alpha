@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db.models.functions import Now
 from django.contrib.auth.hashers import make_password
+from uuid import uuid4
 
 
 class CustomUserManager(BaseUserManager):
@@ -24,8 +25,9 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=128, unique=True)
+    email = models.EmailField(unique=True, max_length=50)
+    first_name = models.CharField(max_length=50)
+    surname = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
     profile_img_url = models.CharField(max_length=1000, blank=True)
@@ -45,12 +47,33 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return f"ID: {self.user_id}, Email: {self.email}"
-
-
+ 
+ 
+    @staticmethod
+    def create_user(email, first_name, password, surname, profile_img_url=None, 
+                    is_active_for_proposals=False, is_investor=False, is_startup=False):
+        """
+        Create a user with the given email, first name, password, surname, profile image URL,
+        is_active_for_proposals, is_investor, and is_startup.
+        This method checks that the email, first name, surname, and password are not longer than 50 characters,
+        and that the password is not longer than 128 characters.
+        
+        The validation for email and password realized in UserRegisterSerializer.
+        """
+        if (len(email)<=50 and len(first_name)<=50 
+            and len(surname)<=50 and len(password)<=128):
+            
+            custom_user = CustomUser(email=email, first_name=first_name, surname=surname,
+                                     profile_img_url=profile_img_url, is_active_for_proposals=is_active_for_proposals,
+                                     is_investor=is_investor, is_startup=is_startup)
+            custom_user.set_password(password)
+            custom_user.save()
+            return custom_user        
+       
+    
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
-    full_name = models.CharField(max_length=128)
     location = models.CharField(max_length=128)
     contact_phone = models.CharField(max_length=128)
     contact_email = models.CharField(max_length=128)
@@ -65,3 +88,19 @@ class Investor(models.Model):
 
     def __str__(self):
         return f"Investor: {self.full_name}. E-mail: {self.contact_email}"
+    
+    
+class EmailConfirmationToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_confirmation_tokens')
+    token = models.CharField(max_length=128)
+    expiration_date = models.DateTimeField()
+
+    class Meta:
+        db_table = 'email_confirmation_tokens'
+        verbose_name = 'Email confirmation token'
+        verbose_name_plural = 'Email confirmation tokens'
+
+    def __str__(self):
+        return f"User: {self.user.email}, Token: {self.token}"
