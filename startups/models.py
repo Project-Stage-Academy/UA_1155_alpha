@@ -4,7 +4,7 @@ from django.db.models.functions import Now
 
 class Startup(models.Model):
     id = models.AutoField(primary_key=True)
-    owner = models.ForeignKey('uses.CustomrUser', related_name='owner', on_delete=models.CASCADE)
+    owner = models.ForeignKey('users.CustomUser', related_name='owner', on_delete=models.CASCADE)
     startup_name = models.CharField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True)
     industries = models.TextField(blank=True)
