@@ -16,7 +16,6 @@ def simple_json_view(request):
 class CreateStartupAPIView(APIView):
     def post(self, request):
         user = request.user
-        print(user.id)
         serializer = StartupSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=user)
