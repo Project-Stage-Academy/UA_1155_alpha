@@ -17,6 +17,8 @@ def simple_json_view(request):
 class CreateStartupAPIView(APIView):
     def post(self, request):
         user = request.user
+        if not user.is_startup:
+            return Response({'message': 'You\'re not startup'}, status=status.HTTP_400_BAD_REQUEST)
         if Startup.objects.filter(owner=user):
             return Response({'message': 'You\'ve already started a Startup'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = StartupSerializer(data=request.data)
