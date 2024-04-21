@@ -28,9 +28,10 @@ class CreateProjectAPIView(APIView):
     def post(self, request):
         user = request.user
         startup = Startup.objects.filter(owner=user).first()
-
-        serializer = ProjectSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=user, startup=startup)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if startup:
+            serializer = ProjectSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(owner=user, startup=startup)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "User doesn't have a startup"}, status=status.HTTP_400_BAD_REQUEST)
