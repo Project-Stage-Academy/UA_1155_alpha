@@ -20,4 +20,5 @@ from startups import views
 urlpatterns = [
     path("", views.simple_json_view, name="mainpage"),
     path("create_startup/", views.CreateStartupAPIView.as_view(), name="create_startup"),
+    path("create_project/", views.CreateProjectAPIView.as_view(), name="create_project"),
 ]
