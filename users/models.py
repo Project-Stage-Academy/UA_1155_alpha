@@ -55,7 +55,7 @@ class CustomUser(AbstractBaseUser):
         """
         Create a user with the given email, first name, password, surname, profile image URL,
         is_active_for_proposals, is_investor, and is_startup.
-        This method checks that the email, first name, surname, and password are not longer than 50 characters,
+        This method checks that the email, first name, and surname, are not longer than 50 characters,
         and that the password is not longer than 128 characters.
         
         The validation for email and password realized in UserRegisterSerializer.
