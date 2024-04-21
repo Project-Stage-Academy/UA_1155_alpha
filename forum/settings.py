@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
-from pathlib import Path
-from dotenv import load_dotenv
 from datetime import timedelta
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # from decouple import config
 
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_rest_passwordreset',
     'users',
     'startups'
 ]
@@ -182,13 +184,20 @@ SIMPLE_JWT = {
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 
 # SMTP Configuration
+
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT'))
-EMAIL_USE_TLS = bool(os.getenv('EMAIL_USE_TLS'))
+EMAIL_USE_SSL = bool(os.getenv('EMAIL_USE_SSL'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 DEFAULT_FROM_NAME = os.getenv('DEFAULT_FROM_NAME')
 
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.org'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'testing.shap@mail.com'
+# EMAIL_HOST_PASSWORD = 'swfuztvosymgbgiz'
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# EMAIL_FILE_PATH = 'BASE_DIR/"sent_emails"'
