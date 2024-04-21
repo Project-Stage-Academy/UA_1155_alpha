@@ -193,11 +193,4 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 DEFAULT_FROM_NAME = os.getenv('DEFAULT_FROM_NAME')
 
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.org'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'testing.shap@mail.com'
-# EMAIL_HOST_PASSWORD = 'swfuztvosymgbgiz'
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# EMAIL_FILE_PATH = 'BASE_DIR/"sent_emails"'
+
