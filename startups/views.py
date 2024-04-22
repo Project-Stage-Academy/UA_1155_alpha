@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from .serializers import StartupSerializer, ProjectSerializer
 from rest_framework.response import Response
@@ -14,21 +15,23 @@ def simple_json_view(request):
     return JsonResponse(data)
 
 
-class CreateStartupAPIView(APIView):
-    def post(self, request):
-        user = request.user
-        if not user.is_startup:
-            return Response({'message': 'You\'re not startup'}, status=status.HTTP_400_BAD_REQUEST)
-        if Startup.objects.filter(owner=user):
-            return Response({'message': 'You\'ve already started a Startup'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = StartupSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class CreateStartupAPIView(APIView):
+#     def post(self, request):
+#         user = request.user
+#         if not user.is_startup:
+#             return Response({'message': 'You\'re not startup'}, status=status.HTTP_400_BAD_REQUEST)
+#         if Startup.objects.filter(owner=user):
+#             return Response({'message': 'You\'ve already started a Startup'}, status=status.HTTP_400_BAD_REQUEST)
+#         serializer = StartupSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(owner=user)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateProjectAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request):
         user = request.user
         if not user.is_startup:
