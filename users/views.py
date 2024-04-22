@@ -25,7 +25,7 @@ class LoginAPIView(APIView):
         refresh = RefreshToken.for_user(user)
         refresh.payload.update({
             'id': user.id,
-            'username': user.username
+            'first_name': user.first_name
         })
 
         return Response({

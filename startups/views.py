@@ -1,11 +1,15 @@
 from forum.utils import get_query_dict
-
 from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from .models import Startup
+from .serializers import StartupSerializer, StartupListSerializer
 
 
 class StartupViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticated,)
     """
      ViewSet for managing startup resources.
 
@@ -34,15 +38,15 @@ class StartupViewSet(viewsets.ViewSet):
     def list(self, request):
         # Implementation of GET METHOD - ExampLE URL: /api/startups/
         # Getting ALL startups logic
-        data = {
-            'message': "Hello, ALL STARTUPS PROFILE PAGE",
-            'status': status.HTTP_200_OK
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/startups?name=Apple
-        if query_data:
-            data.update(query_data)
-        # Should return a list!
-        return Response(data, status=status.HTTP_200_OK)
+        startups = Startup.objects.all()
+        # api/startups/?industry=test
+        industry = request.query_params.get('industries')
+        if industry:
+            startups = startups.filter(industries__icontains=industry)
+        else:
+            startups = startups.all()
+        serializer = StartupListSerializer(startups, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         # Implementation of GET METHOD for one startup - ExampLE URL: /api/startups/2
@@ -66,11 +70,16 @@ class StartupViewSet(viewsets.ViewSet):
         # + you should send data in JSON
         # Creating startup logic
         startup_info = request.data
-        data = {
-            'startup_info': startup_info,
-            'status': 'success'
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
+        startup = Startup.objects.filter(owner=request.user).first()
+        if startup:
+            return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
+        startup_info['owner'] = request.user.id
+        serializer = StartupSerializer(data=startup_info)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
         # Implementation of PUT METHOD for one startup - ExampLE URL: /api/startups/2/
@@ -85,6 +94,7 @@ class StartupViewSet(viewsets.ViewSet):
             'updated_data': startup_updated_info,
             'status': 'success'
         }
+
         return Response(data)
 
     def partial_update(self, request, pk=None):
