@@ -44,14 +44,14 @@ class CustomUser(AbstractBaseUser):
         db_table = 'users'
 
     def __str__(self):
-        return f"ID: {self.user_id}, Email: {self.email}"
+        return f"ID: {self.id}, Email: {self.email}"
  
  
     @staticmethod
-    def create_user(email, first_name, password, surname, profile_img_url=None, 
+    def create_user(email, first_name, password, last_name , profile_img_url=None, 
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
-        Create a user with the given email, first name, password, surname, profile image URL,
+        Create a user with the given email, first name, password, last_name , profile image URL,
         is_active_for_proposals, is_investor, and is_startup.
         This method checks that the email, first name, and surname, are not longer than 50 characters,
         and that the password is not longer than 128 characters.
@@ -59,9 +59,9 @@ class CustomUser(AbstractBaseUser):
         The validation for email and password realized in UserRegisterSerializer.
         """
         if (len(email)<=50 and len(first_name)<=50 
-            and len(surname)<=50 and len(password)<=128):
+            and len(last_name )<=50 and len(password)<=128):
             
-            custom_user = CustomUser(email=email, first_name=first_name, surname=surname,
+            custom_user = CustomUser(email=email, first_name=first_name, last_name =last_name,
                                      profile_img_url=profile_img_url, is_active_for_proposals=is_active_for_proposals,
                                      is_investor=is_investor, is_startup=is_startup)
             custom_user.set_password(password)
@@ -74,7 +74,7 @@ class Investor(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
     location = models.CharField(max_length=128)
     contact_phone = models.CharField(max_length=128)
-    contact_email = models.CharField(max_length=128)
+    contact_email = models.EmailField(unique=True, max_length=50)
     investment_amount = models.DecimalField(max_digits=12, decimal_places=2)
     interests = models.CharField(max_length=500)
     number_for_investor_validation = models.IntegerField(null=True)
@@ -85,6 +85,5 @@ class Investor(models.Model):
         verbose_name_plural = 'Investors'
 
     def __str__(self):
-        return f"Investor: {self.full_name}. E-mail: {self.contact_email}"
-    
+        return f"Investor: {self.user.first_name}. E-mail: {self.contact_email}"
     
