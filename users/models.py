@@ -2,8 +2,6 @@ from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db.models.functions import Now
-from django.contrib.auth.hashers import make_password
-from uuid import uuid4
 
 
 class CustomUserManager(BaseUserManager):
