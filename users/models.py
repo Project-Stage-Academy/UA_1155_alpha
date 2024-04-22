@@ -2,8 +2,6 @@ from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db.models.functions import Now
-from django.contrib.auth.hashers import make_password
-from uuid import uuid4
 
 
 class CustomUserManager(BaseUserManager):
@@ -27,7 +25,7 @@ class CustomUser(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True, max_length=50)
     first_name = models.CharField(max_length=50)
-    surname = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
     profile_img_url = models.CharField(max_length=1000, blank=True)
@@ -89,18 +87,3 @@ class Investor(models.Model):
     def __str__(self):
         return f"Investor: {self.full_name}. E-mail: {self.contact_email}"
     
-    
-class EmailConfirmationToken(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_confirmation_tokens')
-    token = models.CharField(max_length=128)
-    expiration_date = models.DateTimeField()
-
-    class Meta:
-        db_table = 'email_confirmation_tokens'
-        verbose_name = 'Email confirmation token'
-        verbose_name_plural = 'Email confirmation tokens'
-
-    def __str__(self):
-        return f"User: {self.user.email}, Token: {self.token}"
