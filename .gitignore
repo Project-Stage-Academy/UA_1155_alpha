@@ -153,4 +153,12 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+#MongoDB data directory
+mongo-data/
+
+#PostgreSQL data directory
+postgres-data/
+
+#Redis data directory
+redis-data/
 
