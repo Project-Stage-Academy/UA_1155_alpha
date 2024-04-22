@@ -14,8 +14,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# from decouple import config
-
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -196,3 +194,5 @@ EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = os.environ.get('EMAIL_PORT')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL=EMAIL_HOST_USER
+EMAIL_FILE_PATH='BASE_DIR/"sent_emails"'
