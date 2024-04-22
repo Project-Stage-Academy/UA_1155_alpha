@@ -19,6 +19,8 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, 
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
+from users.views import PasswordRecoveryRequest, PasswordResetConfirm
+
 # from users.views import PasswordRecoveryRequest, PasswordResetConfirm
 
 urlpatterns = [
@@ -28,12 +30,7 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('users/', include('users.urls')),
     path('startups/', include('startups.urls')),
-    # path('reset_password/', PasswordRecoveryRequest.as_view(), name='password_reset'),
-    # path('reset_password/<uidb64>/<token>/', PasswordResetConfirm.as_view(), name='password_reset_confirm'),
-    # path('reset_password/', PasswordResetView.as_view(), name='reset_password'),
-    # path('reset_password_sent/', PasswordResetDoneView.as_view(), name='password_reset_done'),
-    # path('reset_password/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-    # path('reset_password_complete/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    path('password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+    path('reset_password/', PasswordRecoveryRequest.as_view(), name='reset_password'),
+    path('reset_password/<uidb64>/<token>/', PasswordResetConfirm.as_view(), name='password_reset_confirm'),
 
 ]

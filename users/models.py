@@ -23,9 +23,10 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser):
-    user_id = models.AutoField(primary_key=True)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=128, unique=True)
+    id = models.AutoField(primary_key=True)
+    email = models.EmailField(unique=True, max_length=50)
+    first_name = models.CharField(max_length=50)
+    surname = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
     profile_img_url = models.CharField(max_length=1000, blank=True)
@@ -44,7 +45,7 @@ class CustomUser(AbstractBaseUser):
         db_table = 'users'
 
     def __str__(self):
-        return f"ID: {self.user_id}, Email: {self.email}"
+        return f"ID: {self.id}, Email: {self.email}"
 
 
 class Investor(models.Model):
