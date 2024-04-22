@@ -1,3 +1,4 @@
+from forum.utils import get_query_dict
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,17 +24,16 @@ class LoginAPIView(APIView):
 
         refresh = RefreshToken.for_user(user)
         refresh.payload.update({
-        'id': user.id,
-        'first_name': user.first_name,
-        'surname': user.surname
+            'id': user.id,
+            'username': user.username
         })
 
         return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=200)
-        
-        
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=200)
+
+
 class UserRegisterAPIView(APIView):
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
@@ -41,15 +41,16 @@ class UserRegisterAPIView(APIView):
             validated_data = serializer.validated_data
             custom_user = CustomUser.create_user(**validated_data)
             if custom_user:
-                
+
                 token = RefreshToken.for_user(custom_user).access_token
                 current_site = get_current_site(request).domain
                 relative_link = reverse('send_email_confirmation')
-                abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token)
+                abs_url = 'http://' + current_site + relative_link + '?token=' + str(token)
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
-                sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
+                sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation',
+                               'to_email': custom_user.email}
                 # Util.send_email(data=sended_data)
-                
+
                 return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"message": "Failed to create user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -60,3 +61,93 @@ class UserRegisterAPIView(APIView):
 class VerifyEmailAPIView(APIView):
     def get(self):
         pass
+
+
+class InvestorViewSet(viewsets.ViewSet):
+    def list(self, request):
+        # Implementation of GET METHOD - ExampLE URL: /api/investors/
+        # Getting ALL investors logic
+
+        data = {
+            'message': "Hello, GET all INVESTORS",
+            'status': status.HTTP_200_OK,
+        }
+        query_data = get_query_dict(request)  # If we need to use queries like /api/investors?name=JamesBond
+        if query_data:
+            data.update(query_data)
+
+        # Should return a list!
+        return Response(data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        # Implementation of GET METHOD for one investor - ExampLE URL: /api/investors/2
+        # Getting ONE investor with investors_id=pk logic
+
+        investor_id = pk
+        data = {
+            'investor_id': investor_id,
+            'message': f"Hello, concrete INVESTOR profile page with id {investor_id}",
+            'status': status.HTTP_200_OK
+        }
+        query_data = get_query_dict(request)  # If we need to use queries like /api/investors?name=JamesBond
+        if query_data:
+            data.update(query_data)
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        # Implementation of POST METHOD for one investor - ExampLE URL: /api/investors/
+        # Do not forget slash at the end of link
+        # + you should send data in JSON
+        # Creating investor logic
+        investor_info = request.data
+        data = {
+            'message': "You successfully POSTed new INVESTOR",
+            'investor_info': investor_info,
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, pk=None):
+        # Implementation of PUT METHOD for one investor - ExampLE URL: /api/investors/2/
+        # Do not forget about SLASH at the end of URL
+        # + you should send data in JSON
+        investor_id = pk
+        investor_updated_info = request.data
+        # ...
+        # PUT logic
+        # ...
+        data = {
+            'investor_id': investor_id,
+            'message': f"Hello, here's a PUT method! You update ALL information about INVESTOR № {investor_id}",
+            'updated_data': investor_updated_info,
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        # Implementation of PATCH METHOD for one investor - ExampLE URL: /api/investors/2/
+        # Do not forget about SLASH at the end of URL
+        # + you should send data in JSON
+        # PATCHcing logic
+        investor_id = pk
+        investor_specific_updated_info = request.data
+        data = {
+            'investor_id': investor_id,
+            'message': f"Hello, here's a PATCH method! You updated SOME information about INVESTOR № {investor_id}",
+            'specific_updated_data': investor_specific_updated_info,
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None):
+        # Implementation of DELETE METHOD for one investor - ExampLE URL: /api/investors/4/
+        # Do not forget about SLASH at the end of URL
+        # Deleting logic
+        investor_id = pk
+        data = {
+            'investor_id': investor_id,
+            'message': f"Hello, you DELETED INVESTOR with ID: {investor_id}",
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_204_NO_CONTENT)
