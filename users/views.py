@@ -1,13 +1,13 @@
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, EmailConfirmationToken
+from .models import CustomUser
 from .serializers import UserRegisterSerializer
-from rest_framework.permissions import IsAuthenticated
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
+from rest_framework.generics import get_object_or_404
 
 
 class LoginAPIView(APIView):
@@ -44,11 +44,11 @@ class UserRegisterAPIView(APIView):
                 
                 token = RefreshToken.for_user(custom_user).access_token
                 current_site = get_current_site(request).domain
-                relative_link = reverse('send_email_confirmation')
-                abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token)
+                relative_link = reverse('verify-email', kwargs={'token': token, 'user_id': custom_user.id})
+                abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token) + '?id=' + str(custom_user.id) 
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
-                # Util.send_email(data=sended_data)
+                Util.send_email(data=sended_data)
                 
                 return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
             else:
@@ -56,7 +56,15 @@ class UserRegisterAPIView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class VerifyEmailAPIView(APIView):
-    def get(self):
-        pass
+    
+class SendEmailConfirmationAPIView(APIView):
+    def get(self, request, token=None, user_id=None):
+        if not token or not user_id:
+            return Response({"message": "Token or user ID is invalid"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = get_object_or_404(CustomUser, id=user_id)
+        user.is_email_valid = True
+        user.save()
+        
+        return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+    
