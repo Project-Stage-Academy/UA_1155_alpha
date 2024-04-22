@@ -46,7 +46,7 @@ class CustomUser(AbstractBaseUser):
         db_table = 'users'
 
     def __str__(self):
-        return f"ID: {self.user_id}, Email: {self.email}"
+        return f"ID: {self.id}, Email: {self.email}"
  
  
     @staticmethod

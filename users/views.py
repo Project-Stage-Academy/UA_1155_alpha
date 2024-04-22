@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, EmailConfirmationToken
+from .models import CustomUser
 from .serializers import UserRegisterSerializer
 from rest_framework.permissions import IsAuthenticated
 from .utils import Util
