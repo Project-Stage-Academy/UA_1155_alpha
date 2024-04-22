@@ -16,13 +16,23 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from rest_framework.routers import DefaultRouter
+from startups.views import StartupViewSet, ProjectViewSet
+from users.views import InvestorViewSet
 
+router = DefaultRouter()
+
+router.register(r'startups', StartupViewSet, basename='startups')
+router.register(r'projects', ProjectViewSet, basename='projects')
+router.register(r'investors', InvestorViewSet, basename='investors')
+# router.register(r'messages', MessageViewSet, basename='messages') #TODO: Implement the MessageViewSet logic
 
 urlpatterns = [
+    path('', include('startups.urls')),
     path('admin/', admin.site.urls),
+    path('api/', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-    path('startups/', include('startups.urls')),
-    path('api/', include('users.urls')),
+    path('api/users/', include('users.urls')),
 ]
