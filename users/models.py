@@ -73,7 +73,7 @@ class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
     location = models.CharField(max_length=128)
-    contact_phone = models.CharField(max_length=128)
+    contact_phone = models.CharField(max_length=25)
     contact_email = models.EmailField(unique=True, max_length=50)
     investment_amount = models.DecimalField(max_digits=12, decimal_places=2)
     interests = models.CharField(max_length=500)

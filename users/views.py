@@ -4,12 +4,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
-from .models import CustomUser
 from .serializers import UserRegisterSerializer
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
-from rest_framework.generics import get_object_or_404
 from rest_framework.generics import get_object_or_404
 
 
@@ -35,6 +33,22 @@ class LoginAPIView(APIView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=200)
+
+
+class LogoutAPIView(APIView):
+    def post(self, request):
+        '''Method should receive "access" and "refresh" tokens in body of POST request to LogOut'''
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except Exception as e:
+            return Response({'error': 'Wrong refresh token.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'success': 'Successful exit'}, status=status.HTTP_200_OK)
 
 
 class UserRegisterAPIView(APIView):
