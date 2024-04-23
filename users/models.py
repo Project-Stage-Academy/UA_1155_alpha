@@ -46,7 +46,7 @@ class CustomUser(AbstractBaseUser):
         db_table = 'users'
 
     def __str__(self):
-        return f"ID: {self.user_id}, Email: {self.email}"
+        return f"ID: {self.id}, Email: {self.email}"
  
  
     @staticmethod
@@ -87,6 +87,6 @@ class Investor(models.Model):
         verbose_name_plural = 'Investors'
 
     def __str__(self):
-        return f"Investor: {self.full_name}. E-mail: {self.contact_email}"
+        return f"Investor: {self.user.first_name}. E-mail: {self.contact_email}"
     
     
