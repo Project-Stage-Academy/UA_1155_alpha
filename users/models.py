@@ -50,7 +50,7 @@ class CustomUser(AbstractBaseUser):
  
  
     @staticmethod
-    def create_user(email, first_name, password, last_name, profile_img_url=None, 
+    def create_user(email, first_name, password, last_name, profile_img_url=None,
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
         Create a user with the given email, first name, password, surname, profile image URL,
@@ -62,7 +62,7 @@ class CustomUser(AbstractBaseUser):
         """
         if (len(email)<=50 and len(first_name)<=50 
             and len(last_name)<=50 and len(password)<=128):
-            
+
             custom_user = CustomUser(email=email, first_name=first_name, last_name=last_name,
                                      profile_img_url=profile_img_url, is_active_for_proposals=is_active_for_proposals,
                                      is_investor=is_investor, is_startup=is_startup)

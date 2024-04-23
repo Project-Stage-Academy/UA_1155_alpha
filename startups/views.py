@@ -1,8 +1,10 @@
-from forum.utils import get_query_dict
-
 from rest_framework import status
-from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from .serializers import ProjectSerializer
 from rest_framework.response import Response
+from .models import Startup
+from forum.utils import get_query_dict
+from rest_framework import viewsets
 
 
 class StartupViewSet(viewsets.ViewSet):
@@ -148,91 +150,103 @@ class ProjectViewSet(viewsets.ViewSet):
     - Methods accept data in JSON format and also return responses in JSON format.
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
+    permission_classes = (IsAuthenticated,)
 
-    def list(self, request):
-        # Implementation of GET METHOD - ExampLE URL: /api/projects/
-        # Getting ALL projects logic
-
-        data = {
-            'message': "Hello, ALL Projects PROFILE PAGE",
-            'status': status.HTTP_200_OK,
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/projects?name=Project1
-        if query_data:
-            data.update(query_data)
-
-        # Should return a list!
-        return Response(data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
-        # Getting ONE project with id=project logic
-
-        project_id = pk
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, concrete PROJECT profile page with id {project_id}",
-            'status': status.HTTP_200_OK
-        }
-        query_data = get_query_dict(request)
-        if query_data:
-            data.update(query_data)
-
-        return Response(data, status=status.HTTP_200_OK)
+    # def list(self, request):
+    #     # Implementation of GET METHOD - ExampLE URL: /api/projects/
+    #     # Getting ALL projects logic
+    #
+    #     data = {
+    #         'message': "Hello, ALL Projects PROFILE PAGE",
+    #         'status': status.HTTP_200_OK,
+    #     }
+    #     query_data = get_query_dict(request)  # If we need to use queries like /api/projects?name=Project1
+    #     if query_data:
+    #         data.update(query_data)
+    #
+    #     # Should return a list!
+    #     return Response(data, status=status.HTTP_200_OK)
+    #
+    # def retrieve(self, request, pk=None):
+    #     # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
+    #     # Getting ONE project with id=project logic
+    #
+    #     project_id = pk
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, concrete PROJECT profile page with id {project_id}",
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     query_data = get_query_dict(request)
+    #     if query_data:
+    #         data.update(query_data)
+    #
+    #     return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        # Implementation of POST METHOD for one project - ExampLE URL: /api/projects/
-        # Do not forget slash at the end of link
-        # + you should send data in JSON
-        # Creating project logic
+        """
+        Create a new project (POST /api/projects/)
+        Do not forget slash at the end of link
+        + you should send data in JSON
+        """
+        user = request.user
+        if not user.is_startup:
+            return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
+        startup = Startup.objects.filter(owner=user).first()
+        if not startup:
+            return Response({'message': 'Please create a startup first'}, status=status.HTTP_400_BAD_REQUEST)
         project_info = request.data
-        data = {
-            'message': "You successfully created new project",
-            'project_info': project_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
+        serializer = ProjectSerializer(data=project_info)
+        if serializer.is_valid():
+            serializer.save(startup=startup)
+            data = {
+                'message': "You successfully created new project",
+                'project_info': project_info,
+                'status': status.HTTP_200_OK
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None):
-        # Implementation of PUT METHOD for one project - ExampLE URL: /api/projects/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        project_id = pk
-        project_updated_info = request.data
-        # ...
-        # PUT logic
-        # ...
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {project_id}",
-            'updated_data': project_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, pk=None):
-        # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        # PATCHcing logic
-        project_id = pk
-        project_specific_updated_info = request.data
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, here's a PATCH method! You update SOME information about project № {project_id}",
-            'specific_updated_data': project_specific_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
-    def destroy(self, request, pk=None):
-        # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
-        # Do not forget about SLASH at the end of URL
-        # Deleting logic
-        project_id = pk
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_204_NO_CONTENT)
+    # def update(self, request, pk=None):
+    #     # Implementation of PUT METHOD for one project - ExampLE URL: /api/projects/2/
+    #     # Do not forget about SLASH at the end of URL
+    #     # + you should send data in JSON
+    #     project_id = pk
+    #     project_updated_info = request.data
+    #     # ...
+    #     # PUT logic
+    #     # ...
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {project_id}",
+    #         'updated_data': project_updated_info,
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
+    #
+    # def partial_update(self, request, pk=None):
+    #     # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
+    #     # Do not forget about SLASH at the end of URL
+    #     # + you should send data in JSON
+    #     # PATCHcing logic
+    #     project_id = pk
+    #     project_specific_updated_info = request.data
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, here's a PATCH method! You update SOME information about project № {project_id}",
+    #         'specific_updated_data': project_specific_updated_info,
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
+    #
+    # def destroy(self, request, pk=None):
+    #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
+    #     # Do not forget about SLASH at the end of URL
+    #     # Deleting logic
+    #     project_id = pk
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_204_NO_CONTENT)
