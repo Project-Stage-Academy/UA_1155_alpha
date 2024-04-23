@@ -192,7 +192,7 @@ class ProjectViewSet(viewsets.ViewSet):
         user = request.user
         if not user.is_startup:
             return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
-        startup = Startup.objects.get(owner=user)
+        startup = Startup.objects.filter(owner=user)
         if not startup:
             return Response({'message': 'Please create a startup first'}, status=status.HTTP_400_BAD_REQUEST)
         project_info = request.data
