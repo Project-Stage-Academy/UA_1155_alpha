@@ -1,4 +1,3 @@
-from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .serializers import ProjectSerializer
@@ -167,7 +166,7 @@ class ProjectViewSet(viewsets.ViewSet):
     #
     #     # Should return a list!
     #     return Response(data, status=status.HTTP_200_OK)
-
+    #
     # def retrieve(self, request, pk=None):
     #     # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
     #     # Getting ONE project with id=project logic
@@ -185,10 +184,11 @@ class ProjectViewSet(viewsets.ViewSet):
     #     return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        # Implementation of POST METHOD for one project - ExampLE URL: /api/projects/
-        # Do not forget slash at the end of link
-        # + you should send data in JSON
-        # Creating project logic
+        """
+        Create a new project (POST /api/projects/)
+        Do not forget slash at the end of link
+        + you should send data in JSON
+        """
         user = request.user
         if not user.is_startup:
             return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
@@ -223,7 +223,7 @@ class ProjectViewSet(viewsets.ViewSet):
     #         'status': status.HTTP_200_OK
     #     }
     #     return Response(data, status=status.HTTP_200_OK)
-
+    #
     # def partial_update(self, request, pk=None):
     #     # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
     #     # Do not forget about SLASH at the end of URL
@@ -238,7 +238,7 @@ class ProjectViewSet(viewsets.ViewSet):
     #         'status': status.HTTP_200_OK
     #     }
     #     return Response(data, status=status.HTTP_200_OK)
-
+    #
     # def destroy(self, request, pk=None):
     #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
     #     # Do not forget about SLASH at the end of URL
