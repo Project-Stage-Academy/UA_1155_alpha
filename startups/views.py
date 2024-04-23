@@ -192,13 +192,13 @@ class ProjectViewSet(viewsets.ViewSet):
         user = request.user
         if not user.is_startup:
             return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
-        startup = Startup.objects.filter(owner=user)
+        startup = Startup.objects.filter(owner=user).first()
         if not startup:
             return Response({'message': 'Please create a startup first'}, status=status.HTTP_400_BAD_REQUEST)
         project_info = request.data
         serializer = ProjectSerializer(data=project_info)
         if serializer.is_valid():
-            serializer.save(owner=user, startup=startup)
+            serializer.save(startup=startup)
             data = {
                 'message': "You successfully created new project",
                 'project_info': project_info,
