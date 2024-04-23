@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
+from .models import CustomUser
 from .serializers import UserRegisterSerializer
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
+from rest_framework.generics import get_object_or_404
 from rest_framework.generics import get_object_or_404
 
 
@@ -51,6 +53,7 @@ class UserRegisterAPIView(APIView):
                 abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token) + '?id=' + str(custom_user.id) 
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
+                Util.send_email(data=sended_data)
                 Util.send_email(data=sended_data)
                 
                 return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
