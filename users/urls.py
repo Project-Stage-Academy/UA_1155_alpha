@@ -21,7 +21,7 @@ from .views import UserRegisterAPIView, LoginAPIView, SendEmailConfirmationAPIVi
 urlpatterns = [
     path('register/',  UserRegisterAPIView.as_view(), name='register'),
     path('login/', LoginAPIView.as_view(), name='login'),
-    path('verify-email/<str:token>/<int:user_id>/', SendEmailConfirmationAPIView.as_view(), name='verify-email'),
+    path('verify-email/<str:token>/<int:user_id>/', SendEmailConfirmationAPIView.as_view(), name='verify-email')
 ]
 
 

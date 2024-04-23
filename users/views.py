@@ -47,16 +47,13 @@ class UserRegisterAPIView(APIView):
 
                 token = RefreshToken.for_user(custom_user).access_token
                 current_site = get_current_site(request).domain
-                relative_link = reverse('send_email_confirmation')
-                abs_url = 'http://' + current_site + relative_link + '?token=' + str(token)
                 relative_link = reverse('verify-email', kwargs={'token': token, 'user_id': custom_user.id})
                 abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token) + '?id=' + str(custom_user.id) 
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
                 Util.send_email(data=sended_data)
-                Util.send_email(data=sended_data)
-                
-                return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+                                
+                return Response({"User id": custom_user.id, "User name": custom_user.first_name, "message": "User created successfully"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"message": "Failed to create user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
@@ -72,7 +69,7 @@ class SendEmailConfirmationAPIView(APIView):
         user.is_email_valid = True
         user.save()
         
-        return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+        return Response({"User name":user.first_name, "email": user.email, "message": "Email verified successfully"}, status=status.HTTP_200_OK)
 
 
 class InvestorViewSet(viewsets.ViewSet):
