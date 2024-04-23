@@ -26,7 +26,7 @@ class CustomUser(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True, max_length=50)
     first_name = models.CharField(max_length=50)
-    surname = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
     profile_img_url = models.CharField(max_length=1000, blank=True)
