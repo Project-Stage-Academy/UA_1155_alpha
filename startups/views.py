@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.exceptions import ValidationError
 from .models import Startup
 from .serializers import StartupSerializer, StartupListSerializer
 
@@ -36,38 +36,46 @@ class StartupViewSet(viewsets.ViewSet):
      """
 
     def list(self, request):
-        # Implementation of GET METHOD - ExampLE URL: /api/startups/
+        # Example URL: /api/startups/
         # Getting ALL startups logic
         startups = Startup.objects.all()
-        # api/startups/?industry=test
-        industry = request.query_params.get('industries')
+
+        # Example URL: /api/startups/?industry=test
+        # Example URL: /api/startups/?name=test
+        industry = request.query_params.get('industry')
+        name = request.query_params.get('name')
+        other_params = request.query_params.keys() - {'industry', 'name'}
+
+        if other_params:
+            return Response({"error": "Only 'industry' and 'name' parameter is allowed"}, status=status.HTTP_400_BAD_REQUEST)
+
         if industry:
             startups = startups.filter(industries__icontains=industry)
-        else:
-            startups = startups.all()
+            if not startups.exists():
+                return Response({"error": f"No startups found for the industry '{industry}'"},status=status.HTTP_404_NOT_FOUND)
+        if name:
+            startups = startups.filter(startup_name__icontains=name)
+            if not startups.exists():
+                return Response({"error": f"No startups found with the name '{name}'"},status=status.HTTP_404_NOT_FOUND)
+
         serializer = StartupListSerializer(startups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        # Implementation of GET METHOD for one startup - ExampLE URL: /api/startups/2
+        # ExampLE URL: /api/startups/2
         # Getting ONE startup with id=startup_id logic
-
         startup_id = pk
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, concrete STARTUP PROFILE PAGE WITH NUMBER {startup_id}",
-            'status': status.HTTP_200_OK
-        }
+        if startup_id:
+            startup = Startup.objects.filter(id=startup_id).first()
+            if not startup:
+                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StartupListSerializer(startup)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        query_data = get_query_dict(request)  # If we need to use queries like /api/startups?name=AppleTV
-        if query_data:
-            data.update(query_data)
-        return Response(data, status=status.HTTP_200_OK)
+
 
     def create(self, request):
-        # Implementation of POST METHOD for one startup - ExampLE URL: /api/startups/
-        # Do not forget slash at the end of link
-        # + you should send data in JSON
+        # ExampLE URL: /api/startups/
         # Creating startup logic
         startup_info = request.data
         startup = Startup.objects.filter(owner=request.user).first()
