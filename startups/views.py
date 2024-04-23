@@ -8,28 +8,6 @@ from forum.utils import get_query_dict
 from rest_framework import viewsets
 
 
-def simple_json_view(request):
-    data = {
-        'message': 'Hello, STARTUP PAGE',
-        'status': 'success'
-    }
-    return JsonResponse(data)
-
-
-# class CreateStartupAPIView(APIView):
-#     def post(self, request):
-#         user = request.user
-#         if not user.is_startup:
-#             return Response({'message': 'You\'re not startup'}, status=status.HTTP_400_BAD_REQUEST)
-#         if Startup.objects.filter(owner=user):
-#             return Response({'message': 'You\'ve already started a Startup'}, status=status.HTTP_400_BAD_REQUEST)
-#         serializer = StartupSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save(owner=user)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class StartupViewSet(viewsets.ViewSet):
     """
      ViewSet for managing startup resources.
@@ -175,36 +153,36 @@ class ProjectViewSet(viewsets.ViewSet):
     """
     permission_classes = (IsAuthenticated,)
 
-    def list(self, request):
-        # Implementation of GET METHOD - ExampLE URL: /api/projects/
-        # Getting ALL projects logic
+    # def list(self, request):
+    #     # Implementation of GET METHOD - ExampLE URL: /api/projects/
+    #     # Getting ALL projects logic
+    #
+    #     data = {
+    #         'message': "Hello, ALL Projects PROFILE PAGE",
+    #         'status': status.HTTP_200_OK,
+    #     }
+    #     query_data = get_query_dict(request)  # If we need to use queries like /api/projects?name=Project1
+    #     if query_data:
+    #         data.update(query_data)
+    #
+    #     # Should return a list!
+    #     return Response(data, status=status.HTTP_200_OK)
 
-        data = {
-            'message': "Hello, ALL Projects PROFILE PAGE",
-            'status': status.HTTP_200_OK,
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/projects?name=Project1
-        if query_data:
-            data.update(query_data)
-
-        # Should return a list!
-        return Response(data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
-        # Getting ONE project with id=project logic
-
-        project_id = pk
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, concrete PROJECT profile page with id {project_id}",
-            'status': status.HTTP_200_OK
-        }
-        query_data = get_query_dict(request)
-        if query_data:
-            data.update(query_data)
-
-        return Response(data, status=status.HTTP_200_OK)
+    # def retrieve(self, request, pk=None):
+    #     # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
+    #     # Getting ONE project with id=project logic
+    #
+    #     project_id = pk
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, concrete PROJECT profile page with id {project_id}",
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     query_data = get_query_dict(request)
+    #     if query_data:
+    #         data.update(query_data)
+    #
+    #     return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request):
         # Implementation of POST METHOD for one project - ExampLE URL: /api/projects/
@@ -229,46 +207,46 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None):
-        # Implementation of PUT METHOD for one project - ExampLE URL: /api/projects/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        project_id = pk
-        project_updated_info = request.data
-        # ...
-        # PUT logic
-        # ...
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {project_id}",
-            'updated_data': project_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
+    # def update(self, request, pk=None):
+    #     # Implementation of PUT METHOD for one project - ExampLE URL: /api/projects/2/
+    #     # Do not forget about SLASH at the end of URL
+    #     # + you should send data in JSON
+    #     project_id = pk
+    #     project_updated_info = request.data
+    #     # ...
+    #     # PUT logic
+    #     # ...
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {project_id}",
+    #         'updated_data': project_updated_info,
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
 
-    def partial_update(self, request, pk=None):
-        # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        # PATCHcing logic
-        project_id = pk
-        project_specific_updated_info = request.data
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, here's a PATCH method! You update SOME information about project № {project_id}",
-            'specific_updated_data': project_specific_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
+    # def partial_update(self, request, pk=None):
+    #     # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
+    #     # Do not forget about SLASH at the end of URL
+    #     # + you should send data in JSON
+    #     # PATCHcing logic
+    #     project_id = pk
+    #     project_specific_updated_info = request.data
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, here's a PATCH method! You update SOME information about project № {project_id}",
+    #         'specific_updated_data': project_specific_updated_info,
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, pk=None):
-        # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
-        # Do not forget about SLASH at the end of URL
-        # Deleting logic
-        project_id = pk
-        data = {
-            'project_id': project_id,
-            'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_204_NO_CONTENT)
+    # def destroy(self, request, pk=None):
+    #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
+    #     # Do not forget about SLASH at the end of URL
+    #     # Deleting logic
+    #     project_id = pk
+    #     data = {
+    #         'project_id': project_id,
+    #         'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
+    #         'status': status.HTTP_200_OK
+    #     }
+    #     return Response(data, status=status.HTTP_204_NO_CONTENT)
