@@ -34,6 +34,22 @@ class LoginAPIView(APIView):
         }, status=200)
 
 
+class LogoutAPIView(APIView):
+    def post(self, request):
+        '''Method should receive "access" and "refresh" tokens in body of POST request to LogOut'''
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except Exception as e:
+            return Response({'error': 'Wrong refresh token.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'success': 'Successful exit'}, status=status.HTTP_200_OK)
+
+
 class UserRegisterAPIView(APIView):
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
