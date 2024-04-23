@@ -9,7 +9,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, EmailConfirmationToken
+from .models import CustomUser
 from .serializers import UserRegisterSerializer
 from rest_framework.permissions import IsAuthenticated
 from .utils import Util
@@ -159,7 +159,7 @@ class InvestorViewSet(viewsets.ViewSet):
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
 
-class PasswordRecoveryRequest(APIView):
+class PasswordResetRequest(APIView):
     def post(self, request):
         email = request.data.get('email')
         if not email:

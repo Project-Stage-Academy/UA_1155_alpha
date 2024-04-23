@@ -46,12 +46,7 @@ class CustomUser(AbstractBaseUser):
         db_table = 'users'
 
     def __str__(self):
-<<<<<<< HEAD
         return f"ID: {self.id}, Email: {self.email}"
-
-
-=======
-        return f"ID: {self.user_id}, Email: {self.email}"
  
  
     @staticmethod
@@ -75,8 +70,7 @@ class CustomUser(AbstractBaseUser):
             custom_user.save()
             return custom_user        
        
-    
->>>>>>> main
+
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
