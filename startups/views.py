@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from .models import Startup
 from .serializers import StartupSerializer, StartupListSerializer
 
@@ -90,20 +89,17 @@ class StartupViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
-        # Implementation of PUT METHOD for one startup - ExampLE URL: /api/startups/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        # PUT logic
+        # ExampLE URL: /api/startups/2/
         startup_id = pk
-        startup_updated_info = request.data
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, EDIT STARTUP PROFILE WITH NUMBER {startup_id}",
-            'updated_data': startup_updated_info,
-            'status': 'success'
-        }
-
-        return Response(data)
+        startup = Startup.objects.filter(id=startup_id).first()
+        if not startup:
+            return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StartupSerializer(startup, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
         # Implementation of PATCH METHOD for one startup - ExampLE URL: /api/startups/2/
