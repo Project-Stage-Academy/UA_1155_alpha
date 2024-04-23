@@ -3,9 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, EmailConfirmationToken
+from .models import CustomUser
 from .serializers import UserRegisterSerializer
-from rest_framework.permissions import IsAuthenticated
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
@@ -25,7 +24,8 @@ class LoginAPIView(APIView):
         refresh = RefreshToken.for_user(user)
         refresh.payload.update({
             'id': user.id,
-            'username': user.username
+            'first_name': user.first_name,
+            'last_name': user.last_name
         })
 
         return Response({
