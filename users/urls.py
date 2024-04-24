@@ -15,8 +15,11 @@ Including another URLconf
 """
 
 from django.urls import path
-from .views import UserRegisterAPIView, LoginAPIView, VerifyEmailAPIView, LogoutAPIView
+from .views import UserRegisterAPIView, LoginAPIView, VerifyEmailAPIView, LogoutAPIView, InvestorViewSet
+from rest_framework import routers
 
+router = routers.SimpleRouter()
+router.register(r'investors', InvestorViewSet)
 
 urlpatterns = [
     path('register/',  UserRegisterAPIView.as_view(), name='register'),
@@ -25,4 +28,5 @@ urlpatterns = [
     path('send_confirmation_email/', VerifyEmailAPIView.as_view(), name='send_email_confirmation'),
 ]
 
+urlpatterns += router.urls
 

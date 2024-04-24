@@ -1,16 +1,15 @@
-from django.contrib.sites.shortcuts import get_current_site
-from django.http import JsonResponse
-from django.urls import reverse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import transaction
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from users.serializers import PasswordResetConfirmSerializer
-from forum.utils import get_query_dict
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser
-from .serializers import UserRegisterSerializer
+from .models import CustomUser, Investor
+from .serializers import UserRegisterSerializer, InvestorSerializer
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
@@ -85,94 +84,72 @@ class VerifyEmailAPIView(APIView):
         pass
 
 
+@method_decorator(login_required, name='dispatch')
 class InvestorViewSet(viewsets.ViewSet):
+    @user_passes_test(lambda user: user.is_staff == 1)
     def list(self, request):
-        # Implementation of GET METHOD - ExampLE URL: /api/investors/
-        # Getting ALL investors logic
+        investors = Investor.objects.all()
+        serializer = InvestorSerializer(investors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        data = {
-            'message': "Hello, GET all INVESTORS",
-            'status': status.HTTP_200_OK,
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/investors?name=JamesBond
-        if query_data:
-            data.update(query_data)
-
-        # Should return a list!
-        return Response(data, status=status.HTTP_200_OK)
-
+    @user_passes_test(lambda user: user.is_staff == 1)
     def retrieve(self, request, pk=None):
-        # Implementation of GET METHOD for one investor - ExampLE URL: /api/investors/2
-        # Getting ONE investor with investors_id=pk logic
+        try:
+            investor = Investor.objects.get(id=pk)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        investor_id = pk
-        data = {
-            'investor_id': investor_id,
-            'message': f"Hello, concrete INVESTOR profile page with id {investor_id}",
-            'status': status.HTTP_200_OK
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/investors?name=JamesBond
-        if query_data:
-            data.update(query_data)
+        serializer = InvestorSerializer(investor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(data, status=status.HTTP_200_OK)
-
+    @user_passes_test(lambda user: user.is_investor == 1)
     def create(self, request):
-        # Implementation of POST METHOD for one investor - ExampLE URL: /api/investors/
-        # Do not forget slash at the end of link
-        # + you should send data in JSON
-        # Creating investor logic
-        investor_info = request.data
-        data = {
-            'message': "You successfully POSTed new INVESTOR",
-            'investor_info': investor_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
+        serializer = InvestorSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @user_passes_test(lambda user: user.is_investor == 1)
     def update(self, request, pk=None):
-        # Implementation of PUT METHOD for one investor - ExampLE URL: /api/investors/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        investor_id = pk
-        investor_updated_info = request.data
-        # ...
-        # PUT logic
-        # ...
-        data = {
-            'investor_id': investor_id,
-            'message': f"Hello, here's a PUT method! You update ALL information about INVESTOR № {investor_id}",
-            'updated_data': investor_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
+        try:
+            investor = Investor.objects.get(id=pk)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        serializer = InvestorSerializer(instance=investor, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @user_passes_test(lambda user: user.is_investor == 1)
     def partial_update(self, request, pk=None):
-        # Implementation of PATCH METHOD for one investor - ExampLE URL: /api/investors/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        # PATCHcing logic
-        investor_id = pk
-        investor_specific_updated_info = request.data
-        data = {
-            'investor_id': investor_id,
-            'message': f"Hello, here's a PATCH method! You updated SOME information about INVESTOR № {investor_id}",
-            'specific_updated_data': investor_specific_updated_info,
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_200_OK)
+        try:
+            investor = Investor.objects.get(id=pk)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        serializer = InvestorSerializer(instance=investor, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @user_passes_test(lambda user: user.is_investor == 1)
     def destroy(self, request, pk=None):
-        # Implementation of DELETE METHOD for one investor - ExampLE URL: /api/investors/4/
-        # Do not forget about SLASH at the end of URL
-        # Deleting logic
-        investor_id = pk
-        data = {
-            'investor_id': investor_id,
-            'message': f"Hello, you DELETED INVESTOR with ID: {investor_id}",
-            'status': status.HTTP_200_OK
-        }
-        return Response(data, status=status.HTTP_204_NO_CONTENT)
+        try:
+            with transaction.atomic():
+                investor = Investor.objects.select_related('user').get(id=pk)
+                investor.user.is_investor = 0
+                investor.user.save()
+                investor.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PasswordResetRequest(APIView):
