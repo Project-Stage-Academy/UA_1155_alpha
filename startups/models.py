@@ -27,6 +27,13 @@ class Project(models.Model):
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
     ]
+    INDUSTRY_CHOICES = [
+        ('tech', 'Technology'),
+        ('finance', 'Finance'),
+        ('healthcare', 'Health Care'),
+        ('education', 'Education'),
+        ('economics', 'Economics')
+    ]
 
     startup = models.ForeignKey(Startup, on_delete=models.CASCADE, related_name='projects')
     project_name = models.CharField(max_length=255, unique=True)
@@ -34,7 +41,7 @@ class Project(models.Model):
     goals = models.CharField(max_length=255)
     budget_needed = models.DecimalField(max_digits=10, decimal_places=2)
     budget_ready = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    industry = models.CharField(max_length=255)
+    industry = models.CharField(max_length=255, choices=INDUSTRY_CHOICES)
     promo_photo_url = models.CharField(max_length=1000, blank=True)
     promo_video_url = models.CharField(max_length=1000, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
