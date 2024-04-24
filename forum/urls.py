@@ -18,7 +18,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
 from startups.views import StartupViewSet, ProjectViewSet
-from users.views import InvestorViewSet
+from users.views import InvestorViewSet, PasswordResetRequest, PasswordResetConfirm
 
 router = DefaultRouter()
 
@@ -27,6 +27,7 @@ router.register(r'projects', ProjectViewSet, basename='projects')
 router.register(r'investors', InvestorViewSet, basename='investors')
 # router.register(r'messages', MessageViewSet, basename='messages') #TODO: Implement the MessageViewSet logic
 
+
 urlpatterns = [
     path('', include('startups.urls')),
     path('admin/', admin.site.urls),
@@ -34,5 +35,9 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('users/', include('users.urls')),
+    path('startups/', include('startups.urls')),
+    path('reset_password/', PasswordResetRequest.as_view(), name='reset_password'),
+    path('reset_password/<uidb64>/<token>/', PasswordResetConfirm.as_view(), name='password_reset_confirm'),
     path('api/users/', include('users.urls')),
 ]

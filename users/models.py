@@ -68,7 +68,7 @@ class CustomUser(AbstractBaseUser):
             custom_user.save()
             return custom_user        
        
-    
+
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
