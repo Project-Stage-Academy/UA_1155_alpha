@@ -71,7 +71,7 @@ class UserRegisterAPIView(APIView):
                 abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token) + '?id=' + str(custom_user.id) 
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
-                Util.send_email(data=sended_data)
+                # Util.send_email(data=sended_data)
                                 
                 return Response({"User id": custom_user.id, "User name": custom_user.first_name, "message": "User created successfully"}, status=status.HTTP_201_CREATED)
             else:
