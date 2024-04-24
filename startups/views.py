@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .serializers import ProjectSerializer
 from rest_framework.response import Response
-from .models import Startup
+from .models import Startup, Project
 from forum.utils import get_query_dict
 from rest_framework import viewsets
 
@@ -207,37 +207,55 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # def update(self, request, pk=None):
-    #     # Implementation of PUT METHOD for one project - ExampLE URL: /api/projects/2/
-    #     # Do not forget about SLASH at the end of URL
-    #     # + you should send data in JSON
-    #     project_id = pk
-    #     project_updated_info = request.data
-    #     # ...
-    #     # PUT logic
-    #     # ...
-    #     data = {
-    #         'project_id': project_id,
-    #         'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {project_id}",
-    #         'updated_data': project_updated_info,
-    #         'status': status.HTTP_200_OK
-    #     }
-    #     return Response(data, status=status.HTTP_200_OK)
-    #
-    # def partial_update(self, request, pk=None):
-    #     # Implementation of PATCH METHOD for one project - ExampLE URL: /api/projects/2/
-    #     # Do not forget about SLASH at the end of URL
-    #     # + you should send data in JSON
-    #     # PATCHcing logic
-    #     project_id = pk
-    #     project_specific_updated_info = request.data
-    #     data = {
-    #         'project_id': project_id,
-    #         'message': f"Hello, here's a PATCH method! You update SOME information about project № {project_id}",
-    #         'specific_updated_data': project_specific_updated_info,
-    #         'status': status.HTTP_200_OK
-    #     }
-    #     return Response(data, status=status.HTTP_200_OK)
+    def update(self, request, pk=None):
+        """
+        Update an existing project with all fields required
+        (PUT api/projects/<pk>/)
+        Do not forget about SLASH at the end of URL
+        """
+        if not pk:
+            return Response({"error": "Method PUT not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            instance = Project.objects.get(pk=pk)
+        except:
+            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProjectSerializer(instance=instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        data = {
+            'project_id': pk,
+            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
+            'updated_data': request.data,
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        """
+        Update an existing project without all fields required
+        (PATCH api/projects/<pk>/)
+        Do not forget about SLASH at the end of URL
+        """
+        if not pk:
+            return Response({"error": "Method PATCH not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            instance = Project.objects.get(pk=pk)
+        except:
+            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProjectSerializer(instance=instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        data = {
+            'project_id': pk,
+            'message': f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
+            'updated_data': request.data,
+            'status': status.HTTP_200_OK
+        }
+        return Response(data, status=status.HTTP_200_OK)
     #
     # def destroy(self, request, pk=None):
     #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
