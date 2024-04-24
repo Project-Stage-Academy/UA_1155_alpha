@@ -75,7 +75,9 @@ class StartupViewSet(viewsets.ViewSet):
         # ExampLE URL: /api/startups/
         # Creating startup logic
         startup_info = request.data
-
+        startup = Startup.objects.filter(owner=request.user).first()
+        if startup:
+            return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
         startup_info['owner'] = request.user.id
         serializer = StartupSerializer(data=startup_info)
         if serializer.is_valid():
@@ -84,71 +86,20 @@ class StartupViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # def update(self, request, pk=None):
-    #     # ExampLE URL: /api/startups/2/
-    #     startup_id = pk
-    #     startup = Startup.objects.filter(id=startup_id).first()
-    #     if not startup:
-    #         return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
-    #
-    #     # Передаємо існуючий екземпляр та перевірені дані в функцію update серіалізатора
-    #     serializer = StartupSerializer(startup, data=request.data, partial=True)
-    #     if serializer.is_valid():
-    #         res = serializer.update(startup, serializer.validated_data)  # Викликаємо функцію update серіалізатора
-    #         if type(res) == dict:
-    #             return Response(res, status=status.HTTP_400_BAD_REQUEST)
-    #         else:
-    #             return Response(serializer.data, status=status.HTTP_200_OK)
-    #     else:
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None):
+    def partial_update(self, request, pk=None):
         # ExampLE URL: /api/startups/2/
+        # Update info about startup
         startup_id = pk
-        if not pk:
-            return Response({"error": "Method PUT not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            instance = Startup.objects.get(id=startup_id)
-        except:
-            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        startup = Startup.objects.filter(id=startup_id).first()
+        if not startup:
+            return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StartupSerializer(startup, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = StartupSerializer(instance=instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-    # def partial_update(self, request, pk=None):
-    #     # ExampLE URL: /api/startups/2/
-    #     startup_id = pk
-    #     startup = Startup.objects.filter(id=startup_id).first()
-    #     if not startup:
-    #         return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
-    #     serializer = StartupSerializer(startup, data=request.data, partial=True)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    #     else:
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #     return Response(data)
-
-    # def partial_update(self, request, pk=None):
-    #     """
-    #     Update an existing project without all fields required
-    #     (PATCH api/projects/<pk>/)
-    #     Do not forget about SLASH at the end of URL
-    #     """
-    #     if not pk:
-    #         return Response({"error": "Method PATCH not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-    #     try:
-    #         instance = Startup.objects.get(pk=pk)
-    #     except:
-    #         return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     serializer = StartupSerializer(instance=instance, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
         # Implementation of DELETE METHOD for one startup - ExampLE URL: /api/startups/4/
