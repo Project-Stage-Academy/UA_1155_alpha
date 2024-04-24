@@ -62,8 +62,6 @@ class UserRegisterAPIView(APIView):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             validated_data = serializer.validated_data
-            # if not validated_data['profile_img_url']:
-            #     validated_data['profile_img_url'] = '' 
             custom_user = CustomUser.create_user(**validated_data)
             if custom_user:
 
@@ -82,17 +80,10 @@ class UserRegisterAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SendEmailConfirmationAPIView(APIView):
-    def get(self, request, token=None, user_id=None):
-        if not token or not user_id:
-            return Response({"message": "Token or user ID is invalid"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = get_object_or_404(CustomUser, id=user_id)
-        user.is_email_valid = True
-        user.save()
-        
-        return Response({"User name":user.first_name, "email": user.email, "message": "Email verified successfully"}, status=status.HTTP_200_OK)
-
+class VerifyEmailAPIView(APIView):
+    def get(self):
+        pass
+    
 
 class InvestorViewSet(viewsets.ViewSet):
     def list(self, request):
@@ -183,8 +174,7 @@ class InvestorViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_204_NO_CONTENT)
 
-<<<<<<< HEAD
-=======
+
 
 class PasswordResetRequest(APIView):
     def post(self, request):
@@ -230,4 +220,3 @@ class PasswordResetConfirm(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
->>>>>>> main
