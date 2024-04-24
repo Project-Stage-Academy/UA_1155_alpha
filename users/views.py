@@ -93,6 +93,8 @@ class SendEmailConfirmationAPIView(APIView):
             user = get_object_or_404(CustomUser, id=user_id)
         except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
                 return Response({'error': 'Invalid user ID'}, status=status.HTTP_400_BAD_REQUEST)
+        except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
             
         if decoded_token.get('user_id') != int(user_id):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)    
