@@ -28,7 +28,7 @@ class CustomUser(AbstractBaseUser):
     last_name = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
-    profile_img_url = models.CharField(max_length=1000, blank=True)
+    profile_img_url = models.CharField(max_length=1000, blank=True, default='')
     is_active_for_proposals = models.BooleanField(default=False)
     is_investor = models.BooleanField(default=False)
     is_startup = models.BooleanField(default=False)
@@ -48,7 +48,7 @@ class CustomUser(AbstractBaseUser):
  
  
     @staticmethod
-    def create_user(email, first_name, password, last_name , profile_img_url=None, 
+    def create_user(email, first_name, password, last_name , profile_img_url='', 
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
         Create a user with the given email, first name, password, last_name , profile image URL,

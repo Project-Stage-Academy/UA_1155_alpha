@@ -56,6 +56,8 @@ class UserRegisterAPIView(APIView):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             validated_data = serializer.validated_data
+            # if not validated_data['profile_img_url']:
+            #     validated_data['profile_img_url'] = '' 
             custom_user = CustomUser.create_user(**validated_data)
             if custom_user:
 
