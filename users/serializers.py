@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from .models import CustomUser
+from .models import CustomUser, Investor
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -12,7 +12,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('email',
                   'first_name',
-                  'surname',
+                  'last_name',
                   'password',
                   'password2',
                   'profile_img_url',
@@ -70,5 +70,20 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
 
         if password != password2:
             raise serializers.ValidationError({'Error': 'Passwords do not match'})
+
+        return data
+
+
+class InvestorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Investor
+        fields = '__all__'
+
+    def validate(self, data):
+        number = data.get('contact_phone')
+        regex_for_number = r'^\+[0-9]{1,3}[0-9]{9}$'
+
+        if not re.match(regex_for_number, number):
+            raise serializers.ValidationError({'Error': 'Phone number is not correct'})
 
         return data

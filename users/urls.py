@@ -17,12 +17,9 @@ Including another URLconf
 from django.urls import path
 from .views import UserRegisterAPIView, LoginAPIView, VerifyEmailAPIView, LogoutAPIView
 
-
 urlpatterns = [
     path('register/',  UserRegisterAPIView.as_view(), name='register'),
     path('login/', LoginAPIView.as_view(), name='login'),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
     path('send_confirmation_email/', VerifyEmailAPIView.as_view(), name='send_email_confirmation'),
 ]
-
-
