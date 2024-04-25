@@ -1,10 +1,10 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import transaction
-from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from rest_framework.permissions import IsAuthenticated
 from users.serializers import PasswordResetConfirmSerializer
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -84,16 +84,34 @@ class VerifyEmailAPIView(APIView):
         pass
 
 
-@method_decorator(login_required, name='dispatch')
+class IsStaffPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow staff and startups to interact with the view.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_staff == 1 and request.user.is_startup == 1
+
+
+class IsInvestorPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow investors to interact with the view.
+    """
+    def has_permission(self, request, view):
+        return request.user.is_investor == 1
+
+
 class InvestorViewSet(viewsets.ViewSet):
-    @user_passes_test(lambda user: user.is_staff == 1)
+
+    permission_classes = [IsAuthenticated]
+
     def list(self, request):
+        self.permission_classes = [IsStaffPermission]
         investors = Investor.objects.all()
         serializer = InvestorSerializer(investors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @user_passes_test(lambda user: user.is_staff == 1)
     def retrieve(self, request, pk=None):
+        self.permission_classes = [IsStaffPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -102,8 +120,8 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @user_passes_test(lambda user: user.is_investor == 1)
     def create(self, request):
+        self.permission_classes = [IsInvestorPermission]
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -111,8 +129,8 @@ class InvestorViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @user_passes_test(lambda user: user.is_investor == 1)
     def update(self, request, pk=None):
+        self.permission_classes = [IsInvestorPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -125,8 +143,8 @@ class InvestorViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @user_passes_test(lambda user: user.is_investor == 1)
     def partial_update(self, request, pk=None):
+        self.permission_classes = [IsInvestorPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -139,8 +157,8 @@ class InvestorViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @user_passes_test(lambda user: user.is_investor == 1)
     def destroy(self, request, pk=None):
+        self.permission_classes = [IsInvestorPermission]
         try:
             with transaction.atomic():
                 investor = Investor.objects.select_related('user').get(id=pk)
