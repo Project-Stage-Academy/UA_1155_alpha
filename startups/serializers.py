@@ -15,3 +15,20 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         project = Project.objects.create(**validated_data)
         return project
+
+    def update(self, instance, validated_data):
+        instance.project_name = validated_data.get('project_name', instance.project_name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.goals = validated_data.get('goals', instance.goals)
+        instance.status = validated_data.get('status', instance.status)
+        instance.budget_needed = validated_data.get('budget_needed', instance.budget_needed)
+        instance.budget_ready = validated_data.get('budget_ready', instance.budget_ready)
+        instance.industry = validated_data.get('industry', instance.industry)
+        instance.promo_photo_url = validated_data.get('promo_photo_url', instance.promo_photo_url)
+        instance.promo_video_url = validated_data.get('promo_video_url', instance.promo_video_url)
+        instance.save()
+        return instance
+
+
+
+
