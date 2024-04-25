@@ -7,12 +7,13 @@ from .models import CustomUser
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
-
+    profile_img_url = serializers.CharField(required=False)
+    
     class Meta:
         model = CustomUser
         fields = ('email',
                   'first_name',
-                  'surname',
+                  'last_name',
                   'password',
                   'password2',
                   'profile_img_url',
