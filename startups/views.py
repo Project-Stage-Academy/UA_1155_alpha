@@ -207,6 +207,7 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
     def update(self, request, pk=None):
         """
         Update an existing project with all fields required
@@ -216,11 +217,11 @@ class ProjectViewSet(viewsets.ViewSet):
         if not pk:
             return Response({"error": "Method PUT not allowed"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            instance = Project.objects.get(pk=pk)
+            project = Project.objects.get(pk=pk)
         except:
             return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProjectSerializer(instance=instance, data=request.data)
+        serializer = ProjectSerializer(instance=project, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -231,6 +232,7 @@ class ProjectViewSet(viewsets.ViewSet):
             'status': status.HTTP_200_OK
         }
         return Response(data, status=status.HTTP_200_OK)
+
 
     def partial_update(self, request, pk=None):
         """
