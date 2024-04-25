@@ -85,3 +85,5 @@ class InvestorSerializer(serializers.ModelSerializer):
 
         if not re.match(regex_for_number, number):
             raise serializers.ValidationError({'Error': 'Phone number is not correct'})
+
+        return data
