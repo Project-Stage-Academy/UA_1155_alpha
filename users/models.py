@@ -2,6 +2,10 @@ from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db.models.functions import Now
+from django.contrib.auth.hashers import make_password
+from uuid import uuid4
+from startups.models import Project
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -28,7 +32,7 @@ class CustomUser(AbstractBaseUser):
     last_name = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
-    profile_img_url = models.CharField(max_length=1000, blank=True)
+    profile_img_url = models.CharField(max_length=1000, blank=True, default='')
     is_active_for_proposals = models.BooleanField(default=False)
     is_investor = models.BooleanField(default=False)
     is_startup = models.BooleanField(default=False)
@@ -48,7 +52,7 @@ class CustomUser(AbstractBaseUser):
  
  
     @staticmethod
-    def create_user(email, first_name, password, last_name , profile_img_url=None, 
+    def create_user(email, first_name, password, last_name , profile_img_url='', 
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
         Create a user with the given email, first name, password, last_name , profile image URL,
@@ -72,11 +76,11 @@ class CustomUser(AbstractBaseUser):
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
-    location = models.CharField(max_length=128)
-    contact_phone = models.CharField(max_length=25)
+    location = models.CharField(max_length=128, blank=True)
+    contact_phone = models.CharField(max_length=25, blank=True)
     contact_email = models.EmailField(unique=True, max_length=50)
     investment_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    interests = models.CharField(max_length=500)
+    interests = models.CharField(max_length=500, blank=True, choices=Project.INDUSTRY_CHOICES)
     number_for_investor_validation = models.IntegerField(null=True)
 
     class Meta:

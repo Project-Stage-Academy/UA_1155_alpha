@@ -85,13 +85,13 @@ class UserRegisterAPIView(APIView):
 
 class SendEmailConfirmationAPIView(APIView):
     
-    def get(self, request, token=None, uidb64=None):
+    def get(self, request, token=None):
         return Response({'message': "Plese, confifm your email"}, status=status.HTTP_200_OK)
     
     
     def post(self, request, token=None):
         if not token:
-            return Response({"message": "You need a tocken to verify email."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "You need a token to verify email."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             decoded_token = jwt.decode(token, options={"verify_signature": False})
@@ -103,7 +103,7 @@ class SendEmailConfirmationAPIView(APIView):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
             
         if user.is_email_valid:
-            return Response({'message': 'Email already verified'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Email already verified'}, status=status.HTTP_403_FORBIDDEN)
              
         user.is_email_valid = True
         user.save()        
