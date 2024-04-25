@@ -84,34 +84,27 @@ class VerifyEmailAPIView(APIView):
         pass
 
 
-class IsStaffPermission(permissions.BasePermission):
-    """
-    Custom permission to only allow staff and startups to interact with the view.
-    """
-    def has_permission(self, request, view):
-        return request.user.is_staff == 1 and request.user.is_startup == 1
-
-
 class IsInvestorPermission(permissions.BasePermission):
     """
     Custom permission to only allow investors to interact with the view.
     """
     def has_permission(self, request, view):
-        return request.user.is_investor == 1
+        return request.user.is_investor == 1 and request.user.is_authenticated
 
 
 class InvestorViewSet(viewsets.ViewSet):
-
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return []
+        else:
+            return [IsInvestorPermission()]
 
     def list(self, request):
-        self.permission_classes = [IsStaffPermission]
         investors = Investor.objects.all()
         serializer = InvestorSerializer(investors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        self.permission_classes = [IsStaffPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -121,7 +114,6 @@ class InvestorViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        self.permission_classes = [IsInvestorPermission]
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -130,7 +122,6 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
-        self.permission_classes = [IsInvestorPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -144,7 +135,6 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
-        self.permission_classes = [IsInvestorPermission]
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
@@ -158,7 +148,6 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
-        self.permission_classes = [IsInvestorPermission]
         try:
             with transaction.atomic():
                 investor = Investor.objects.select_related('user').get(id=pk)
