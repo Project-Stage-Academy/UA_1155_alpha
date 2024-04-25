@@ -7,6 +7,7 @@ from uuid import uuid4
 from startups.models import Project
 
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -31,7 +32,7 @@ class CustomUser(AbstractBaseUser):
     last_name = models.CharField(max_length=50)
     password = models.CharField(max_length=128)
     is_email_valid = models.BooleanField(default=False)
-    profile_img_url = models.CharField(max_length=1000, blank=True)
+    profile_img_url = models.CharField(max_length=1000, blank=True, default='')
     is_active_for_proposals = models.BooleanField(default=False)
     is_investor = models.BooleanField(default=False)
     is_startup = models.BooleanField(default=False)
@@ -51,10 +52,10 @@ class CustomUser(AbstractBaseUser):
  
  
     @staticmethod
-    def create_user(email, first_name, password, last_name, profile_img_url=None,
+    def create_user(email, first_name, password, last_name , profile_img_url='', 
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
-        Create a user with the given email, first name, password, surname, profile image URL,
+        Create a user with the given email, first name, password, last_name , profile image URL,
         is_active_for_proposals, is_investor, and is_startup.
         This method checks that the email, first name, and surname, are not longer than 50 characters,
         and that the password is not longer than 128 characters.
@@ -62,9 +63,9 @@ class CustomUser(AbstractBaseUser):
         The validation for email and password realized in UserRegisterSerializer.
         """
         if (len(email)<=50 and len(first_name)<=50 
-            and len(last_name)<=50 and len(password)<=128):
-
-            custom_user = CustomUser(email=email, first_name=first_name, last_name=last_name,
+            and len(last_name )<=50 and len(password)<=128):
+            
+            custom_user = CustomUser(email=email, first_name=first_name, last_name =last_name,
                                      profile_img_url=profile_img_url, is_active_for_proposals=is_active_for_proposals,
                                      is_investor=is_investor, is_startup=is_startup)
             custom_user.set_password(password)
@@ -89,5 +90,4 @@ class Investor(models.Model):
 
     def __str__(self):
         return f"Investor: {self.user.first_name}. E-mail: {self.contact_email}"
-    
     
