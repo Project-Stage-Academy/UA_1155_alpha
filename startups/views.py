@@ -1,13 +1,13 @@
 from forum.utils import get_query_dict
 from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Startup, Project
 from .serializers import StartupSerializer, StartupListSerializer, ProjectSerializer
 
 class StartupViewSet(viewsets.ViewSet):
-    permission_classes = (IsAuthenticated,)
     """
      ViewSet for managing startup resources.
 
@@ -32,32 +32,44 @@ class StartupViewSet(viewsets.ViewSet):
      - Methods accept data in JSON format and also return responses in JSON format.
      - Responses contain the status of the operation, messages, and startup data (in list, retrieve, create, update, partial_update operations).
      """
+    permission_classes = (IsAuthenticated,)
 
     def list(self, request):
         # Example URL: /api/startups/
         # Getting ALL startups logic
         startups = Startup.objects.all()
 
-        # Example URL: /api/startups/?industry=test
-        # Example URL: /api/startups/?name=test
-        industry = request.query_params.get('industry')
-        name = request.query_params.get('name')
-        other_params = request.query_params.keys() - {'industry', 'name'}
-
-        if other_params:
-            return Response({"error": "Only 'industry' and 'name' parameter is allowed"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if industry:
-            startups = startups.filter(industries__icontains=industry)
-            if not startups.exists():
-                return Response({"error": f"No startups found for the industry '{industry}'"},status=status.HTTP_404_NOT_FOUND)
-        if name:
-            startups = startups.filter(startup_name__icontains=name)
-            if not startups.exists():
-                return Response({"error": f"No startups found with the name '{name}'"},status=status.HTTP_404_NOT_FOUND)
+        try:
+            startups = self.filter_queryset_by_params(startups, request.query_params)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Startup.DoesNotExist as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = StartupListSerializer(startups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def filter_queryset_by_params(self, queryset, query_params):
+        # Example URL: /api/startups/?industry=test
+        # Example URL: /api/startups/?name=test
+        industry = query_params.get('industry')
+        name = query_params.get('name')
+        other_params = query_params.keys() - {'industry', 'name'}
+
+        if other_params:
+            raise ValueError("Only 'industry' and 'name' parameters are allowed")
+
+        if industry:
+            queryset = queryset.filter(industries__icontains=industry)
+            if not queryset.exists():
+                raise Startup.DoesNotExist(f"No startups found for the industry '{industry}'")
+
+        if name:
+            queryset = queryset.filter(startup_name__icontains=name)
+            if not queryset.exists():
+                raise Startup.DoesNotExist(f"No startups found with the name '{name}'")
+
+        return queryset
 
     def retrieve(self, request, pk=None):
         # ExampLE URL: /api/startups/2

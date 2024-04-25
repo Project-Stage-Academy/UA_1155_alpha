@@ -12,6 +12,8 @@ class StartupListSerializer(serializers.ModelSerializer):
                   'location',
                   'contact_phone',
                   'contact_email')
+
+
 class StartupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Startup
