@@ -70,7 +70,7 @@ class UserRegisterAPIView(APIView):
 
                 token = RefreshToken.for_user(custom_user).access_token
                 current_site = get_current_site(request).domain
-                relative_link = reverse('verify-email', kwargs={'token': token, 'uidb64': urlsafe_base64_encode(force_bytes(custom_user.id))})
+                relative_link = reverse('verify-email', kwargs={'token': token, })
                 abs_url= f"http://{current_site}{relative_link}"
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
@@ -89,21 +89,18 @@ class SendEmailConfirmationAPIView(APIView):
         return Response({'message': "Plese, confifm your email"}, status=status.HTTP_200_OK)
     
     
-    def post(self, request, token=None, uidb64=None):
+    def post(self, request, token=None):
         if not token:
             return Response({"message": "You need a tocken to verify email."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             decoded_token = jwt.decode(token, options={"verify_signature": False})
-            user_id = urlsafe_base64_decode(uidb64).decode()
+            user_id = decoded_token.get('user_id') 
             user = get_object_or_404(CustomUser, id=user_id)
         except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
                 return Response({'error': 'Invalid user ID'}, status=status.HTTP_400_BAD_REQUEST)
         except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        if decoded_token.get('user_id') != int(user_id):
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)    
             
         if user.is_email_valid:
             return Response({'message': 'Email already verified'}, status=status.HTTP_400_BAD_REQUEST)

@@ -12,7 +12,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('email',
                   'first_name',
-                  'surname',
+                  'last_name',
                   'password',
                   'password2',
                   'profile_img_url',

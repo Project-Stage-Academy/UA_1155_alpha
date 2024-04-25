@@ -22,6 +22,6 @@ urlpatterns = [
     path('register/',  UserRegisterAPIView.as_view(), name='register'),
     path('login/', LoginAPIView.as_view(), name='login'),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
-    path('verify-email/<str:token>/<str:uidb64>/', SendEmailConfirmationAPIView.as_view(), name='verify-email')
+    path('verify-email/<str:token>/', SendEmailConfirmationAPIView.as_view(), name='verify-email')
 ]
 
