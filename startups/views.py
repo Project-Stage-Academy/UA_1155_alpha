@@ -51,16 +51,22 @@ class StartupViewSet(viewsets.ViewSet):
         # ExampLE URL: /api/startups/2
         # Getting ONE startup with id=startup_id logic
         startup_id = pk
-        if startup_id:
-            startup = Startup.objects.filter(id=startup_id).first()
-            if not startup:
-                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = StartupListSerializer(startup)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            if startup_id:
+                startup = Startup.objects.filter(id=startup_id).first()
+                if not startup:
+                    return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupListSerializer(startup)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request):
         # ExampLE URL: /api/startups/
         # Creating startup logic
+        existing_startup = Startup.objects.filter(owner=request.user).first()
+        if existing_startup:
+            return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
         startup_info = request.data
         serializer = StartupSerializer(data=startup_info, context={'request': request})
         if serializer.is_valid():
@@ -73,14 +79,17 @@ class StartupViewSet(viewsets.ViewSet):
         # PUT logic
         startup_id = pk
         startup = Startup.objects.filter(id=startup_id).first()
-        if not startup:
-            return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = StartupSerializer(startup, data=request.data, partial=False)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if not startup:
+                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupSerializer(startup, data=request.data, partial=False)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def partial_update(self, request, pk=None):
@@ -88,14 +97,17 @@ class StartupViewSet(viewsets.ViewSet):
         # Update info about startup
         startup_id = pk
         startup = Startup.objects.filter(id=startup_id).first()
-        if not startup:
-            return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = StartupSerializer(startup, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if not startup:
+                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupSerializer(startup, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def destroy(self, request, pk=None):
