@@ -15,13 +15,25 @@ class StartupListSerializer(serializers.ModelSerializer):
 
 
 class StartupSerializer(serializers.ModelSerializer):
+    owner = serializers.PrimaryKeyRelatedField(
+        read_only=True
+    )
+
     class Meta:
         model = Startup
         fields = '__all__'
-        read_only_fields = ('registration_date', )
+        read_only_fields = ('registration_date', 'owner')
 
     def create(self, validated_data):
-        return Startup.objects.create(**validated_data)
+        user = self.context['request'].user
+        user.is_startup = True
+        user.save()
+        if 'owner' not in validated_data:
+            validated_data['owner'] = user
+        startup = Startup.objects.create(**validated_data)
+        return startup
+
+
 
     def validate_location(self, data):
         # Check if location consists of two or more words separated by space, comma, or hyphen,

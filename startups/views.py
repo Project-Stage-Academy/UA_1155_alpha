@@ -86,11 +86,7 @@ class StartupViewSet(viewsets.ViewSet):
         # ExampLE URL: /api/startups/
         # Creating startup logic
         startup_info = request.data
-        startup = Startup.objects.filter(owner=request.user).first()
-        if startup:
-            return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
-        startup_info['owner'] = request.user.id
-        serializer = StartupSerializer(data=startup_info)
+        serializer = StartupSerializer(data=startup_info, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
