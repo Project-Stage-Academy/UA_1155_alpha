@@ -8,6 +8,8 @@ from forum.utils import get_query_dict
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
 from .serializers import UserRegisterSerializer
@@ -15,6 +17,7 @@ from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from rest_framework.generics import get_object_or_404
+import jwt
 
 
 class LoginAPIView(APIView):
@@ -67,23 +70,45 @@ class UserRegisterAPIView(APIView):
 
                 token = RefreshToken.for_user(custom_user).access_token
                 current_site = get_current_site(request).domain
-                relative_link = reverse('verify-email', kwargs={'token': token, 'user_id': custom_user.id})
-                abs_url = 'http://'+ current_site + relative_link + '?token=' + str(token) + '?id=' + str(custom_user.id) 
+                relative_link = reverse('verify-email', kwargs={'token': token, })
+                abs_url= f"http://{current_site}{relative_link}"
                 email_body = 'Hi ' + custom_user.first_name + ' Use the link below to verify your email \n' + abs_url
                 sended_data = {'email_body': email_body, 'email_subject': 'Email confirmation', 'to_email': custom_user.email}
-                # Util.send_email(data=sended_data)
+                Util.send_email(data=sended_data)
                                 
-                return Response({"User id": custom_user.id, "User name": custom_user.first_name, "message": "User created successfully"}, status=status.HTTP_201_CREATED)
+                return Response({"User name": custom_user.first_name, "message": "User created successfully"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"message": "Failed to create user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class VerifyEmailAPIView(APIView):
-    def get(self):
-        pass
+class SendEmailConfirmationAPIView(APIView):
     
+    def get(self, request, token=None):
+        return Response({'message': "Plese, confifm your email"}, status=status.HTTP_200_OK)
+    
+    
+    def post(self, request, token=None):
+        if not token:
+            return Response({"message": "You need a token to verify email."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            decoded_token = jwt.decode(token, options={"verify_signature": False})
+            user_id = decoded_token.get('user_id') 
+            user = get_object_or_404(CustomUser, id=user_id)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+                return Response({'error': 'Invalid user ID'}, status=status.HTTP_400_BAD_REQUEST)
+        except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError):
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if user.is_email_valid:
+            return Response({'message': 'Email already verified'}, status=status.HTTP_403_FORBIDDEN)
+             
+        user.is_email_valid = True
+        user.save()        
+        return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+
 
 class InvestorViewSet(viewsets.ViewSet):
     def list(self, request):
@@ -173,7 +198,6 @@ class InvestorViewSet(viewsets.ViewSet):
             'status': status.HTTP_200_OK
         }
         return Response(data, status=status.HTTP_204_NO_CONTENT)
-
 
 
 class PasswordResetRequest(APIView):
