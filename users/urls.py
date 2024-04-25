@@ -24,4 +24,3 @@ urlpatterns = [
     path('logout/', LogoutAPIView.as_view(), name='logout'),
     path('verify-email/<str:token>/', SendEmailConfirmationAPIView.as_view(), name='verify-email')
 ]
-
