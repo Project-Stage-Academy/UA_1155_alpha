@@ -11,7 +11,9 @@ class StartupListSerializer(serializers.ModelSerializer):
                   'industries',
                   'location',
                   'contact_phone',
-                  'contact_email')
+                  'contact_email',
+                  'registration_date',
+                  )
 
 
 class StartupSerializer(serializers.ModelSerializer):
@@ -33,7 +35,16 @@ class StartupSerializer(serializers.ModelSerializer):
         startup = Startup.objects.create(**validated_data)
         return startup
 
-
+    def update(self, instance, validated_data):
+        instance.startup_name = validated_data.get('startup_name', instance.startup_name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.industries = validated_data.get('industries', instance.industries)
+        instance.location = validated_data.get('location', instance.location)
+        instance.contact_phone = validated_data.get('contact_phone', instance.contact_phone)
+        instance.contact_email = validated_data.get('contact_email', instance.contact_email)
+        instance.number_for_startup_validation = validated_data.get('number_for_startup_validation',instance.number_for_startup_validation)
+        instance.save()
+        return instance
 
     def validate_location(self, data):
         # Check if location consists of two or more words separated by space, comma, or hyphen,
