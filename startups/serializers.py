@@ -81,6 +81,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     """
     Serializer for Project model
     """
+    industry = serializers.CharField(required=True)
 
     class Meta:
         model = Project
@@ -103,3 +104,28 @@ class ProjectSerializer(serializers.ModelSerializer):
         instance.promo_video_url = validated_data.get('promo_video_url', instance.promo_video_url)
         instance.save()
         return instance
+
+
+    def validate(self, data):
+        budget_needed = data.get('budget_needed')
+        budget_ready = data.get('budget_ready')
+        if budget_ready and budget_needed and budget_ready > budget_needed:
+            raise serializers.ValidationError(
+                {
+                    "status": "failed",
+                    "message": "Budget ready cannot be greater than budget needed"
+                }
+            )
+        industry = data.get('industry')
+        if industry:
+            industries = [industry[0] for industry in Project.INDUSTRY_CHOICES]
+            if industry not in industries:
+                raise serializers.ValidationError(
+                    {
+                        "status": "failed",
+                        "message": "Industry does not exist",
+                        "choices": industries
+                    }
+                )
+        return data
+
