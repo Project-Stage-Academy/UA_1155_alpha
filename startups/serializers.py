@@ -29,6 +29,15 @@ class ProjectSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
-
+    def validate(self, data):
+        budget_needed = data.get('budget_needed')
+        budget_ready = data.get('budget_ready')
+        if budget_ready and budget_needed and budget_ready > budget_needed:
+            raise serializers.ValidationError(
+                {
+                    "status": "failed",
+                    "message": "Budget ready cannot be greater than budget needed"
+                }
+            )
+        return data
 
