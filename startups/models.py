@@ -16,6 +16,7 @@ class Startup(models.Model):
     registration_date = models.DateTimeField(db_default=Now())
 
     class Meta:
+
         db_table = 'startups'
 
 
