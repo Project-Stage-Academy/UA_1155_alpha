@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Startup, Project
 from .serializers import StartupSerializer, StartupListSerializer, ProjectSerializer
-from .viewing_startups import list as list_startups, filter_queryset_by_params as filter_startups
+from .view import list as list_startups, filter_queryset_by_params as filter_startups
 
 
 class StartupViewSet(viewsets.ViewSet):
