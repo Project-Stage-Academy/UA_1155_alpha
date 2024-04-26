@@ -88,8 +88,8 @@ class IsInvestorPermission(permissions.BasePermission):
     """
     Custom permission to only allow investors to interact with the view.
     """
-    # def has_permission(self, request, view):
-    #     return request.user.is_investor == 1 and request.user.is_authenticated
+    def has_permission(self, request, view):
+        return request.user.is_investor == 1 and request.user.is_authenticated
 
 
 class InvestorViewSet(viewsets.ViewSet):
