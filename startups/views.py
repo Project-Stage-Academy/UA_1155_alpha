@@ -207,20 +207,22 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None):
+    def update(self, request, pk):
         """
         Update an existing project with all fields required
         (PUT api/projects/<pk>/)
         Do not forget about SLASH at the end of URL
         """
-        if not pk:
-            return Response({"error": "Method PUT not allowed"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            instance = Project.objects.get(pk=pk)
-        except:
+            if not pk:
+                raise ValueError("Project ID is required")
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
             return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProjectSerializer(instance=instance, data=request.data)
+        serializer = ProjectSerializer(instance=project, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -232,20 +234,23 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    def partial_update(self, request, pk=None):
+    def partial_update(self, request, pk):
         """
         Update an existing project without all fields required
         (PATCH api/projects/<pk>/)
         Do not forget about SLASH at the end of URL
         """
-        if not pk:
-            return Response({"error": "Method PATCH not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            instance = Project.objects.get(pk=pk)
-        except:
-            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProjectSerializer(instance=instance, data=request.data, partial=True)
+        try:
+            if not pk:
+                raise ValueError("Project ID is required")
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProjectSerializer(instance=project, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
