@@ -19,7 +19,6 @@ def list(self, request):
     serializer = StartupListSerializer(startups, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 def filter_queryset_by_params(self, queryset, query_params):
     # Example URL: /api/startups/?industry=test
     # Example URL: /api/startups/?name=test

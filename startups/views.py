@@ -46,7 +46,6 @@ class StartupViewSet(viewsets.ViewSet):
         # Example URL: /api/startups/?name=test
         return filter_startups(self, queryset, query_params)
 
-
     def retrieve(self, request, pk=None):
         # ExampLE URL: /api/startups/2
         # Getting ONE startup with id=startup_id logic
@@ -91,7 +90,6 @@ class StartupViewSet(viewsets.ViewSet):
         except:
             return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
-
     def partial_update(self, request, pk=None):
         # ExampLE URL: /api/startups/2/
         # Update info about startup
@@ -108,7 +106,6 @@ class StartupViewSet(viewsets.ViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
-
 
     def destroy(self, request, pk=None):
         # Implementation of DELETE METHOD for one startup - ExampLE URL: /api/startups/4/
