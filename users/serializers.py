@@ -2,17 +2,18 @@ import re
 
 from rest_framework import serializers
 
-from .models import CustomUser
+from .models import CustomUser, Investor
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    profile_img_url = serializers.CharField(required=False)
 
     class Meta:
         model = CustomUser
         fields = ('email',
                   'first_name',
-                  'surname',
+                  'last_name',
                   'password',
                   'password2',
                   'profile_img_url',
@@ -32,7 +33,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         # Check if the passwords match pattern
         if not re.match(regex_for_password, password):
             raise serializers.ValidationError({
-                                                  'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
+                'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
 
         # Check if the passwords match
         if password != password2:
@@ -70,5 +71,20 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
 
         if password != password2:
             raise serializers.ValidationError({'Error': 'Passwords do not match'})
+
+        return data
+
+
+class InvestorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Investor
+        fields = '__all__'
+
+    def validate(self, data):
+        number = data.get('contact_phone')
+        regex_for_number = r'^\+[0-9]{1,3}[0-9]{9}$'
+
+        if not re.match(regex_for_number, number):
+            raise serializers.ValidationError({'Error': 'Phone number is not correct'})
 
         return data
