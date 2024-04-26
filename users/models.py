@@ -5,6 +5,8 @@ from django.db.models.functions import Now
 from startups.models import Project
 
 
+
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -46,29 +48,27 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return f"ID: {self.id}, Email: {self.email}"
- 
- 
+
     @staticmethod
-    def create_user(email, first_name, password, last_name , profile_img_url='', 
+    def create_user(email, first_name, password, last_name, profile_img_url='',
                     is_active_for_proposals=False, is_investor=False, is_startup=False):
         """
         Create a user with the given email, first name, password, last_name , profile image URL,
         is_active_for_proposals, is_investor, and is_startup.
         This method checks that the email, first name, and surname, are not longer than 50 characters,
         and that the password is not longer than 128 characters.
-        
+
         The validation for email and password realized in UserRegisterSerializer.
         """
-        if (len(email)<=50 and len(first_name)<=50 
-            and len(last_name )<=50 and len(password)<=128):
-            
-            custom_user = CustomUser(email=email, first_name=first_name, last_name =last_name,
+        if (len(email) <= 50 and len(first_name) <= 50
+                and len(last_name) <= 50 and len(password) <= 128):
+            custom_user = CustomUser(email=email, first_name=first_name, last_name=last_name,
                                      profile_img_url=profile_img_url, is_active_for_proposals=is_active_for_proposals,
                                      is_investor=is_investor, is_startup=is_startup)
             custom_user.set_password(password)
             custom_user.save()
-            return custom_user        
-       
+            return custom_user
+
 
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
@@ -87,4 +87,3 @@ class Investor(models.Model):
 
     def __str__(self):
         return f"Investor: {self.user.first_name}. E-mail: {self.contact_email}"
-    

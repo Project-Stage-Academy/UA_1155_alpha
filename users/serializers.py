@@ -8,7 +8,7 @@ from .models import CustomUser, Investor
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
     profile_img_url = serializers.CharField(required=False)
-    
+
     class Meta:
         model = CustomUser
         fields = ('email',
@@ -33,7 +33,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         # Check if the passwords match pattern
         if not re.match(regex_for_password, password):
             raise serializers.ValidationError({
-                                                  'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
+                'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
 
         # Check if the passwords match
         if password != password2:

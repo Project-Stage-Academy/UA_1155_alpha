@@ -42,7 +42,6 @@ class LoginAPIView(APIView):
             'access': str(refresh.access_token),
         }, status=200)
 
-
 class LogoutAPIView(APIView):
     def post(self, request):
         '''Method should receive "access" and "refresh" tokens in body of POST request to LogOut'''

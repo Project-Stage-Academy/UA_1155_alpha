@@ -1,10 +1,12 @@
+from forum.utils import get_query_dict
 from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .serializers import ProjectSerializer
 from rest_framework.response import Response
 from .models import Startup, Project
-from forum.utils import get_query_dict
-from rest_framework import viewsets
+from .serializers import StartupSerializer, StartupListSerializer, ProjectSerializer
+from .view import list as list_startups, filter_queryset_by_params as filter_startups
 
 
 class StartupViewSet(viewsets.ViewSet):
@@ -32,77 +34,78 @@ class StartupViewSet(viewsets.ViewSet):
      - Methods accept data in JSON format and also return responses in JSON format.
      - Responses contain the status of the operation, messages, and startup data (in list, retrieve, create, update, partial_update operations).
      """
+    permission_classes = (IsAuthenticated,)
 
     def list(self, request):
-        # Implementation of GET METHOD - ExampLE URL: /api/startups/
+        # Example URL: /api/startups/
         # Getting ALL startups logic
-        data = {
-            'message': "Hello, ALL STARTUPS PROFILE PAGE",
-            'status': status.HTTP_200_OK
-        }
-        query_data = get_query_dict(request)  # If we need to use queries like /api/startups?name=Apple
-        if query_data:
-            data.update(query_data)
-        # Should return a list!
-        return Response(data, status=status.HTTP_200_OK)
+        return list_startups(self, request)
+
+    def filter_queryset_by_params(self, queryset, query_params):
+        # Example URL: /api/startups/?industry=test
+        # Example URL: /api/startups/?name=test
+        return filter_startups(self, queryset, query_params)
 
     def retrieve(self, request, pk=None):
-        # Implementation of GET METHOD for one startup - ExampLE URL: /api/startups/2
+        # ExampLE URL: /api/startups/2
         # Getting ONE startup with id=startup_id logic
-
         startup_id = pk
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, concrete STARTUP PROFILE PAGE WITH NUMBER {startup_id}",
-            'status': status.HTTP_200_OK
-        }
-
-        query_data = get_query_dict(request)  # If we need to use queries like /api/startups?name=AppleTV
-        if query_data:
-            data.update(query_data)
-        return Response(data, status=status.HTTP_200_OK)
+        try:
+            if startup_id:
+                startup = Startup.objects.filter(id=startup_id).first()
+                if not startup:
+                    return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupListSerializer(startup)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request):
-        # Implementation of POST METHOD for one startup - ExampLE URL: /api/startups/
-        # Do not forget slash at the end of link
-        # + you should send data in JSON
+        # ExampLE URL: /api/startups/
         # Creating startup logic
+        existing_startup = Startup.objects.filter(owner=request.user).first()
+        if existing_startup:
+            return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
         startup_info = request.data
-        data = {
-            'startup_info': startup_info,
-            'status': 'success'
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
+        serializer = StartupSerializer(data=startup_info, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
-        # Implementation of PUT METHOD for one startup - ExampLE URL: /api/startups/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
         # PUT logic
         startup_id = pk
-        startup_updated_info = request.data
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, EDIT STARTUP PROFILE WITH NUMBER {startup_id}",
-            'updated_data': startup_updated_info,
-            'status': 'success'
-        }
-        return Response(data)
+        startup = Startup.objects.filter(id=startup_id).first()
+        try:
+            if not startup:
+                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupSerializer(startup, data=request.data, partial=False)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
-        # Implementation of PATCH METHOD for one startup - ExampLE URL: /api/startups/2/
-        # Do not forget about SLASH at the end of URL
-        # + you should send data in JSON
-        # Pathcing logic
+        # ExampLE URL: /api/startups/2/
+        # Update info about startup
         startup_id = pk
-        startup_specific_updated_info = request.data
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, EDIT STARTUP PROFILE WITH NUMBER {startup_id}",
-            'specific_updated_data': startup_specific_updated_info,
-            'status': 'success'
-        }
-        return Response(data)
+        startup = Startup.objects.filter(id=startup_id).first()
+        try:
+            if not startup:
+                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = StartupSerializer(startup, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
         # Implementation of DELETE METHOD for one startup - ExampLE URL: /api/startups/4/
