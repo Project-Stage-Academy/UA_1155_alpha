@@ -18,7 +18,8 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
 from startups.views import StartupViewSet, ProjectViewSet
-from users.views import InvestorViewSet, PasswordResetRequest, PasswordResetConfirm
+from users.views import PasswordResetRequest, PasswordResetConfirm
+from investors.views import InvestorViewSet
 
 router = DefaultRouter()
 
