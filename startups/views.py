@@ -2,6 +2,7 @@ from forum.utils import get_query_dict
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import permission_classes
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Startup, Project
@@ -52,7 +53,7 @@ class StartupViewSet(viewsets.ViewSet):
         startup_id = pk
         try:
             if startup_id:
-                startup = Startup.objects.filter(id=startup_id).first()
+                startup = Startup.objects.filter(id=startup_id, is_active=True).first()
                 if not startup:
                     return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
             serializer = StartupListSerializer(startup)
@@ -75,12 +76,10 @@ class StartupViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
+        # ExampLE URL: /api/startups/
         # PUT logic
-        startup_id = pk
-        startup = Startup.objects.filter(id=startup_id).first()
         try:
-            if not startup:
-                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            startup = get_object_or_404(Startup, id=pk)
             serializer = StartupSerializer(startup, data=request.data, partial=False)
             if serializer.is_valid():
                 serializer.save()
@@ -90,14 +89,12 @@ class StartupViewSet(viewsets.ViewSet):
         except:
             return Response({"error": "Invalid startup id"}, status=status.HTTP_400_BAD_REQUEST)
 
+
     def partial_update(self, request, pk=None):
         # ExampLE URL: /api/startups/2/
         # Update info about startup
-        startup_id = pk
-        startup = Startup.objects.filter(id=startup_id).first()
         try:
-            if not startup:
-                return Response({"error": "Startup not found"}, status=status.HTTP_404_NOT_FOUND)
+            startup = get_object_or_404(Startup, id=pk)
             serializer = StartupSerializer(startup, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
