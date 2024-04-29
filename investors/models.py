@@ -1,8 +1,7 @@
 from django.db import models
 
-from startups.models import Project
+from projects.models import Project
 from users.models import CustomUser
-
 
 
 class Investor(models.Model):

@@ -32,8 +32,10 @@ class Project(models.Model):
     registration_date = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(auto_now=True)
     rating = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    subscribers = models.ManyToManyField('users.Investor', related_name='subscribed_projects', blank=True)
-    investors = models.ManyToManyField('users.Investor', related_name='participated_projects', blank=True)
+    subscribers = models.ManyToManyField("investors.Investor", related_name='subscribed_projects', blank=True)
+    investors = models.ManyToManyField("investors.Investor", related_name='participated_projects', blank=True)
     is_active = models.BooleanField(default=True)
+
+
     class Meta:
         db_table = 'projects'
