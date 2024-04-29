@@ -3,6 +3,7 @@ from projects.serializers import ProjectSerializer
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from startups.models import Startup
 
 
 class ProjectViewSet(viewsets.ViewSet):
