@@ -1,22 +1,18 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import transaction
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from rest_framework.permissions import IsAuthenticated
-from users.serializers import PasswordResetConfirmSerializer
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, Investor
-from .serializers import UserRegisterSerializer, InvestorSerializer
-from .utils import Util
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
-from rest_framework.generics import get_object_or_404
 import jwt
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.utils.encoding import force_bytes
+from rest_framework.generics import get_object_or_404
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+from .utils import Util
+from .models import CustomUser
+from .serializers import UserRegisterSerializer
+from users.serializers import PasswordResetConfirmSerializer
 
 
 class LoginAPIView(APIView):
@@ -41,6 +37,7 @@ class LoginAPIView(APIView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=200)
+
 
 class LogoutAPIView(APIView):
     def post(self, request):
@@ -106,81 +103,6 @@ class SendEmailConfirmationAPIView(APIView):
         user.is_email_valid = True
         user.save()        
         return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
-
-
-class IsInvestorPermission(permissions.BasePermission):
-    """
-    Custom permission to only allow investors to interact with the view.
-    """
-    def has_permission(self, request, view):
-        return request.user.is_investor == 1 and request.user.is_authenticated
-
-
-class InvestorViewSet(viewsets.ViewSet):
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return []
-        else:
-            return [IsInvestorPermission()]
-
-    def list(self, request):
-        investors = Investor.objects.all()
-        serializer = InvestorSerializer(investors, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = InvestorSerializer(investor)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def create(self, request):
-        serializer = InvestorSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = InvestorSerializer(instance=investor, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = InvestorSerializer(instance=investor, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        try:
-            with transaction.atomic():
-                investor = Investor.objects.select_related('user').get(id=pk)
-                investor.user.is_investor = 0
-                investor.user.save()
-                investor.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PasswordResetRequest(APIView):
