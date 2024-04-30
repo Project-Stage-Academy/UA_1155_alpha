@@ -6,7 +6,7 @@ from users.models import CustomUser
 
 class Investor(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors', null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='investors')
     location = models.CharField(max_length=128, blank=True)
     contact_phone = models.CharField(max_length=25, blank=True)
     contact_email = models.EmailField(unique=True, max_length=50)
