@@ -1,10 +1,10 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, permissions
+from rest_framework import permissions, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from users.models import CustomUser
+
 from .models import Investor
 from .serializers import InvestorSerializer
 
@@ -20,10 +20,10 @@ class IsInvestorPermission(permissions.BasePermission):
 
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        permission_list = ['list', 'retrieve']
+        permission_list = ["list", "retrieve"]
         if self.action in permission_list:
             return []
-        elif self.action == 'create':
+        elif self.action == "create":
             return [IsAuthenticated()]
         return [IsInvestorPermission()]
 
@@ -41,7 +41,7 @@ class InvestorViewSet(viewsets.ViewSet):
         jwt_token = request.auth
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
-            user_id = jwt_token.payload.get('id')
+            user_id = jwt_token.payload.get("id")
             user_instance = CustomUser.objects.get(id=user_id)
             user_instance.is_investor = 1
             user_instance.save()
@@ -61,7 +61,9 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def partial_update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
-        serializer = InvestorSerializer(instance=investor, data=request.data, partial=True)
+        serializer = InvestorSerializer(
+            instance=investor, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
