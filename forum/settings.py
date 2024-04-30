@@ -86,12 +86,6 @@ WSGI_APPLICATION = 'forum.wsgi.application'
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-}
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -201,7 +195,7 @@ CELERY_BROKER_URL = 'redis://redis:6379/0'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT'))
-EMAIL_USE_SSL = bool(os.getenv('EMAIL_USE_SSL'))
+EMAIL_USE_TLS = bool(os.getenv('EMAIL_USE_SSL'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
