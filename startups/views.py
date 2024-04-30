@@ -86,6 +86,7 @@ class StartupViewSet(viewsets.ViewSet):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
     def partial_update(self, request, pk=None):
         # ExampLE URL: /api/startups/2/
         # Update info about startup
