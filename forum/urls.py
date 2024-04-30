@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from projects.views import ProjectViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
-from startups.views import StartupViewSet, ProjectViewSet
+from startups.views import StartupViewSet
 from users.views import PasswordResetRequest, PasswordResetConfirm
 from investors.views import InvestorViewSet
 
