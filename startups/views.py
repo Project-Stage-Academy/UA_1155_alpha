@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+
 from forum.utils import get_query_dict
 from rest_framework import status
 from rest_framework import viewsets
@@ -219,9 +221,7 @@ class ProjectViewSet(viewsets.ViewSet):
         try:
             if not pk:
                 raise ValueError("Project ID is required")
-            project = Project.objects.get(pk=pk)
-        except Project.DoesNotExist:
-            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            project = get_object_or_404(Project, pk=pk)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -247,9 +247,7 @@ class ProjectViewSet(viewsets.ViewSet):
         try:
             if not pk:
                 raise ValueError("Project ID is required")
-            project = Project.objects.get(pk=pk)
-        except Project.DoesNotExist:
-            return Response({"error": "Project does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            project = get_object_or_404(Project, pk=pk)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
