@@ -1,6 +1,7 @@
 from rest_framework import serializers
 import re
 
+from forum.utils import LOCATION_REGEX, PHONE_NUMBER_REGEX, EDRPOU_REGEX
 from .models import Startup
 
 
@@ -51,7 +52,7 @@ class StartupSerializer(serializers.ModelSerializer):
     def validate_location(self, data):
         # Check if location consists of two or more words separated by space, comma, or hyphen,
         # where all words contain only English letters
-        if not re.match(r'^([A-Za-z]+[\s,\-]?)+[A-Za-z]+$', data):
+        if not re.match(LOCATION_REGEX, data):
             raise serializers.ValidationError(
                 "Location must be in the format 'Name Region' or 'Name, Region' and contain only English letters")
         # Check if the first word starts with an uppercase letter
@@ -60,21 +61,14 @@ class StartupSerializer(serializers.ModelSerializer):
         return data
 
     def validate_contact_phone(self, data):
-        if not re.match(r'^\d{3}-\d{3}-\d{4}$', data):
+        if not re.match(PHONE_NUMBER_REGEX, data):
             raise serializers.ValidationError("Mobile phone number must be in the format XXX-XXX-XXXX")
-        return data
-
-    def validate_contact_email(self, data):
-        regex_for_email = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        # Check if the email match pattern
-        if not re.match(regex_for_email, data):
-            raise serializers.ValidationError({"Error": "Invalid email address"})
         return data
 
     def validate_number_for_startup_validation(self, data):
         # Convert data to string
         data_str = str(data)
         # Check if the EDRPOU code consists of exactly 8 digits
-        if not re.match(r'^\d{8}$', data_str):
+        if not re.match(EDRPOU_REGEX, data_str):
             raise serializers.ValidationError("EDRPOU code must contain exactly 8 digits")
         return data
