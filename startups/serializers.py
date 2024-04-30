@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Startup, Project
 import re
+
+from .models import Startup
 
 
 class StartupListSerializer(serializers.ModelSerializer):
@@ -42,7 +43,8 @@ class StartupSerializer(serializers.ModelSerializer):
         instance.location = validated_data.get('location', instance.location)
         instance.contact_phone = validated_data.get('contact_phone', instance.contact_phone)
         instance.contact_email = validated_data.get('contact_email', instance.contact_email)
-        instance.number_for_startup_validation = validated_data.get('number_for_startup_validation',instance.number_for_startup_validation)
+        instance.number_for_startup_validation = validated_data.get('number_for_startup_validation',
+                                                                    instance.number_for_startup_validation)
         instance.save()
         return instance
 
@@ -50,7 +52,8 @@ class StartupSerializer(serializers.ModelSerializer):
         # Check if location consists of two or more words separated by space, comma, or hyphen,
         # where all words contain only English letters
         if not re.match(r'^([A-Za-z]+[\s,\-]?)+[A-Za-z]+$', data):
-            raise serializers.ValidationError("Location must be in the format 'Name Region' or 'Name, Region' and contain only English letters")
+            raise serializers.ValidationError(
+                "Location must be in the format 'Name Region' or 'Name, Region' and contain only English letters")
         # Check if the first word starts with an uppercase letter
         if not data[0].isupper():
             raise serializers.ValidationError("Region name must start with an uppercase letter")
@@ -75,57 +78,3 @@ class StartupSerializer(serializers.ModelSerializer):
         if not re.match(r'^\d{8}$', data_str):
             raise serializers.ValidationError("EDRPOU code must contain exactly 8 digits")
         return data
-
-
-class ProjectSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Project model
-    """
-    industry = serializers.CharField(required=True)
-
-    class Meta:
-        model = Project
-        fields = '__all__'
-        read_only_fields = ('registration_date', 'startup')
-
-    def create(self, validated_data):
-        project = Project.objects.create(**validated_data)
-        return project
-
-    def update(self, instance, validated_data):
-        instance.project_name = validated_data.get('project_name', instance.project_name)
-        instance.description = validated_data.get('description', instance.description)
-        instance.goals = validated_data.get('goals', instance.goals)
-        instance.status = validated_data.get('status', instance.status)
-        instance.budget_needed = validated_data.get('budget_needed', instance.budget_needed)
-        instance.budget_ready = validated_data.get('budget_ready', instance.budget_ready)
-        instance.industry = validated_data.get('industry', instance.industry)
-        instance.promo_photo_url = validated_data.get('promo_photo_url', instance.promo_photo_url)
-        instance.promo_video_url = validated_data.get('promo_video_url', instance.promo_video_url)
-        instance.save()
-        return instance
-
-
-    def validate(self, data):
-        budget_needed = data.get('budget_needed')
-        budget_ready = data.get('budget_ready')
-        if budget_ready and budget_needed and budget_ready > budget_needed:
-            raise serializers.ValidationError(
-                {
-                    "status": "failed",
-                    "message": "Budget ready cannot be greater than budget needed"
-                }
-            )
-        industry = data.get('industry')
-        if industry:
-            industries = [industry[0] for industry in Project.INDUSTRY_CHOICES]
-            if industry not in industries:
-                raise serializers.ValidationError(
-                    {
-                        "status": "failed",
-                        "message": "Industry does not exist",
-                        "choices": industries
-                    }
-                )
-        return data
-

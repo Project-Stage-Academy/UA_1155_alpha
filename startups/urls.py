@@ -15,7 +15,8 @@ Including another URLconf
 """
 
 from django.urls import path
-from startups.views import StartupViewSet, ProjectViewSet
+from projects.views import ProjectViewSet
+from startups.views import StartupViewSet
 
 urlpatterns = [
     path("", StartupViewSet.as_view({'get': 'custom_method'}), name="startup_mainpage"),
