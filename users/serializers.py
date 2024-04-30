@@ -20,8 +20,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "profile_img_url",
             "is_active_for_proposals",
         )
-        #   'is_investor',
-        #   'is_startup')
         extra_kwargs = {
             "password": {"write_only": True},
         }
