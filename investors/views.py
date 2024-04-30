@@ -1,6 +1,9 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from users.models import CustomUser
 
 from .models import Investor
 from .serializers import InvestorSerializer
@@ -17,43 +20,38 @@ class IsInvestorPermission(permissions.BasePermission):
 
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == "list" or self.action == "retrieve":
+        permission_list = ["list", "retrieve"]
+        if self.action in permission_list:
             return []
-        else:
-            return [IsInvestorPermission()]
+        elif self.action == "create":
+            return [IsAuthenticated()]
+        return [IsInvestorPermission()]
 
     def list(self, request):
-        investors = Investor.objects.all()
+        investors = Investor.objects.filter(is_active=True)
         serializer = InvestorSerializer(investors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response(
-                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
+        investor = get_object_or_404(Investor, id=pk, is_active=True)
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
+        jwt_token = request.auth
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user_id = jwt_token.payload.get("id")
+            user_instance = CustomUser.objects.get(id=user_id)
+            user_instance.is_investor = 1
+            user_instance.save()
+            Investor.objects.create(user=user_instance, **serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response(
-                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
+        investor = get_object_or_404(Investor, id=pk)
         serializer = InvestorSerializer(instance=investor, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -62,13 +60,7 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
-        try:
-            investor = Investor.objects.get(id=pk)
-        except Investor.DoesNotExist:
-            return Response(
-                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
+        investor = get_object_or_404(Investor, id=pk)
         serializer = InvestorSerializer(
             instance=investor, data=request.data, partial=True
         )
@@ -79,14 +71,13 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
-        try:
-            with transaction.atomic():
-                investor = Investor.objects.select_related("user").get(id=pk)
-                investor.user.is_investor = 0
-                investor.user.save()
-                investor.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Investor.DoesNotExist:
-            return Response(
-                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        investor = get_object_or_404(Investor, id=pk)
+        investor.is_active = 0
+        user_instance = investor.user
+        user_instance.is_investor = 0
+
+        with transaction.atomic():
+            investor.save()
+            user_instance.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
