@@ -32,6 +32,7 @@ class LoginAPIView(APIView):
             )
 
         user.last_login = Now()
+        user.save()
 
         refresh = RefreshToken.for_user(user)
         refresh.payload.update(
