@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework import viewsets, status, permissions
+from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 
 from .models import Investor
@@ -10,13 +10,14 @@ class IsInvestorPermission(permissions.BasePermission):
     """
     Custom permission to only allow investors to interact with the view.
     """
+
     def has_permission(self, request, view):
         return request.user.is_investor == 1 and request.user.is_authenticated
 
 
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
+        if self.action == "list" or self.action == "retrieve":
             return []
         else:
             return [IsInvestorPermission()]
@@ -30,7 +31,9 @@ class InvestorViewSet(viewsets.ViewSet):
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -47,7 +50,9 @@ class InvestorViewSet(viewsets.ViewSet):
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = InvestorSerializer(instance=investor, data=request.data)
         if serializer.is_valid():
@@ -60,9 +65,13 @@ class InvestorViewSet(viewsets.ViewSet):
         try:
             investor = Investor.objects.get(id=pk)
         except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        serializer = InvestorSerializer(instance=investor, data=request.data, partial=True)
+        serializer = InvestorSerializer(
+            instance=investor, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -72,11 +81,12 @@ class InvestorViewSet(viewsets.ViewSet):
     def destroy(self, request, pk=None):
         try:
             with transaction.atomic():
-                investor = Investor.objects.select_related('user').get(id=pk)
+                investor = Investor.objects.select_related("user").get(id=pk)
                 investor.user.is_investor = 0
                 investor.user.save()
                 investor.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Investor.DoesNotExist:
-            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
-
+            return Response(
+                {"error": "Investor not found"}, status=status.HTTP_404_NOT_FOUND
+            )
