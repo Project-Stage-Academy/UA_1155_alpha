@@ -1,6 +1,7 @@
-from .models import Startup
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+
+from .models import Startup
 from .serializers import StartupListSerializer
 
 
@@ -17,6 +18,7 @@ def list(self, request):
 
     serializer = StartupListSerializer(startups, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 def filter_queryset_by_params(self, queryset, query_params):
     industry = query_params.get('industry')
