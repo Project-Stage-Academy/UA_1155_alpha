@@ -45,6 +45,7 @@ class Project(models.Model):
     industry = models.CharField(max_length=255, choices=INDUSTRY_CHOICES)
     promo_photo_url = models.CharField(max_length=1000, blank=True)
     promo_video_url = models.CharField(max_length=1000, blank=True)
+    is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     registration_date = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(auto_now=True)

@@ -218,10 +218,13 @@ class ProjectViewSet(viewsets.ViewSet):
         (PUT api/projects/<pk>/)
         Do not forget about SLASH at the end of URL
         """
+
         try:
             if not pk:
                 raise ValueError("Project ID is required")
             project = get_object_or_404(Project, pk=pk)
+            if not project.is_active:
+                raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -248,10 +251,12 @@ class ProjectViewSet(viewsets.ViewSet):
             if not pk:
                 raise ValueError("Project ID is required")
             project = get_object_or_404(Project, pk=pk)
+            if not project.is_active:
+                raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProjectSerializer(instance=project, data=request.data, partial=True)
+        serializer = ProjectSerializer(instance=project, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
