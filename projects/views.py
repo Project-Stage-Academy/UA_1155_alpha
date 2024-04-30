@@ -97,8 +97,6 @@ class ProjectViewSet(viewsets.ViewSet):
         Do not forget about SLASH at the end of URL
         """
         try:
-            if not pk:
-                raise ValueError("Project ID is required")
             project = get_object_or_404(Project, pk=pk)
             if not project.is_active:
                 raise ValueError("Project is not active")
@@ -125,8 +123,6 @@ class ProjectViewSet(viewsets.ViewSet):
         """
 
         try:
-            if not pk:
-                raise ValueError("Project ID is required")
             project = get_object_or_404(Project, pk=pk)
             if not project.is_active:
                 raise ValueError("Project is not active")
