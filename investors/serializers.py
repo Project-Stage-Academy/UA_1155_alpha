@@ -7,6 +7,7 @@ class InvestorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Investor
         fields = '__all__'
+        read_only_fields = ('user',)
 
     def validate(self, data):
         number = data.get('contact_phone')
