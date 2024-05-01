@@ -25,7 +25,6 @@ def filter_projects(queryset, data, request):
     queryset = queryset.filter(**data)
 
     if request.user.is_authenticated and request.user.is_investor and budget_filter:
-        print("AH TI INVESTOR!")
         queryset = filter_by_budget(queryset, budget_filter)
 
     return queryset
