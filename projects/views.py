@@ -39,7 +39,7 @@ class ProjectViewSet(viewsets.ViewSet):
     """
 
     free_methods = ("list", "retrieve")
-    investors_methods = ("invest_to_project")
+    investors_methods = ("invest_to_project", "get_my_projects")
     allowed_uqery_keys = {'project_name', 'description', 'industry', 'status', 'bgt', 'blt'}
 
     def get_permissions(self):
@@ -186,7 +186,7 @@ class ProjectViewSet(viewsets.ViewSet):
         Use this method by sending a POST request to the URL: /api/projects/12/invest
         where 12 is the ID of the project you want to add an investor to.
         """
-        
+
         try:
             user = request.user
             project = Project.objects.get(id=pk, is_active=True)
