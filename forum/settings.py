@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
+import mongoengine
 from datetime import timedelta
 from pathlib import Path
 
@@ -52,7 +53,8 @@ INSTALLED_APPS = [
     'startups',
     'investors',
     'projects',
-    'notifications'
+    'notifications',
+    'rest_framework_mongoengine',
 ]
 
 MIDDLEWARE = [
@@ -101,6 +103,9 @@ DATABASES = {
     },
 
 }
+# Added MongoDB
+MONGO_DB = os.environ.get('MONGO_DB')
+mongoengine.connect(MONGO_DB)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
