@@ -1,11 +1,11 @@
 from rest_framework import status, viewsets
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Startup
-from .serializers import StartupListSerializer, StartupSerializer
+from .models import Startup, Industry
+from .serializers import StartupListSerializer, StartupSerializer, StartupSerializerUpdate
 from .view import filter_queryset_by_params as filter_startups, list as list_startups
 
 
@@ -62,9 +62,12 @@ class StartupViewSet(viewsets.ViewSet):
         # ExampLE URL: /api/startups/
         # Creating startup logic
         existing_startup = Startup.objects.filter(owner=request.user).first()
+        industry_name = request.data.get('industries')
+        industry = get_object_or_404(Industry, name=industry_name)
         if existing_startup:
             return Response({"error": "Startup already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
         startup_info = request.data
+        startup_info['industries'] = industry.id
         serializer = StartupSerializer(data=startup_info, context={'request': request})
         if serializer.is_valid():
             serializer.save()
@@ -77,12 +80,17 @@ class StartupViewSet(viewsets.ViewSet):
         # PUT logic
         try:
             startup = get_object_or_404(Startup, id=pk)
-            serializer = StartupSerializer(startup, data=request.data, partial=False)
+            industry_name = request.data['industries']
+            industry = Industry.objects.get(name=industry_name)
+            serializer = StartupSerializerUpdate(startup, data=request.data, partial=False)
             serializer.is_valid(raise_exception=True)
+            serializer.validated_data['industries'] = industry
             serializer.save()
             if not startup.is_active:
                 raise ValidationError({"error": "Startup not active"})
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except Industry.DoesNotExist:
+            raise NotFound("Industry '{}' not found".format(industry_name))
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -92,12 +100,17 @@ class StartupViewSet(viewsets.ViewSet):
         # Update info about startup
         try:
             startup = get_object_or_404(Startup, id=pk)
-            serializer = StartupSerializer(startup, data=request.data, partial=True)
+            industry_name = request.data['industries']
+            industry = Industry.objects.get(name=industry_name)
+            serializer = StartupSerializerUpdate(startup, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
+            serializer.validated_data['industries'] = industry
             serializer.save()
             if not startup.is_active:
                 raise ValidationError({"error": "Startup not active"})
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except Industry.DoesNotExist:
+            raise NotFound("Industry '{}' not found".format(industry_name))
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
