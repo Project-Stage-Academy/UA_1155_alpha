@@ -62,7 +62,7 @@ class StartupSerializer(serializers.ModelSerializer):
 
     def validate_contact_phone(self, data):
         if not re.match(PHONE_NUMBER_REGEX, data):
-            raise serializers.ValidationError("Mobile phone number must be in the format XXX-XXX-XXXX")
+            raise serializers.ValidationError("Mobile phone number must be in the format +XXXXXXXXXX")
         return data
 
     def validate_number_for_startup_validation(self, data):
