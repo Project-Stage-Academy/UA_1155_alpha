@@ -40,7 +40,7 @@ class ProjectViewSet(viewsets.ViewSet):
 
     free_methods = ("list", "retrieve")
     investors_methods = ("invest_to_project", "get_my_projects")
-    allowed_uqery_keys = {'project_name', 'description', 'industry', 'status', 'bgt', 'blt'}
+    allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
 
     def get_permissions(self):
         # Configure permissions based on the action (method) that is called
