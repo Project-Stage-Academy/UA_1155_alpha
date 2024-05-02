@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
     'rest_framework.authtoken',
     'rest_framework_simplejwt.token_blacklist',
+    'drf-yasg',
     'users',
     'startups',
     'investors',

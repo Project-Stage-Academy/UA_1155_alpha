@@ -25,6 +25,18 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Forum API",
+        default_version="1.0.0",
+        description="API documentation of forum app."
+    ),
+    public=True
+)
 
 router = DefaultRouter()
 
@@ -42,4 +54,5 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
+    path("api/swagger")
 ]
