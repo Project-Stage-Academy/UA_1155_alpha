@@ -25,18 +25,11 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
-from drf_yasg import openapi
+from rest_framework import permissions
 from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 
-schema_view = get_schema_view(
-    openapi.Info(
-        title="Forum API",
-        default_version="1.0.0",
-        description="API documentation of forum app."
-    ),
-    public=True
-)
 
 router = DefaultRouter()
 
@@ -44,6 +37,19 @@ router.register(r"startups", StartupViewSet, basename="startups")
 router.register(r"projects", ProjectViewSet, basename="projects")
 router.register(r"investors", InvestorViewSet, basename="investors")
 # router.register(r'messages', MessageViewSet, basename='messages') #TODO: Implement the MessageViewSet logic
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="My API",
+        default_version='v1',
+        description="My API description",
+        terms_of_service="https://www.example.com/terms/",
+        contact=openapi.Contact(email="contact@example.com"),
+        license=openapi.License(name="Awesome License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 
 urlpatterns = [
@@ -54,5 +60,5 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
-    path("api/swagger")
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
