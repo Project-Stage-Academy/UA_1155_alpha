@@ -16,7 +16,7 @@ class Startup(models.Model):
     owner = models.ForeignKey(CustomUser, related_name='owner', on_delete=models.CASCADE)
     startup_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
-    industries = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='startups')
+    industries = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='startups', null=True, blank=True)
     location = models.CharField(max_length=255, blank=True)
     contact_phone = models.CharField(max_length=128, unique=True)
     contact_email = models.CharField(max_length=128, unique=True)

@@ -19,7 +19,7 @@ class Project(models.Model):
     goals = models.CharField(max_length=255)
     budget_needed = models.DecimalField(max_digits=10, decimal_places=2)
     budget_ready = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    industry = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='projects')
+    industry = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='projects', null=True, blank=True)
     promo_photo_url = models.CharField(max_length=1000, blank=True)
     promo_video_url = models.CharField(max_length=1000, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
