@@ -11,7 +11,7 @@ class Startup(models.Model):
     industries = models.TextField(blank=True)
     location = models.CharField(max_length=255, blank=True)
     contact_phone = models.CharField(max_length=128, blank=True)
-    contact_email = models.CharField(max_length=128, unique=True)
+    contact_email = models.EmailField(max_length=128, unique=True)
     number_for_startup_validation = models.IntegerField(null=True)
     is_verified = models.BooleanField(default=False)
     registration_date = models.DateTimeField(db_default=Now())
