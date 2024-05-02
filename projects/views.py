@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import get_object_or_404
 
 from projects.models import Project
@@ -6,6 +8,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from startups.models import Startup
+from notifications.tasks import project_updating
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -106,6 +109,10 @@ class ProjectViewSet(viewsets.ViewSet):
         serializer = ProjectSerializer(instance=project, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        for investor in project.subscribers.all():
+            project_updating.delay(investor.id, project.id)
+
 
         data = {
             'project_id': pk,
