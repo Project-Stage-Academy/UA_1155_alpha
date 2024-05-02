@@ -31,7 +31,7 @@ class ValidationPatterns:
 
     @staticmethod
     def validate_location(location):
-        if not re.match(LOCATION_REGEX, location):
+        if not re.match(ValidationPatterns.LOCATION_REGEX, location):
             raise serializers.ValidationError({
                 "Error": "Location must be in the format 'Name Region' or 'Name, Region' and in English"})
         if not location[0].isupper():
