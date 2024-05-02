@@ -36,6 +36,8 @@ class StartupViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticated,)
 
     def list(self, request):
+        # Example URL: /api/startups/
+        # Getting ALL startups logic
         startups = Startup.objects.filter(is_active=True)
         filter_queryset_by_params_response = self.filter_queryset_by_params(startups, request.query_params)
         filtered_startups = filter_queryset_by_params_response['queryset']
@@ -47,6 +49,8 @@ class StartupViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def filter_queryset_by_params(self, queryset, query_params):
+        # Example URL: /api/startups/?industry=test
+        # Example URL: /api/startups/?name=test
         industry = query_params.get('industry')
         name = query_params.get('name')
         other_params = query_params.keys() - {'industry', 'name'}
