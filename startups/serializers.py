@@ -1,7 +1,6 @@
 from rest_framework import serializers
-import re
 
-from forum.utils import LOCATION_REGEX, PHONE_NUMBER_REGEX, EDRPOU_REGEX
+from forum.utils import ValidationPatterns
 from .models import Startup
 
 
@@ -28,6 +27,11 @@ class StartupSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('registration_date', 'owner')
 
+    def to_internal_value(self, data):
+        if 'contact_email' in data:
+            data['contact_email'] = data['contact_email'].lower()
+        return super().to_internal_value(data)
+
     def create(self, validated_data):
         user = self.context['request'].user
         user.is_startup = True
@@ -49,26 +53,15 @@ class StartupSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def validate_location(self, data):
-        # Check if location consists of two or more words separated by space, comma, or hyphen,
-        # where all words contain only English letters
-        if not re.match(LOCATION_REGEX, data):
-            raise serializers.ValidationError(
-                "Location must be in the format 'Name Region' or 'Name, Region' and contain only English letters")
-        # Check if the first word starts with an uppercase letter
-        if not data[0].isupper():
-            raise serializers.ValidationError("Region name must start with an uppercase letter")
-        return data
+    def validate(self, data):
+        location = data.get('location')
+        contact_phone = data.get('contact_phone')
+        number_for_startup_validation = data.get('number_for_startup_validation')
 
-    def validate_contact_phone(self, data):
-        if not re.match(PHONE_NUMBER_REGEX, data):
-            raise serializers.ValidationError("Mobile phone number must be in the format +XXXXXXXXXX")
-        return data
+        ValidationPatterns.validate_location(location)
 
-    def validate_number_for_startup_validation(self, data):
-        # Convert data to string
-        data_str = str(data)
-        # Check if the EDRPOU code consists of exactly 8 digits
-        if not re.match(EDRPOU_REGEX, data_str):
-            raise serializers.ValidationError("EDRPOU code must contain exactly 8 digits")
+        ValidationPatterns.validate_phone_number(contact_phone)
+
+        ValidationPatterns.validate_edrpou(number_for_startup_validation)
+
         return data

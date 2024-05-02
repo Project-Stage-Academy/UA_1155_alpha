@@ -1,8 +1,6 @@
-import re
-
 from rest_framework import serializers
 
-from forum.utils import PASSWORD_REGEX
+from forum.utils import ValidationPatterns
 from .models import CustomUser
 
 
@@ -25,23 +23,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "password": {"write_only": True},
         }
 
+    def to_internal_value(self, data):
+        if 'contact_email' in data:
+            data['contact_email'] = data['contact_email'].lower()
+        return super().to_internal_value(data)
+
     def validate(self, data):
-        email = data.get("email")
         password = data.get("password")
         password2 = data.pop("password2")
 
-        # Check if the passwords match pattern
-        if not re.match(PASSWORD_REGEX, password):
-            raise serializers.ValidationError({
-                'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
+        # Check if the password match pattern
+        ValidationPatterns.validate_password(password)
 
         # Check if the passwords match
-        if password != password2:
-            raise serializers.ValidationError({"Error": "Passwords do not match"})
-
-        # Check if user with the same email already exists
-        if CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError({"Error": "Email already exist"})
+        ValidationPatterns.passwords_dont_match(password, password2)
 
         return data
 
@@ -60,11 +55,8 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
         password = data.get("password")
         password2 = data.pop("password2")
 
-        if not re.match(PASSWORD_REGEX, password):
-            raise serializers.ValidationError({
-                'Error': 'Password must contain at least 8 characters, one letter, one number and one special character'})
+        ValidationPatterns.validate_password(password)
 
-        if password != password2:
-            raise serializers.ValidationError({"Error": "Passwords do not match"})
+        ValidationPatterns.passwords_dont_match(password, password2)
 
         return data
