@@ -20,7 +20,7 @@ class ValidationPatterns:
                 'Error': 'Password must contain at least 8 characters, 1 letter, 1 number and 1 special character'})
 
     @staticmethod
-    def passwords_dont_match(password, password2):
+    def validate_passwords_match(password, password2):
         if password != password2:
             raise serializers.ValidationError({"Error": "Passwords do not match"})
 

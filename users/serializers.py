@@ -36,7 +36,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         ValidationPatterns.validate_password(password)
 
         # Check if the passwords match
-        ValidationPatterns.passwords_dont_match(password, password2)
+        ValidationPatterns.validate_passwords_match(password, password2)
 
         return data
 
@@ -57,6 +57,6 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
 
         ValidationPatterns.validate_password(password)
 
-        ValidationPatterns.passwords_dont_match(password, password2)
+        ValidationPatterns.validate_passwords_match(password, password2)
 
         return data

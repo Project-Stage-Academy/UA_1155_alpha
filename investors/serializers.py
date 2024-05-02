@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Investor
+
 from forum.utils import ValidationPatterns
+from .models import Investor
 
 
 class InvestorSerializer(serializers.ModelSerializer):
