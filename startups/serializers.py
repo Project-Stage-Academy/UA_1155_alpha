@@ -29,7 +29,6 @@ class StartupSerializer(serializers.ModelSerializer):
         read_only_fields = ('registration_date', 'owner')
 
     def create(self, validated_data):
-        print(validated_data)
         user = self.context['request'].user
         user.is_startup = True
         user.save()

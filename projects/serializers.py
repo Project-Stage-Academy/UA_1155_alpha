@@ -50,15 +50,4 @@ class ProjectSerializerUpdate(serializers.ModelSerializer):
                     "message": "Budget ready cannot be greater than budget needed"
                 }
             )
-        # industry = data.get('industry')
-        # if industry:
-        #     industries = [industry[0] for industry in Project.INDUSTRY_CHOICES]
-        #     if industry not in industries:
-        #         raise serializers.ValidationError(
-        #             {
-        #                 "status": "failed",
-        #                 "message": "Industry does not exist",
-        #                 "choices": industries
-        #             }
-        #         )
         return data
