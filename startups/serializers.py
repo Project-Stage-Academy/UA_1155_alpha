@@ -1,7 +1,7 @@
 from rest_framework import serializers
-import re
 
 from .models import Startup, Industry
+from forum.utils import ValidationPatterns
 
 
 class StartupListSerializer(serializers.ModelSerializer):
@@ -27,6 +27,11 @@ class StartupSerializer(serializers.ModelSerializer):
         model = Startup
         fields = '__all__'
         read_only_fields = ('registration_date', 'owner')
+
+    def to_internal_value(self, data):
+        if 'contact_email' in data:
+            data['contact_email'] = data['contact_email'].lower()
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -61,33 +66,15 @@ class StartupSerializerUpdate(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def validate_location(self, data):
-        # Check if location consists of two or more words separated by space, comma, or hyphen,
-        # where all words contain only English letters
-        if not re.match(r'^([A-Za-z]+[\s,\-]?)+[A-Za-z]+$', data):
-            raise serializers.ValidationError(
-                "Location must be in the format 'Name Region' or 'Name, Region' and contain only English letters")
-        # Check if the first word starts with an uppercase letter
-        if not data[0].isupper():
-            raise serializers.ValidationError("Region name must start with an uppercase letter")
-        return data
+    def validate(self, data):
+        location = data.get('location')
+        contact_phone = data.get('contact_phone')
+        number_for_startup_validation = data.get('number_for_startup_validation')
 
-    def validate_contact_phone(self, data):
-        if not re.match(r'^\d{3}-\d{3}-\d{4}$', data):
-            raise serializers.ValidationError("Mobile phone number must be in the format XXX-XXX-XXXX")
-        return data
+        ValidationPatterns.validate_location(location)
 
-    def validate_contact_email(self, data):
-        regex_for_email = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        # Check if the email match pattern
-        if not re.match(regex_for_email, data):
-            raise serializers.ValidationError({"Error": "Invalid email address"})
-        return data
+        ValidationPatterns.validate_phone_number(contact_phone)
 
-    def validate_number_for_startup_validation(self, data):
-        # Convert data to string
-        data_str = str(data)
-        # Check if the EDRPOU code consists of exactly 8 digits
-        if not re.match(r'^\d{8}$', data_str):
-            raise serializers.ValidationError("EDRPOU code must contain exactly 8 digits")
+        ValidationPatterns.validate_edrpou(number_for_startup_validation)
+
         return data
