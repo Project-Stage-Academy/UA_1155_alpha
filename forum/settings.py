@@ -104,7 +104,7 @@ DATABASES = {
 
 }
 # Added MongoDB
-MONGO_DB = os.environ.get('MONGO_DB')
+MONGO_DB = os.environ.get('MONGO_DATABASE')
 mongoengine.connect(MONGO_DB)
 
 # Password validation
