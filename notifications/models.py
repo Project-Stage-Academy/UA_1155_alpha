@@ -9,8 +9,13 @@ class Notification(mongoengine.Document):
         ("investor_subscription", "Investors Subscription"),
         ("new_message", "New Message")
     ]
+    TYPES_OF_RECIPIENTS = [
+        ("investor", "Investor"),
+        ("startup", "Startup")
+    ]
 
-    investor_id = mongoengine.IntField(required=True)
+    recipient_id = mongoengine.IntField(required=True)
+    recipient_type = mongoengine.StringField(choices=TYPES_OF_RECIPIENTS)
     project_id = mongoengine.IntField(required=True)
     type_of_notification = mongoengine.StringField(choices=TYPES_OF_NOTIFICATIONS)
     send_at = mongoengine.DateTimeField(default=datetime.now)
