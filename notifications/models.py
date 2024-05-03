@@ -21,3 +21,15 @@ class Notification(mongoengine.Document):
     send_at = mongoengine.DateTimeField(default=datetime.now)
     is_read = mongoengine.BooleanField(default=False)
     text = mongoengine.StringField(required=True, max_length=1000)
+
+    @classmethod
+    def create_notification(cls, recipient_type, recipient_id, project_id, type_of_notification, text):
+        notification = cls(
+            recipient_type=recipient_type,
+            recipient_id=recipient_id,
+            project_id=project_id,
+            type_of_notification=type_of_notification,
+            text=text
+        )
+        notification.save()
+        return notification

@@ -1,5 +1,4 @@
 from celery import shared_task
-from django.contrib.sites.shortcuts import get_current_site
 
 from investors.models import Investor
 from projects.models import Project
@@ -13,14 +12,13 @@ def project_updating(self, investor_id, project_id, domain):
     project = Project.objects.get(id=project_id)
     investor = Investor.objects.get(id=investor_id)
     user = CustomUser.objects.get(id=investor.user_id)
-    notification = Notification(
+    notification = Notification.create_notification(
         recipient_type="investor",
         recipient_id=investor_id,
         project_id=project_id,
         type_of_notification="project_updating",
         text=f"Project {project.project_name} has been updated",
     )
-    notification.save()
 
     link = f"http://{domain}/api/projects/{project.id}"
     sent_data = {
@@ -31,3 +29,4 @@ def project_updating(self, investor_id, project_id, domain):
         "to_email": investor.contact_email
     }
     Util.send_email(sent_data)
+    return "Project updating task completed"
