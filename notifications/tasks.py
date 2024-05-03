@@ -13,7 +13,8 @@ def project_updating(self, investor_id, project_id):
     investor = Investor.objects.get(id=investor_id)
     user = CustomUser.objects.get(id=investor.user_id)
     notification = Notification(
-        investor_id=investor_id,
+        recipient_type="investor",
+        recipient_id=investor_id,
         project_id=project_id,
         type_of_notification='project_updating',
         text=f"Project {project.project_name} has been updated"
