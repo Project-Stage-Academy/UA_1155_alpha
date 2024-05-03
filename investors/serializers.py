@@ -1,5 +1,6 @@
-import re
 from rest_framework import serializers
+
+from forum.utils import ValidationPatterns
 from .models import Investor
 
 
@@ -9,11 +10,21 @@ class InvestorSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('user',)
 
+    def to_internal_value(self, data):
+        if 'contact_email' in data:
+            data['contact_email'] = data['contact_email'].lower()
+        return super().to_internal_value(data)
+
     def validate(self, data):
         number = data.get('contact_phone')
-        regex_for_number = r'^\+[0-9]{1,3}[0-9]{9}$'
+        fop_code = data.get('number_for_investor_validation')
+        investment_amount = data.get('investment_amount')
 
-        if not re.match(regex_for_number, number):
-            raise serializers.ValidationError({'Error': 'Phone number is not correct'})
+        ValidationPatterns.validate_phone_number(number)
+
+        ValidationPatterns.validate_fop(fop_code)
+
+        if investment_amount <= 0:
+            raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
 
         return data
