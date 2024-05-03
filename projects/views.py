@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 
 from projects.models import Project
@@ -110,8 +111,9 @@ class ProjectViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
-            project_updating.delay(investor.id, project.id)
+            project_updating.delay(investor.id, project.id, current_site)
 
 
         data = {
