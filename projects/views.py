@@ -1,3 +1,4 @@
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 
 from projects.models import Project
@@ -5,7 +6,7 @@ from projects.serializers import ProjectSerializer, ProjectSerializerUpdate
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from startups.models import Startup
+from startups.models import Startup, Industry
 from notifications.tasks import project_updating
 
 
