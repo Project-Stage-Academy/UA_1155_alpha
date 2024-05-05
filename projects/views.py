@@ -1,15 +1,14 @@
 from django.shortcuts import get_object_or_404
-from investors.models import Investor
-
-from projects.models import Project
-from projects.serializers import ProjectSerializer, ProjectSerializerUpdate
-from projects.permissions import IsInvestor
-from projects.serializers import ProjectSerializer, ProjectViewSerializer
-from projects.utils import filter_projects
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from investors.models import Investor
+from projects.models import Project
+from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
+from projects.permissions import IsInvestor
+from projects.utils import filter_projects
 from startups.models import Startup, Industry
 
 
@@ -68,7 +67,7 @@ class ProjectViewSet(viewsets.ViewSet):
         # Getting ONE project with id=project logic
         project_id = pk
         try:
-            project = Project.objects.get(is_active=True, id=project_id)
+            project = get_object_or_404(Project, is_active=True, id=project_id)
         except Project.DoesNotExist:
             return Response({
                 'detail': f'Project with id {pk} not found.'
@@ -216,8 +215,8 @@ class ProjectViewSet(viewsets.ViewSet):
 
         try:
             user = request.user
-            project = Project.objects.get(id=pk, is_active=True)
-            investor = Investor.objects.get(user=user, is_active=True)
+            project = get_object_or_404(Project, is_active=True, id=pk)
+            investor = get_object_or_404(Investor, user=user, is_active=True)
             if project.investors.filter(id=investor.id).exists():
                 return Response({
                     'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
