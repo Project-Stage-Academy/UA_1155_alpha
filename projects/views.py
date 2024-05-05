@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.response import Response
 
+from investors.models import Investor
 from projects.models import Project
 from projects.serializers import ProjectSerializer, ProjectSerializerUpdate
-from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from startups.models import Startup, Industry
 
 
@@ -33,7 +33,8 @@ class ProjectViewSet(viewsets.ViewSet):
     - Methods accept data in JSON format and also return responses in JSON format.
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
-    permission_classes = (IsAuthenticated,)
+
+    # permission_classes = (IsAuthenticated,)
 
     # def list(self, request):
     #     # Implementation of GET METHOD - ExampLE URL: /api/projects/
@@ -166,6 +167,7 @@ class ProjectViewSet(viewsets.ViewSet):
             'status': status.HTTP_200_OK
         }
         return Response(data, status=status.HTTP_200_OK)
+
     #
     # def destroy(self, request, pk=None):
     #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
@@ -178,3 +180,31 @@ class ProjectViewSet(viewsets.ViewSet):
     #         'status': status.HTTP_200_OK
     #     }
     #     return Response(data, status=status.HTTP_204_NO_CONTENT)
+
+    def add_investor(self, request, pk=None):
+        """
+        Add an investor to the project (POST /api/projects/{pk}/add_investor/).
+        """
+        try:
+            project = Project.objects.get(pk=pk)
+            investor_id = request.data.get('investor_id')
+            investor = get_object_or_404(Investor, pk=investor_id)
+            project.investors.add(investor)
+            return Response({'message': f'Investor {investor_id} successfully added to project {pk}'},
+                            status=status.HTTP_200_OK)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def add_subscriber(self, request, pk=None):
+        """
+        Add a subscriber to the project (POST /api/projects/{pk}/add_subscriber/).
+        """
+        try:
+            project = Project.objects.get(pk=pk)
+            subscriber_id = request.data.get('subscriber_id')
+            subscriber = get_object_or_404(Investor, pk=subscriber_id)
+            project.subscribers.add(subscriber)
+            return Response({'message': f'Investor {subscriber_id} successfully added to project {pk}'},
+                            status=status.HTTP_200_OK)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)

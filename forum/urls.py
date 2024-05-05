@@ -42,4 +42,7 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
+    path("api/projects/<int:pk>/add_investor/", ProjectViewSet.as_view({"post": "add_investor"}), name="add_investor"),
+    path("api/projects/<int:pk>/add_subscriber/", ProjectViewSet.as_view({"post": "add_subscriber"}), name="add_subscriber"),
 ]
+
