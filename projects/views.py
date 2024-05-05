@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from investors.models import Investor
 
 from projects.models import Project
+from projects.serializers import ProjectSerializer, ProjectSerializerUpdate
 from projects.permissions import IsInvestor
 from projects.serializers import ProjectSerializer, ProjectViewSerializer
 from projects.utils import filter_projects
@@ -9,7 +10,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from startups.models import Startup
+from startups.models import Startup, Industry
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -86,9 +87,13 @@ class ProjectViewSet(viewsets.ViewSet):
         if not user.is_startup:
             return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
         startup = Startup.objects.filter(owner=user).first()
+
         if not startup:
             return Response({'message': 'Please create a startup first'}, status=status.HTTP_400_BAD_REQUEST)
+        industry_name = request.data.get('industry')
+        industry = get_object_or_404(Industry, name=industry_name)
         project_info = request.data
+        project_info['industry'] = industry.id
         serializer = ProjectSerializer(data=project_info)
         if serializer.is_valid():
             serializer.save(startup=startup)
@@ -112,9 +117,20 @@ class ProjectViewSet(viewsets.ViewSet):
                 raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = ProjectSerializer(instance=project, data=request.data)
+        industry_name = request.data.get('industry')
+        if industry_name:
+            try:
+                industry = Industry.objects.get(name=industry_name)
+            except Industry.DoesNotExist:
+                return Response({"error": "Industry does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            industry = project.industry
+        serializer = ProjectSerializerUpdate(instance=project, data=request.data, partial=False)
         serializer.is_valid(raise_exception=True)
+        if industry is not None:
+            serializer.validated_data['industry'] = industry
+        else:
+            return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
         data = {
@@ -138,9 +154,20 @@ class ProjectViewSet(viewsets.ViewSet):
                 raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = ProjectSerializer(instance=project, data=request.data, partial=True)
+        industry_name = request.data.get('industry')
+        if industry_name:
+            try:
+                industry = Industry.objects.get(name=industry_name)
+            except Industry.DoesNotExist:
+                return Response({"error": "Industry does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            industry = project.industry
+        serializer = ProjectSerializerUpdate(instance=project, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        if industry is not None:
+            serializer.validated_data['industry'] = industry
+        else:
+            return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
         data = {

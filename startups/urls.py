@@ -19,6 +19,6 @@ from projects.views import ProjectViewSet
 from startups.views import StartupViewSet
 
 urlpatterns = [
-    path("", StartupViewSet.as_view({'get': 'custom_method'}), name="startup_mainpage"),
+    path("", StartupViewSet.as_view({"get": "custom_method"}), name="startup_mainpage"),
     path("", ProjectViewSet.as_view, name="startup_mainpage"),
 ]

@@ -6,7 +6,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     """
     Serializer for Project model
     """
-    industry = serializers.CharField(required=True)
 
     class Meta:
         model = Project
@@ -16,6 +15,17 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         project = Project.objects.create(**validated_data)
         return project
+
+class ProjectSerializerUpdate(serializers.ModelSerializer):
+    industry = serializers.StringRelatedField()
+    """
+    Serializer for Project model
+    """
+
+    class Meta:
+        model = Project
+        fields = '__all__'
+        read_only_fields = ('registration_date', 'startup')
 
     def update(self, instance, validated_data):
         instance.project_name = validated_data.get('project_name', instance.project_name)
@@ -40,17 +50,6 @@ class ProjectSerializer(serializers.ModelSerializer):
                     "message": "Budget ready cannot be greater than budget needed"
                 }
             )
-        industry = data.get('industry')
-        if industry:
-            industries = [industry[0] for industry in Project.INDUSTRY_CHOICES]
-            if industry not in industries:
-                raise serializers.ValidationError(
-                    {
-                        "status": "failed",
-                        "message": "Industry does not exist",
-                        "choices": industries
-                    }
-                )
         return data
 
 
