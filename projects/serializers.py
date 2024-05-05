@@ -66,7 +66,9 @@ class ProjectViewSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_industry(obj):
-        return obj.get_industry_display()
+        if obj.industry:
+            return obj.industry.name
+        return None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

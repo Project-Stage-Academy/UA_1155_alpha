@@ -178,7 +178,7 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    #
+
     # def destroy(self, request, pk=None):
     #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
     #     # Do not forget about SLASH at the end of URL
