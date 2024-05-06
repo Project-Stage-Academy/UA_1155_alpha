@@ -213,27 +213,18 @@ class ProjectViewSet(viewsets.ViewSet):
         where 12 is the ID of the project you want to add an investor to.
         """
 
-        try:
-            user = request.user
-            project = get_object_or_404(Project, is_active=True, id=pk)
-            investor = get_object_or_404(Investor, user=user, is_active=True)
-            if project.investors.filter(id=investor.id).exists():
-                return Response({
-                    'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        project = get_object_or_404(Project, is_active=True, id=pk)
+        investor = get_object_or_404(Investor, user=user, is_active=True)
 
-            project.investors.add(investor)
-
+        if project.investors.filter(id=investor.id).exists():
             return Response({
-                'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
-            }, status=status.HTTP_200_OK)
+                'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        except Project.DoesNotExist:
-            return Response({
-                'detail': f'Project with id {pk} not found or inactive.'
-            }, status=status.HTTP_404_NOT_FOUND)
+        project.investors.add(investor)
 
-        except Investor.DoesNotExist:
-            return Response({
-                'detail': f'Investor not found or inactive for user {request.user.id}.'
-            }, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
+        }, status=status.HTTP_200_OK)
+
