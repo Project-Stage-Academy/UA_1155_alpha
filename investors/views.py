@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from users.models import CustomUser
 
 from .models import Investor
@@ -16,6 +18,20 @@ class IsInvestorPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_investor == 1 and request.user.is_authenticated
+
+
+class InvestorProfileView(APIView):
+    permission_classes = (IsInvestorPermission,)
+
+    def get(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
+
+        investor = get_object_or_404(Investor, user=user_instance, is_active=True)
+        serializer = InvestorSerializer(investor)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class InvestorViewSet(viewsets.ViewSet):
@@ -39,9 +55,14 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def create(self, request):
         jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+
+        existing_investor = Investor.objects.filter(user=user_id).first()
+        if existing_investor:
+            return Response({"error": "Investor already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
-            user_id = jwt_token.payload.get("id")
             user_instance = CustomUser.objects.get(id=user_id)
             user_instance.is_investor = 1
             user_instance.save()

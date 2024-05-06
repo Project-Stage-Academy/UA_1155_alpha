@@ -16,7 +16,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from investors.views import InvestorViewSet
+from investors.views import InvestorViewSet, InvestorProfileView
 from projects.views import ProjectViewSet
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
@@ -37,9 +37,11 @@ router.register(r"investors", InvestorViewSet, basename="investors")
 urlpatterns = [
     path("", include("startups.urls")),  # Main page
     path("admin/", admin.site.urls),
+    path("api/investors/", include("investors.urls")),
+    path("api/users/", include("users.urls")),
+    path("api/startups/", include("startups.urls")),
     path("api/", include(router.urls)),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
-    path("api/users/", include("users.urls")),
 ]
