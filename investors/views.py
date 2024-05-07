@@ -1,9 +1,9 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from users.models import CustomUser
 
@@ -18,20 +18,6 @@ class IsInvestorPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_investor == 1 and request.user.is_authenticated
-
-
-class InvestorProfileView(APIView):
-    permission_classes = (IsInvestorPermission,)
-
-    def get(self, request):
-        jwt_token = request.auth
-        user_id = jwt_token.payload.get("id")
-        user_instance = CustomUser.objects.get(id=user_id)
-
-        investor = get_object_or_404(Investor, user=user_instance, is_active=True)
-        serializer = InvestorSerializer(investor)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class InvestorViewSet(viewsets.ViewSet):
@@ -102,3 +88,15 @@ class InvestorViewSet(viewsets.ViewSet):
             user_instance.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"], url_path="profile")
+    def get_my_profile(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
+
+        investor = get_object_or_404(Investor, user=user_instance, is_active=True)
+        serializer = InvestorSerializer(investor)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
