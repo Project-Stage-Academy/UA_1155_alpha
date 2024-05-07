@@ -1,10 +1,12 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from users.models import CustomUser
 
+from projects.serializers import ProjectSerializer
+from users.models import CustomUser
 from .models import Investor
 from .serializers import InvestorSerializer
 
@@ -20,7 +22,7 @@ class IsInvestorPermission(permissions.BasePermission):
 
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        permission_list = ["list", "retrieve"]
+        permission_list = ["list", "retrieve", "all_subscribed_projects"]
         if self.action in permission_list:
             return []
         elif self.action == "create":
@@ -81,3 +83,19 @@ class InvestorViewSet(viewsets.ViewSet):
             user_instance.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='all_subscribed_projects')
+    def all_subscribed_projects(self, request, pk=None):
+        """
+        Get all subscribed projects of the investor.
+        This action retrieves a list of all projects that the investor is subscribed to.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the investor.
+        Returns:
+        Response: A JSON response containing a list of subscribed projects.
+        """
+        investor = get_object_or_404(Investor, id=pk)
+        subscribed_projects = investor.subscribed_projects.all()
+        serializer = ProjectSerializer(subscribed_projects, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

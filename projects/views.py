@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -182,10 +183,20 @@ class ProjectViewSet(viewsets.ViewSet):
     #     }
     #     return Response(data, status=status.HTTP_204_NO_CONTENT)
 
-
+    @action(detail=True, methods=['post'], url_path='add_subscriber')
     def add_subscriber(self, request, pk=None):
         """
-        Add a subscriber to the project (POST /api/projects/<pk>/add_subscriber/).
+        Add a subscriber to the project.
+        This action allows adding a subscriber to the specified project. It expects a POST request with the subscriber's
+        ID included in the request data. Upon successful addition, it returns a success message along with
+        HTTP 200 OK status code.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the project to which the subscriber will be added.
+        Returns:
+        Response: A JSON response containing a success message upon successful addition of the subscriber.
+        Raises:
+        Http404: If the specified project does not exist.
         """
         try:
             project = Project.objects.get(pk=pk)

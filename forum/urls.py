@@ -36,7 +36,6 @@ router.register(r"investors", InvestorViewSet, basename="investors")
 
 urlpatterns = [
     path("", include("startups.urls")),  # Main page
-    path("api/projects/", include("projects.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
