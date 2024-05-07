@@ -60,3 +60,9 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
         ValidationPatterns.validate_passwords_match(password, password2)
 
         return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
