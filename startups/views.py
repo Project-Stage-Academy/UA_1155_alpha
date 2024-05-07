@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, permissions
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -6,6 +6,15 @@ from rest_framework.response import Response
 
 from .models import Startup, Industry
 from .serializers import StartupListSerializer, StartupSerializer, StartupSerializerUpdate
+
+
+class IsStartupPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow investors to interact with the view.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_startup == 1 and request.user.is_authenticated
 
 
 class StartupViewSet(viewsets.ViewSet):
@@ -33,7 +42,13 @@ class StartupViewSet(viewsets.ViewSet):
      - Methods accept data in JSON format and also return responses in JSON format.
      - Responses contain the status of the operation, messages, and startup data (in list, retrieve, create, update, partial_update operations).
      """
-    permission_classes = (IsAuthenticated,)
+    def get_permissions(self):
+        permission_list = ["list", "retrieve"]
+        if self.action in permission_list:
+            return []
+        elif self.action == "create":
+            return [IsAuthenticated()]
+        return [IsStartupPermission()]
 
     def list(self, request):
         # Example URL: /api/startups/
