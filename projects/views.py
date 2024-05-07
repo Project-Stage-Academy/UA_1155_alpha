@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from investors.models import Investor
@@ -34,7 +35,7 @@ class ProjectViewSet(viewsets.ViewSet):
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     # def list(self, request):
     #     # Implementation of GET METHOD - ExampLE URL: /api/projects/
@@ -181,23 +182,10 @@ class ProjectViewSet(viewsets.ViewSet):
     #     }
     #     return Response(data, status=status.HTTP_204_NO_CONTENT)
 
-    def add_investor(self, request, pk=None):
-        """
-        Add an investor to the project (POST /api/projects/{pk}/add_investor/).
-        """
-        try:
-            project = Project.objects.get(pk=pk)
-            investor_id = request.data.get('investor_id')
-            investor = get_object_or_404(Investor, pk=investor_id)
-            project.investors.add(investor)
-            return Response({'message': f'Investor {investor_id} successfully added to project {pk}'},
-                            status=status.HTTP_200_OK)
-        except Project.DoesNotExist:
-            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def add_subscriber(self, request, pk=None):
         """
-        Add a subscriber to the project (POST /api/projects/{pk}/add_subscriber/).
+        Add a subscriber to the project (POST /api/projects/<pk>/add_subscriber/).
         """
         try:
             project = Project.objects.get(pk=pk)

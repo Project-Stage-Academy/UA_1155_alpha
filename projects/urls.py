@@ -15,8 +15,11 @@ Including another URLconf
 """
 
 from django.urls import path
-from startups.views import StartupViewSet
+from projects.views import ProjectViewSet
+
 
 urlpatterns = [
-    path("", StartupViewSet.as_view({"get": "custom_method"}), name="startup_mainpage"),
+    path("", ProjectViewSet.as_view, name="startup_mainpage"),
+    path("<int:pk>/add_investor/", ProjectViewSet.as_view({"post": "add_investor"}), name="add_investor"),
+    path("<int:pk>/add_subscriber/", ProjectViewSet.as_view({"post": "add_subscriber"}), name="add_subscriber"),
 ]
