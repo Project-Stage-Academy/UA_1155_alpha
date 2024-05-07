@@ -10,6 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.serializers import PasswordResetConfirmSerializer
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
 
 from .models import CustomUser
 from .serializers import UserRegisterSerializer
@@ -17,6 +20,72 @@ from .utils import Util
 
 
 class LoginAPIView(APIView):
+    """
+    Endpoint for user login.
+
+    This endpoint allows users to login by providing their email and password.
+
+    Parameters:
+    - `request`: HTTP request object.
+
+    Returns:
+    - 200: Successful login. Returns the refresh and access tokens.
+    - 400: Bad request. Returns a message indicating that the user was not found.
+    - 401: Unauthorized. Returns a message indicating that the password is incorrect.
+
+    Example request data:
+    {
+        "email": "john@example.com",
+        "password": "strongPassword123!"
+    }
+
+    Example successful response:
+    HTTP 200 OK
+    {
+        "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+    }
+
+    Example error response (user not found):
+    HTTP 400 Bad Request
+    {
+        "message": "User not found"
+    }
+
+    Example error response (wrong password):
+    HTTP 401 Unauthorized
+    {
+        "message": "Wrong password"
+    }
+    """
+    
+    @swagger_auto_schema(
+        security=[],
+        tags=['User'],
+        request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['email', 'password'],
+        properties={
+            'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+        },
+        example={
+            'email': 'user@example.com',
+            'password': 'password123',
+        }
+    ),
+    responses={
+        
+        200: openapi.Response(description='User created successfully', 
+                              schema=openapi.Schema(type=openapi.TYPE_OBJECT),
+                              examples={
+                                  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                                  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                  }),
+        400: openapi.Response(description="User not found", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+        401: openapi.Response(description="Wrong password", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+        }
+    )
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -49,6 +118,9 @@ class LoginAPIView(APIView):
 
 
 class LogoutAPIView(APIView):
+    @swagger_auto_schema(
+        tags=['User'],
+        )
     def post(self, request):
         """Method should receive "access" and "refresh" tokens in body of POST request to LogOut"""
         refresh_token = request.data.get("refresh")
@@ -68,6 +140,79 @@ class LogoutAPIView(APIView):
 
 
 class UserRegisterAPIView(APIView):
+    """
+    Endpoint for registering a new user.
+
+    This endpoint allows users to register by providing their first name, last name, email, password, and confirming the password.
+
+    Parameters:
+    - `request`: HTTP request object.
+
+    Returns:
+    - 201: User created successfully. Returns the user's first name and a success message.
+    - 400: Bad request. Returns validation errors if the request data is invalid.
+    - 500: Internal Server Error. Returns an error message if there was an issue creating the user.
+
+    Example request data:
+    {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john@example.com",
+        "password": "strongPassword123!",
+        "password2": "strongPassword123!"
+    }
+
+    Example successful response:
+    HTTP 201 Created
+    {
+        "User name": "John",
+        "message": "User created successfully"
+    }
+
+    Example error response:
+    HTTP 400 Bad Request
+    {
+        "email": [
+            "Enter a valid email address."
+        ]
+    }
+    """
+    
+    @swagger_auto_schema(
+        security=[],
+        tags=['User'], 
+        request_body=UserRegisterSerializer,
+        responses={
+            201: openapi.Response(
+                description='User created successfully',
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT),
+                examples={
+                    'application/json': {
+                        "User name": "John",
+                        "message": "User created successfully"
+                        }
+                    }
+                ),
+            400: openapi.Response(
+                description='Bad request',
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT),
+                examples={
+                    'application/json': {
+                        "email": ["Enter a valid email address."]
+                        }
+                    }
+                ),
+            500: openapi.Response(
+                description='Internal Server Error',
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT),
+                examples={'application/json': {
+                    "message": "Internal Server Error"
+                    }
+                          }
+                ),
+            },
+        )
+
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
