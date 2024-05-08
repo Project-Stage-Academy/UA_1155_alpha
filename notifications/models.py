@@ -33,3 +33,13 @@ class Notification(mongoengine.Document):
         )
         notification.save()
         return notification
+
+    @staticmethod
+    def get_unread_notifications(recipient_id, is_read):
+        notifications = Notification.objects.filter(recipient_id=recipient_id, is_read=is_read)
+        return notifications
+
+    @staticmethod
+    def get_all_notifications(recipient_id):
+        notifications = Notification.objects.filter(recipient_id=recipient_id)
+        return notifications
