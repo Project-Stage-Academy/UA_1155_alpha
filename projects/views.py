@@ -228,3 +228,27 @@ class ProjectViewSet(viewsets.ViewSet):
             'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
         }, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='add_subscriber')
+    def add_subscriber(self, request, pk=None):
+        """
+        Add a subscriber to the project.
+        This action allows adding a subscriber to the specified project. It expects a POST request with the subscriber's
+        ID included in the request data. Upon successful addition, it returns a success message along with
+        HTTP 200 OK status code.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the project to which the subscriber will be added.
+        Returns:
+        Response: A JSON response containing a success message upon successful addition of the subscriber.
+        Raises:
+        Http404: If the specified project does not exist.
+        """
+        try:
+            project = Project.objects.get(Project, is_active=True, pk=pk)
+            subscriber_id = request.data.get('subscriber_id')
+            subscriber = get_object_or_404(Investor, pk=subscriber_id)
+            project.subscribers.add(subscriber)
+            return Response({'message': f'Investor {subscriber_id} successfully added to project {pk}'},
+                            status=status.HTTP_200_OK)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
