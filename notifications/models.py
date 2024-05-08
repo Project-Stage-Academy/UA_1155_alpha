@@ -36,10 +36,10 @@ class Notification(mongoengine.Document):
 
     @staticmethod
     def get_unread_notifications(recipient_id, is_read):
-        notifications = Notification.objects.filter(recipient_id=recipient_id, is_read=is_read)
+        notifications = Notification.objects.filter(recipient_id=recipient_id, is_read=is_read).order_by('-send_at')
         return notifications
 
     @staticmethod
     def get_all_notifications(recipient_id):
-        notifications = Notification.objects.filter(recipient_id=recipient_id)
+        notifications = Notification.objects.filter(recipient_id=recipient_id).order_by('-send_at')
         return notifications

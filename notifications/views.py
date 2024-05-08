@@ -14,15 +14,18 @@ class NotificationListView(APIView):
         user = request.user
 
         notifications = Notification.get_unread_notifications(recipient_id=user.id, is_read=False)
-        notifications.update(is_read=True)
+        print(notifications)
 
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
         serializer = NotificationSerializer(notifications, many=True)
+        notifications.update(is_read=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class NotificationsAllView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = request.user
 
