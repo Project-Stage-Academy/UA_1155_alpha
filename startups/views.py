@@ -4,6 +4,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from projects.models import Project
 from .models import Startup, Industry
 from .serializers import StartupListSerializer, StartupSerializer, StartupSerializerUpdate
 
@@ -42,6 +43,7 @@ class StartupViewSet(viewsets.ViewSet):
      - Methods accept data in JSON format and also return responses in JSON format.
      - Responses contain the status of the operation, messages, and startup data (in list, retrieve, create, update, partial_update operations).
      """
+
     def get_permissions(self):
         permission_list = ["list", "retrieve"]
         if self.action in permission_list:
@@ -163,18 +165,23 @@ class StartupViewSet(viewsets.ViewSet):
         # Implementation of DELETE METHOD for one startup - ExampLE URL: /api/startups/4/
         # Do not forget about SLASH at the end of URL
         # Deleting logic
-        startup_id = pk
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, YOU DELETED Startup with ID: {startup_id}",
-            'status': 'success'
-        }
-        return Response(data)
+        startup = get_object_or_404(Startup, id=pk)
+        projects_exist = Project.objects.filter(startup=startup.id, is_active=True).exists()
+
+        if projects_exist:
+            return Response({"detail": "Please delete all your projects first."},
+                            status=status.HTTP_409_CONFLICT)
+
+        startup.is_active = 0
+        user_instance = startup.owner
+        user_instance.is_startup = 0
+        startup.save()
+        user_instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # Maybe we will delete this but i'd like to whow you how it works :)
     def custom_method(self, request):
-        data = {
-            'message': "Hello, this is custom GET method! We can use it for rendering pages",
-            'status': 'success'
-        }
-        return Response(data)
+
+        ''' get current startup profile and ??? all its projects'''
+
+        pass
