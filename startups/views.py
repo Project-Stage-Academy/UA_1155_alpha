@@ -1,10 +1,12 @@
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from projects.models import Project
+from users.models import CustomUser
 from .models import Startup, Industry
 from .serializers import StartupListSerializer, StartupSerializer, StartupSerializerUpdate
 
@@ -179,9 +181,13 @@ class StartupViewSet(viewsets.ViewSet):
         user_instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # Maybe we will delete this but i'd like to whow you how it works :)
-    def custom_method(self, request):
+    @action(detail=False, methods=["get"], url_path="profile")
+    def get_my_profile(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
 
-        ''' get current startup profile and ??? all its projects'''
+        startup = get_object_or_404(Startup, owner=user_instance, is_active=True)
+        serializer = StartupSerializer(startup)
 
-        pass
+        return Response(serializer.data, status=status.HTTP_200_OK)
