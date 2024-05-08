@@ -18,7 +18,10 @@ class NotificationListView(APIView):
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
         serializer = NotificationSerializer(notifications, many=True)
-        notifications.update(is_read=True)
+        for notification in notifications:
+            notification.is_read = True
+            notification.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
