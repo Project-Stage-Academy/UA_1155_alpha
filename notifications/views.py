@@ -14,7 +14,6 @@ class NotificationListView(APIView):
         user = request.user
 
         notifications = Notification.get_unread_notifications(recipient_id=user.id, is_read=False)
-        print(notifications)
 
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
