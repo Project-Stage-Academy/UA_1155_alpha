@@ -6,7 +6,9 @@ from rest_framework.response import Response
 
 from investors.models import Investor
 from projects.models import Project
-from projects.serializers import ProjectSerializer, ProjectSerializerUpdate
+from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
+from projects.permissions import IsInvestor
+from projects.utils import filter_projects
 from startups.models import Startup, Industry
 
 
@@ -36,38 +38,43 @@ class ProjectViewSet(viewsets.ViewSet):
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
 
-    permission_classes = (IsAuthenticated,)
+    free_methods = ("list", "retrieve")
+    investors_methods = ("invest_to_project", "get_my_projects")
+    allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
 
-    # def list(self, request):
-    #     # Implementation of GET METHOD - ExampLE URL: /api/projects/
-    #     # Getting ALL projects logic
-    #
-    #     data = {
-    #         'message': "Hello, ALL Projects PROFILE PAGE",
-    #         'status': status.HTTP_200_OK,
-    #     }
-    #     query_data = get_query_dict(request)  # If we need to use queries like /api/projects?name=Project1
-    #     if query_data:
-    #         data.update(query_data)
-    #
-    #     # Should return a list!
-    #     return Response(data, status=status.HTTP_200_OK)
-    #
-    # def retrieve(self, request, pk=None):
-    #     # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
-    #     # Getting ONE project with id=project logic
-    #
-    #     project_id = pk
-    #     data = {
-    #         'project_id': project_id,
-    #         'message': f"Hello, concrete PROJECT profile page with id {project_id}",
-    #         'status': status.HTTP_200_OK
-    #     }
-    #     query_data = get_query_dict(request)
-    #     if query_data:
-    #         data.update(query_data)
-    #
-    #     return Response(data, status=status.HTTP_200_OK)
+    def get_permissions(self):
+        # Configure permissions based on the action (method) that is called
+        if self.action in self.free_methods:
+            return []
+        elif self.action in self.investors_methods:
+            return [IsInvestor()]
+        else:
+            return [IsAuthenticated()]
+
+    def list(self, request):
+        # Implementation of GET METHOD - ExampLE URL: /api/projects/
+        # Getting ALL projects logic
+        queryset_projects = Project.objects.filter(is_active=True)
+        query_params = request.query_params
+        if query_params:
+            filtered_query_data = {key: query_params[key] for key in query_params if key in self.allowed_uqery_keys}
+            queryset_projects = filter_projects(queryset_projects, filtered_query_data, request)
+        serializer = ProjectViewSerializer(queryset_projects, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
+        # Getting ONE project with id=project logic
+        project_id = pk
+        try:
+            project = get_object_or_404(Project, is_active=True, id=project_id)
+        except Project.DoesNotExist:
+            return Response({
+                'detail': f'Project with id {pk} not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProjectViewSerializer(project, many=False, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
         """
@@ -170,7 +177,7 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    #
+
     # def destroy(self, request, pk=None):
     #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
     #     # Do not forget about SLASH at the end of URL
@@ -183,27 +190,41 @@ class ProjectViewSet(viewsets.ViewSet):
     #     }
     #     return Response(data, status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'], url_path='add_subscriber')
-    def add_subscriber(self, request, pk=None):
+    @action(detail=False, methods=['get'], url_path='my')
+    def get_my_projects(self, request):
+        user = self.request.user
+        investors_projects = Project.objects.filter(investors__id=user.id, is_active=True)
+        serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='invest')
+    def invest_to_project(self, request, pk=None):
         """
-        Add a subscriber to the project.
-        This action allows adding a subscriber to the specified project. It expects a POST request with the subscriber's
-        ID included in the request data. Upon successful addition, it returns a success message along with
-        HTTP 200 OK status code.
-        Parameters:
-        - request (Request): The HTTP request object.
-        - pk (int): The primary key of the project to which the subscriber will be added.
-        Returns:
-        Response: A JSON response containing a success message upon successful addition of the subscriber.
-        Raises:
-        Http404: If the specified project does not exist.
+        This function allows adding an investor to a project.
+        The user must be authenticated and have an active investor linked to their account.
+        The investor is added to the project only if the project is active and does not already contain this investor
+
+        :param self: Allow an instance of a class to access its attributes and methods
+        :param request: Get the user from the request
+        :param pk: The primary key of the project.
+        :return: Response: A response with a detailed message about the result of the operation.
+        Examples:
+        Use this method by sending a POST request to the URL: /api/projects/12/invest
+        where 12 is the ID of the project you want to add an investor to.
         """
-        try:
-            project = Project.objects.get(pk=pk)
-            subscriber_id = request.data.get('subscriber_id')
-            subscriber = get_object_or_404(Investor, pk=subscriber_id)
-            project.subscribers.add(subscriber)
-            return Response({'message': f'Investor {subscriber_id} successfully added to project {pk}'},
-                            status=status.HTTP_200_OK)
-        except Project.DoesNotExist:
-            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        project = get_object_or_404(Project, is_active=True, id=pk)
+        investor = get_object_or_404(Investor, user=user, is_active=True)
+
+        if project.investors.filter(id=investor.id).exists():
+            return Response({
+                'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        project.investors.add(investor)
+
+        return Response({
+            'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
+        }, status=status.HTTP_200_OK)
+

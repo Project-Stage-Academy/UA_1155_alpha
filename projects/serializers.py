@@ -51,3 +51,35 @@ class ProjectSerializerUpdate(serializers.ModelSerializer):
                 }
             )
         return data
+
+
+class ProjectViewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for viewing Project model.
+    Returns different fields depending on whether the user is an investor or not.
+    """
+    industry = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+    @staticmethod
+    def get_industry(obj):
+        if obj.industry:
+            return obj.industry.name
+        return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'is_investor') and request.user.is_investor:
+            fields_to_exclude = ['updated_at', 'registration_date']
+            for field in fields_to_exclude:
+                if field in data:
+                    del data[field]
+            return data
+        else:
+            fields_to_display = ['project_name', 'description', 'industry']
+            filtered_data = {key: data[key] for key in fields_to_display}
+            return filtered_data
