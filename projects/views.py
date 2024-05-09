@@ -8,7 +8,7 @@ from investors.models import Investor
 from projects.models import Project
 from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
 from projects.permissions import IsInvestor
-from projects.utils import filter_projects
+from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
 
 
@@ -38,8 +38,8 @@ class ProjectViewSet(viewsets.ViewSet):
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
 
-    free_methods = ("list", "retrieve")
-    investors_methods = ("invest_to_project", "get_my_projects")
+    free_methods = ("list", "retrieve", "compare_projects")
+    investors_methods = ("invest_to_project", "get_my_projects", "add_subscriber")
     allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
 
     def get_permissions(self):
@@ -252,3 +252,42 @@ class ProjectViewSet(viewsets.ViewSet):
                             status=status.HTTP_200_OK)
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['post'], url_path='compare_projects')
+    def compare_projects(self, request):
+        """
+        Compare multiple projects.
+        This action allows comparing multiple projects based on their IDs provided in the request data.
+        It expects a POST request with a list of project IDs.
+        Upon successful comparison, it returns the difference between the projects.
+        Parameters:
+        - request (Request): The HTTP request object.
+        Returns:
+        Response: A JSON response containing the difference between the compared projects.
+        """
+        try:
+            project_ids = request.data.get('project_ids', [])
+            projects = Project.objects.filter(pk__in=project_ids)
+
+            if len(project_ids) < 2:
+                return Response({'error': 'At least two projects are required for comparison'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            projects = []
+            difference = {}
+            for project_id in project_ids:
+                project = get_object_or_404(Project, pk=project_id)
+                projects.append(project)
+
+            for i in range(len(projects)):
+                for j in range(i + 1, len(projects)):
+                    project1 = projects[i]
+                    project2 = projects[j]
+
+            difference[f'comparison_{i + 1}_{j + 1}'] = {
+                'project1': project1.project_name,
+                'project2': project2.project_name,
+                'difference': calculate_difference(project1, project2)
+            }
+            return Response(difference, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
