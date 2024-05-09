@@ -1,3 +1,10 @@
+import os
 from celery import Celery
 
-app = Celery('forum', broker='redis://redis:6379/0')
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'forum.settings')
+app = Celery('forum')
+
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+app.autodiscover_tasks()

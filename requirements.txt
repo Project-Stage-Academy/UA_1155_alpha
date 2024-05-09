@@ -10,4 +10,6 @@ sqlparse==0.5.0
 tzdata==2024.1
 djangorestframework-simplejwt==5.3.1
 django_rest_passwordreset==1.4.1
+django-rest-framework-mongoengine==3.4.1
+gevent==24.2.1
 drf-yasg==1.21.7

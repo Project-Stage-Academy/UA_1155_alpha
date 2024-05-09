@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import mongoengine
 from dotenv import load_dotenv
 
 # from decouple import config
@@ -53,6 +54,8 @@ INSTALLED_APPS = [
     "investors",
     "projects",
     "drf_yasg",
+    "notifications",
+    "rest_framework_mongoengine",
 ]
 
 MIDDLEWARE = [
@@ -100,6 +103,9 @@ DATABASES = {
         "PORT": os.environ.get("POSTGRES_PORT"),
     },
 }
+# Added MongoDB
+MONGO_DB = os.environ.get("MONGO_DATABASE")
+mongoengine.connect(MONGO_DB)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -184,7 +190,8 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_BROKER_URL = os.environ.get("REDIS_URL")
+CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
 
 # SMTP Configuration
 # We are using mailgun for sending emails.
