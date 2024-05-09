@@ -253,18 +253,9 @@ class ProjectViewSet(viewsets.ViewSet):
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
     @action(detail=False, methods=['post'], url_path='compare_projects')
     def compare_projects(self, request):
-        """
-        Compare multiple projects.
-        This action allows comparing multiple projects based on their IDs provided in the request data.
-        It expects a POST request with a list of project IDs.
-        Upon successful comparison, it returns the difference between the projects.
-        Parameters:
-        - request (Request): The HTTP request object.
-        Returns:
-        Response: A JSON response containing the difference between the compared projects.
-        """
         try:
             project_ids = request.data.get('project_ids', [])
             projects = Project.objects.filter(pk__in=project_ids)
@@ -272,22 +263,15 @@ class ProjectViewSet(viewsets.ViewSet):
             if len(project_ids) < 2:
                 return Response({'error': 'At least two projects are required for comparison'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            projects = []
-            difference = {}
-            for project_id in project_ids:
-                project = get_object_or_404(Project, pk=project_id)
-                projects.append(project)
 
+            differences = {}
             for i in range(len(projects)):
                 for j in range(i + 1, len(projects)):
                     project1 = projects[i]
                     project2 = projects[j]
+                    key = f'comparison_{i + 1}_{j + 1}'
+                    differences[key] = calculate_difference(project1, project2)
 
-            difference[f'comparison_{i + 1}_{j + 1}'] = {
-                'project1': project1.project_name,
-                'project2': project2.project_name,
-                'difference': calculate_difference(project1, project2)
-            }
-            return Response(difference, status=status.HTTP_200_OK)
+            return Response(differences, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
