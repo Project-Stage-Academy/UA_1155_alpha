@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import include, path
 from investors.views import InvestorViewSet
 from projects.views import ProjectViewSet
-from rest_framework import permissions
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -26,9 +25,6 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
-
-# from .yasg import urlpatterns as yasg_urls
-
 
 router = DefaultRouter()
 
