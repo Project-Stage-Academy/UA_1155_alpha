@@ -6,7 +6,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     """
     Serializer for Project model
     """
-    industry = serializers.CharField(required=True)
 
     class Meta:
         model = Project
@@ -16,6 +15,17 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         project = Project.objects.create(**validated_data)
         return project
+
+class ProjectSerializerUpdate(serializers.ModelSerializer):
+    industry = serializers.StringRelatedField()
+    """
+    Serializer for Project model
+    """
+
+    class Meta:
+        model = Project
+        fields = '__all__'
+        read_only_fields = ('registration_date', 'startup')
 
     def update(self, instance, validated_data):
         instance.project_name = validated_data.get('project_name', instance.project_name)
@@ -40,15 +50,36 @@ class ProjectSerializer(serializers.ModelSerializer):
                     "message": "Budget ready cannot be greater than budget needed"
                 }
             )
-        industry = data.get('industry')
-        if industry:
-            industries = [industry[0] for industry in Project.INDUSTRY_CHOICES]
-            if industry not in industries:
-                raise serializers.ValidationError(
-                    {
-                        "status": "failed",
-                        "message": "Industry does not exist",
-                        "choices": industries
-                    }
-                )
         return data
+
+
+class ProjectViewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for viewing Project model.
+    Returns different fields depending on whether the user is an investor or not.
+    """
+    industry = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+    @staticmethod
+    def get_industry(obj):
+        if obj.industry:
+            return obj.industry.name
+        return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'is_investor') and request.user.is_investor:
+            fields_to_exclude = ['updated_at', 'registration_date']
+            for field in fields_to_exclude:
+                if field in data:
+                    del data[field]
+            return data
+        else:
+            fields_to_display = ['project_name', 'description', 'industry']
+            filtered_data = {key: data[key] for key in fields_to_display}
+            return filtered_data
