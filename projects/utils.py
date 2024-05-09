@@ -33,27 +33,30 @@ def filter_projects(queryset, data, request):
     return queryset
 
 
+def compare_industries(industry1, industry2):
+    difference = {}
+    if industry1 != industry2:
+        difference = {
+            "project1": industry1.name if industry1 else None,
+            "project2": industry2.name if industry2 else None
+        }
+    return difference
+
+
 def calculate_difference(project1, project2):
     difference = {}
     for field in project1._meta.fields:
         field_name = field.name
         if getattr(project1, field_name) != getattr(project2, field_name):
-            if field_name == 'industry':
+            if field_name == "industry":
                 industry_difference = compare_industries(project1.industry, project2.industry)
                 difference[field_name] = industry_difference
             else:
                 difference[field_name] = {
-                    'project1': getattr(project1, field_name),
-                    'project2': getattr(project2, field_name)
+                    "project1": getattr(project1, field_name),
+                    "project2": getattr(project2, field_name)
                 }
     return difference
 
 
-def compare_industries(industry1, industry2):
-    difference = {}
-    if industry1 != industry2:
-        difference = {
-            'project1': industry1.name if industry1 else None,
-            'project2': industry2.name if industry2 else None
-        }
-    return difference
+
