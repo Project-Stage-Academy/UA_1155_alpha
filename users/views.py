@@ -2,8 +2,6 @@ import jwt
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models.functions import Now
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
