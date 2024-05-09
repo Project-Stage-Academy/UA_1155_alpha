@@ -1,3 +1,4 @@
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -10,6 +11,7 @@ from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, Pro
 from projects.permissions import IsInvestor
 from projects.utils import filter_projects
 from startups.models import Startup, Industry
+from notifications.tasks import project_updating
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -132,6 +134,11 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
+        current_site = get_current_site(request).domain
+        for investor in project.subscribers.all():
+            project_updating.delay(investor.id, project.id, current_site)
+
+
         data = {
             'project_id': pk,
             'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
@@ -168,6 +175,10 @@ class ProjectViewSet(viewsets.ViewSet):
         else:
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
+
+        current_site = get_current_site(request).domain
+        for investor in project.subscribers.all():
+            project_updating.delay(investor.id, project.id, current_site)
 
         data = {
             'project_id': pk,

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
+import mongoengine
 from datetime import timedelta
 from pathlib import Path
 
@@ -52,6 +53,8 @@ INSTALLED_APPS = [
     'startups',
     'investors',
     'projects',
+    'notifications',
+    'rest_framework_mongoengine',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +103,9 @@ DATABASES = {
     },
 
 }
+# Added MongoDB
+MONGO_DB = os.environ.get('MONGO_DATABASE')
+mongoengine.connect(MONGO_DB)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -188,7 +194,8 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_BROKER_URL = os.environ.get("REDIS_URL")
+CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
 
 # SMTP Configuration
 # We are using mailgun for sending emails.
