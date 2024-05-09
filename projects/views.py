@@ -244,7 +244,7 @@ class ProjectViewSet(viewsets.ViewSet):
         Http404: If the specified project does not exist.
         """
         try:
-            project = Project.objects.get(Project, is_active=True, pk=pk)
+            project = Project.objects.get(is_active=True, pk=pk)
             subscriber_id = request.data.get('subscriber_id')
             subscriber = get_object_or_404(Investor, pk=subscriber_id)
             project.subscribers.add(subscriber)
