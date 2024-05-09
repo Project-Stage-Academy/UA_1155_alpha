@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from investors.views import InvestorViewSet
 from projects.views import ProjectViewSet
+from rest_framework import permissions
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -25,9 +26,8 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
-from rest_framework import permissions
-# from .yasg import urlpatterns as yasg_urls
 
+# from .yasg import urlpatterns as yasg_urls
 
 
 router = DefaultRouter()
@@ -46,6 +46,6 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
-    path("api/notifications/", include("notifications.urls"))
-    path('yasg/', include('forum.yasg'))
+    path("api/notifications/", include("notifications.urls")),
+    path("yasg/", include("forum.yasg")),
 ]
