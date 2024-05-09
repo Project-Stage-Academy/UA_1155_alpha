@@ -13,7 +13,7 @@ from .serializers import StartupListSerializer, StartupSerializer, StartupSerial
 
 class IsStartupPermission(permissions.BasePermission):
     """
-    Custom permission to only allow investors to interact with the view.
+    Custom permission to only allow startups to interact with the view.
     """
 
     def has_permission(self, request, view):
