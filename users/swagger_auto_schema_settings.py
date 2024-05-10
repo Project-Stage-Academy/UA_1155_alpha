@@ -19,7 +19,7 @@ loginAPIView_body = openapi.Schema(
 
 loginAPIView_responses = {
     200: openapi.Response(
-        description="User created successfully",
+        description="User login successfully",
         schema=openapi.Schema(type=openapi.TYPE_OBJECT),
         examples={
             "application/json": {
