@@ -2,8 +2,7 @@ import jwt
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models.functions import Now
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -13,10 +12,49 @@ from users.serializers import PasswordResetConfirmSerializer
 
 from .models import CustomUser
 from .serializers import UserRegisterSerializer
+from .swagger_auto_schema_settings import *
 from .utils import Util
 
 
 class LoginAPIView(APIView):
+    """
+    Endpoint for user login.
+    This endpoint allows users to login by providing their email and password.
+    Parameters:
+    - `request`: HTTP request object.
+    Returns:
+    - 200: Successful login. Returns the refresh and access tokens.
+    - 400: Bad request. Returns a message indicating that the user was not found.
+    - 401: Unauthorized. Returns a message indicating that the password is incorrect.
+    Example request data:
+    {
+        "email": "john@example.com",
+        "password": "strongPassword123!"
+    }
+    Example successful response:
+    HTTP 200 OK
+    {
+        "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+    }
+    Example error response (user not found):
+    HTTP 400 Bad Request
+    {
+        "message": "User not found"
+    }
+    Example error response (wrong password):
+    HTTP 401 Unauthorized
+    {
+        "message": "Wrong password"
+    }
+    """
+
+    @swagger_auto_schema(
+        security=[],
+        tags=["USER REGISTER, LOG_IN, LOG-OUT"],
+        request_body=loginAPIView_body,
+        responses=loginAPIView_responses,
+    )
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -49,8 +87,37 @@ class LoginAPIView(APIView):
 
 
 class LogoutAPIView(APIView):
+    """
+    Endpoint for logging out a user by invalidating their refresh token.
+    This endpoint expects a POST request with the "access" and "refresh" tokens provided in the request body.
+    Parameters:
+    - `request`: HTTP request object containing the refresh token to be invalidated.
+    Returns:
+    - 200: Successful exit. Returns a success message if the refresh token was successfully invalidated.
+    - 400: Bad request. Returns an error message if the refresh token is missing or invalid.
+    Example request data:
+    {
+        "refresh": "your_refresh_token_here"
+    }
+    Example successful response:
+    HTTP 200 OK
+    {
+        "success": "Successful exit"
+    }
+    Example error response:
+    HTTP 400 Bad Request
+    {
+        "error": "Refresh token is required."
+    }
+    """
+
+    @swagger_auto_schema(
+        tags=["USER REGISTER, LOG_IN, LOG-OUT"],
+        request_body=logoutAPIView_body,
+        responses=logoutAPIView_responses,
+    )
     def post(self, request):
-        """Method should receive "access" and "refresh" tokens in body of POST request to LogOut"""
+        """Method should receive "refresh" tokens in body of POST request to LogOut"""
         refresh_token = request.data.get("refresh")
         if not refresh_token:
             return Response(
@@ -68,6 +135,41 @@ class LogoutAPIView(APIView):
 
 
 class UserRegisterAPIView(APIView):
+    """
+    Endpoint for registering a new user.
+    This endpoint allows users to register by providing their first name, last name, email, password, and confirming the password.
+    Parameters:
+    - `request`: HTTP request object.
+    Returns:
+    - 201: User created successfully. Returns the user's first name and a success message.
+    - 400: Bad request. Returns validation errors if the request data is invalid.
+    - 500: Internal Server Error. Returns an error message if there was an issue creating the user.
+
+    Example request data:
+    {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john@example.com",
+        "password": "strongPassword123!",
+        "password2": "strongPassword123!"
+    }
+    Example successful response:
+    HTTP 201 Created
+    {
+        "User name": "John",
+        "message": "User created successfully"
+    }
+    Example error response:
+    HTTP 400 Bad Request
+    {"email": ["Enter a valid email address."]}
+    """
+
+    @swagger_auto_schema(
+        security=[],
+        tags=["USER REGISTER, LOG_IN, LOG-OUT"],
+        request_body=userRegisterAPIView_body,
+        responses=userRegisterAPIView_responses,
+    )
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -114,12 +216,45 @@ class UserRegisterAPIView(APIView):
 
 
 class SendEmailConfirmationAPIView(APIView):
+    """
+    API endpoint for confirming the user's email address.
+    This endpoint provides functionality to confirm a user's email address using a token.
+    Parameters:
+    - `request`: HTTP request object.
+    - `token`: The confirmation token sent to the user's email.
+    Returns:
+    - 200: OK. Returns a message indicating that the email confirmation is required.
+    - 400: Bad Request. Returns an error message if the token is missing or invalid.
+    - 403: Forbidden. Returns a message indicating that the email has already been verified.
 
+    Example successful GET response:
+    HTTP 200 OK
+    {"message": "Plese, confifm your email"}
+    Example successful POST response:
+    {"message": "Email verified successfully"}
+
+    Example request data:
+    - In GET request: A valid token is required in the request header.
+    - In POST request: A valid token is required in the request header.
+
+    Example error response:
+    HTTP 400 Bad Request
+    {"error": "Invalid token"}
+    """
+
+    @swagger_auto_schema(
+        tags=["USER REGISTER, LOG_IN, LOG-OUT"],
+        responses=sendEmailConfirmationAPIView_responses_GET,
+    )
     def get(self, request, token=None):
         return Response(
             {"message": "Plese, confifm your email"}, status=status.HTTP_200_OK
         )
 
+    @swagger_auto_schema(
+        tags=["USER REGISTER, LOG_IN, LOG-OUT"],
+        responses=sendEmailConfirmationAPIView_responses_POST,
+    )
     def post(self, request, token=None):
         if not token:
             return Response(
@@ -153,6 +288,33 @@ class SendEmailConfirmationAPIView(APIView):
 
 
 class PasswordResetRequest(APIView):
+    """
+    API endpoint for requesting a password reset.
+    This endpoint allows users to request a password reset by providing their email address.
+    Parameters:
+    - `request`: HTTP request object containing the user's email address.
+    Returns:
+    - 200: OK. Returns a message indicating that the password reset email has been sent successfully.
+    - 400: Bad Request. Returns an error message if the email is missing.
+    - 404: Not Found. Returns an error message if no user is found with the provided email address.
+
+    Example request data:
+    {"email": "user@example.com"}
+
+    Example successful response:
+    HTTP 200 OK
+    {"message": "Password reset email sent"}
+
+    Example error response:
+    HTTP 400 Bad Request
+    {"error": "Email is required"}
+    """
+
+    @swagger_auto_schema(
+        tags=["RESET PASSWORD"],
+        request_body=passwordResetRequest_body,
+        responses=passwordResetRequest_responses,
+    )
     def post(self, request):
         email = request.data.get("email")
         if not email:
@@ -174,7 +336,6 @@ class PasswordResetRequest(APIView):
             "password_reset_confirm",
             kwargs={
                 "token": token,
-                "uidb64": urlsafe_base64_encode(force_bytes(user.id)),
             },
         )
         abs_url = "http://" + current_site + relative_link
@@ -194,18 +355,47 @@ class PasswordResetRequest(APIView):
 
 
 class PasswordResetConfirm(APIView):
-    def post(self, request, uidb64, token):
+    """
+    API endpoint for confirming a password reset.
+    This endpoint allows users to confirm a password reset by providing a new password along with the token
+    received in the password reset email.
+    Parameters:
+    - `request`: HTTP request object containing the new password.
+    - `token`: Token received in the password reset email.
+    Returns:
+    - 200: OK. Returns a message indicating that the password has been reset successfully.
+    - 400: Bad Request. Returns an error message if the provided data is invalid or if the token is invalid.
+
+    Example request data:
+    {"password": "new_password_here"}
+
+    Example successful response:
+    HTTP 200 OK
+    {"message": "Password reset successfully"}
+
+    Example error response:
+    HTTP 400 Bad Request
+    {"password": ["This field is required."]}
+    """
+
+    @swagger_auto_schema(
+        tags=["RESET PASSWORD"],
+        request_body=PasswordResetConfirmSerializer,
+        responses=passwordResetConfirm_responses,
+    )
+    def post(self, request, token):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
             validated_data = serializer.validated_data
             new_password = validated_data.get("password")
 
             try:
-                uid = urlsafe_base64_decode(uidb64).decode()
-                user = CustomUser.objects.get(pk=uid)
+                decoded_token = jwt.decode(token, options={"verify_signature": False})
+                user_id = decoded_token.get("user_id")
+                user = get_object_or_404(CustomUser, id=user_id)
             except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
                 return Response(
-                    {"error": "Invalid user ID"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
                 )
 
             user.set_password(new_password)
