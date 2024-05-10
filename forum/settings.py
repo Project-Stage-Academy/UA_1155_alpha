@@ -38,6 +38,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -56,6 +57,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "notifications",
     "rest_framework_mongoengine",
+    "channels",
+    "livechat"
 ]
 
 MIDDLEWARE = [
@@ -87,6 +90,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "forum.wsgi.application"
+ASGI_APPLICATION = 'forum.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('172.18.221.195', 6379)],
+        },
+    },
+}
 
 AUTH_USER_MODEL = "users.CustomUser"
 
