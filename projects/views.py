@@ -244,12 +244,19 @@ class ProjectViewSet(viewsets.ViewSet):
         Http404: If the specified project does not exist.
         """
         try:
-            project = Project.objects.get(is_active=True, pk=pk)
-            subscriber_id = request.data.get('subscriber_id')
-            subscriber = get_object_or_404(Investor, pk=subscriber_id)
+            user = request.user
+            project = get_object_or_404(Project, is_active=True, id=pk)
+            subscriber = get_object_or_404(Investor, user=user, is_active=True)
+
+            if project.subscribers.filter(id=subscriber.id).exists():
+                project.subscribers.remove(subscriber)
+                return Response({
+                    'detail': f'Investor {user.first_name} {user.last_name} successfully unsubscribed from the project '
+                              f'{project.project_name}.'}, status=status.HTTP_400_BAD_REQUEST)
+
             project.subscribers.add(subscriber)
-            return Response({'message': f'Investor {subscriber_id} successfully added to project {pk}'},
-                            status=status.HTTP_200_OK)
+            return Response({'message': f'Investor {user.first_name} {user.last_name} successfully subscribed to '
+                                        f'the project {project.project_name}'}, status=status.HTTP_200_OK)
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
