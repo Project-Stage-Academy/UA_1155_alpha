@@ -5,10 +5,13 @@ from django.urls import reverse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from users.serializers import PasswordResetConfirmSerializer
+
+# from investors.views import InvestorProfileView
+from users.serializers import PasswordResetConfirmSerializer, UserSerializer
 
 from .models import CustomUser
 from .serializers import UserRegisterSerializer
@@ -405,3 +408,43 @@ class PasswordResetConfirm(APIView):
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_current_user(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
+        return user_instance
+
+    def get(self, request):
+        user_instance = self.get_current_user(request)
+        serializer = UserSerializer(user_instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        user_instance = self.get_current_user(request)
+        serializer = UserSerializer(instance=user_instance, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        user_instance = self.get_current_user(request)
+
+        if user_instance.is_investor == 1:
+            return Response({"detail": "Please delete your investor profile first."},
+                            status=status.HTTP_409_CONFLICT)
+
+        if user_instance.is_startup == 1:
+            return Response({"detail": "Please delete your startup profile first."},
+                            status=status.HTTP_409_CONFLICT)
+
+        user_instance.is_active = 0
+        user_instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)

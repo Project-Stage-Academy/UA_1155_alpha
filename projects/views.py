@@ -188,18 +188,14 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-
-    # def destroy(self, request, pk=None):
-    #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
-    #     # Do not forget about SLASH at the end of URL
-    #     # Deleting logic
-    #     project_id = pk
-    #     data = {
-    #         'project_id': project_id,
-    #         'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
-    #         'status': status.HTTP_200_OK
-    #     }
-    #     return Response(data, status=status.HTTP_204_NO_CONTENT)
+    def destroy(self, request, pk=None):
+        # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
+        # Do not forget about SLASH at the end of URL
+        # Deleting logic
+        project = get_object_or_404(Project, id=pk)
+        project.is_active = 0
+        project.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'], url_path='my')
     def get_my_projects(self, request):
