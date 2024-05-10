@@ -85,21 +85,28 @@ class InvestorViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['get'], url_path='all_subscribed_projects')
+    @action(detail=False, methods=['get'], url_path='follows')
     def all_subscribed_projects(self, request, pk=None):
         """
         Get all subscribed projects of the investor.
         This action retrieves a list of all projects that the investor is subscribed to.
         Parameters:
         - request (Request): The HTTP request object.
-        - pk (int): The primary key of the investor.
+        - pk (int): The primary key of the investor. If provided, fetch projects subscribed by this investor.
         Returns:
         Response: A JSON response containing a list of subscribed projects.
         """
-        investor = get_object_or_404(Investor, id=pk)
-        subscribed_projects = investor.subscribed_projects.all()
-        serializer = ProjectSerializer(subscribed_projects, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            user = request.user
+            if pk is None:
+                investor = get_object_or_404(Investor, pk=user.id, is_active=True)
+            else:
+                investor = get_object_or_404(Investor, pk=pk, is_active=True)
+            subscribed_projects = investor.subscribed_projects.all()
+            serializer = ProjectSerializer(subscribed_projects, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['post'], url_path='remove_subscribed_project')
     def remove_subscribed_project(self, request, pk=None):
