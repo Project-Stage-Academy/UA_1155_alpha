@@ -42,6 +42,9 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
+    path('api/investors/<int:pk>/follows/', InvestorViewSet.as_view({'get': 'all_subscribed_projects'}), name='investor_follows'),
     path("api/notifications/", include("notifications.urls")),
     path("yasg/", include("forum.yasg")),
+
 ]
+
