@@ -1,11 +1,23 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from projects.models import Project
+from users.models import CustomUser
 from .models import Startup, Industry
 from .serializers import StartupListSerializer, StartupSerializer, StartupSerializerUpdate
+
+
+class IsStartupPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow startups to interact with the view.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_startup == 1 and request.user.is_authenticated
 
 
 class StartupViewSet(viewsets.ViewSet):
@@ -33,7 +45,14 @@ class StartupViewSet(viewsets.ViewSet):
      - Methods accept data in JSON format and also return responses in JSON format.
      - Responses contain the status of the operation, messages, and startup data (in list, retrieve, create, update, partial_update operations).
      """
-    permission_classes = (IsAuthenticated,)
+
+    def get_permissions(self):
+        permission_list = ["list", "retrieve"]
+        if self.action in permission_list:
+            return []
+        elif self.action == "create":
+            return [IsAuthenticated()]
+        return [IsStartupPermission()]
 
     def list(self, request):
         # Example URL: /api/startups/
@@ -148,18 +167,27 @@ class StartupViewSet(viewsets.ViewSet):
         # Implementation of DELETE METHOD for one startup - ExampLE URL: /api/startups/4/
         # Do not forget about SLASH at the end of URL
         # Deleting logic
-        startup_id = pk
-        data = {
-            'startup_id': startup_id,
-            'message': f"Hello, YOU DELETED Startup with ID: {startup_id}",
-            'status': 'success'
-        }
-        return Response(data)
+        startup = get_object_or_404(Startup, id=pk)
+        projects_exist = Project.objects.filter(startup=startup.id, is_active=True).exists()
 
-    # Maybe we will delete this but i'd like to whow you how it works :)
-    def custom_method(self, request):
-        data = {
-            'message': "Hello, this is custom GET method! We can use it for rendering pages",
-            'status': 'success'
-        }
-        return Response(data)
+        if projects_exist:
+            return Response({"detail": "Please delete all your projects first."},
+                            status=status.HTTP_409_CONFLICT)
+
+        startup.is_active = 0
+        user_instance = startup.owner
+        user_instance.is_startup = 0
+        startup.save()
+        user_instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"], url_path="profile")
+    def get_my_profile(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
+
+        startup = get_object_or_404(Startup, owner=user_instance, is_active=True)
+        serializer = StartupSerializer(startup)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

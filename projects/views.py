@@ -1,3 +1,4 @@
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -10,6 +11,7 @@ from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, Pro
 from projects.permissions import IsInvestor
 from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
+from notifications.tasks import project_updating
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -132,6 +134,11 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
+        current_site = get_current_site(request).domain
+        for investor in project.subscribers.all():
+            project_updating.delay(investor.id, project.id, current_site)
+
+
         data = {
             'project_id': pk,
             'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
@@ -169,6 +176,10 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
+        current_site = get_current_site(request).domain
+        for investor in project.subscribers.all():
+            project_updating.delay(investor.id, project.id, current_site)
+
         data = {
             'project_id': pk,
             'message': f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
@@ -177,18 +188,14 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-
-    # def destroy(self, request, pk=None):
-    #     # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
-    #     # Do not forget about SLASH at the end of URL
-    #     # Deleting logic
-    #     project_id = pk
-    #     data = {
-    #         'project_id': project_id,
-    #         'message': f"Hello, you DELETED PROJECT with ID: {project_id}",
-    #         'status': status.HTTP_200_OK
-    #     }
-    #     return Response(data, status=status.HTTP_204_NO_CONTENT)
+    def destroy(self, request, pk=None):
+        # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
+        # Do not forget about SLASH at the end of URL
+        # Deleting logic
+        project = get_object_or_404(Project, id=pk)
+        project.is_active = 0
+        project.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'], url_path='my')
     def get_my_projects(self, request):

@@ -4,6 +4,11 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+<<<<<<< HEAD
+=======
+
+from users.models import CustomUser
+>>>>>>> main
 
 from projects.models import Project
 from projects.serializers import ProjectSerializer
@@ -42,9 +47,14 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def create(self, request):
         jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+
+        existing_investor = Investor.objects.filter(user=user_id).first()
+        if existing_investor:
+            return Response({"error": "Investor already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = InvestorSerializer(data=request.data)
         if serializer.is_valid():
-            user_id = jwt_token.payload.get("id")
             user_instance = CustomUser.objects.get(id=user_id)
             user_instance.is_investor = 1
             user_instance.save()
@@ -130,3 +140,16 @@ class InvestorViewSet(viewsets.ViewSet):
                             status=status.HTTP_200_OK)
         except Investor.DoesNotExist:
             return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=["get"], url_path="profile")
+    def get_my_profile(self, request):
+        jwt_token = request.auth
+        user_id = jwt_token.payload.get("id")
+        user_instance = CustomUser.objects.get(id=user_id)
+
+        investor = get_object_or_404(Investor, user=user_instance, is_active=True)
+        serializer = InvestorSerializer(investor)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+

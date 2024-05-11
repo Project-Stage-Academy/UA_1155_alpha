@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.functions import Now
 from users.models import CustomUser
 
+
 class Industry(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
@@ -10,6 +11,7 @@ class Industry(models.Model):
 
     class Meta:
         db_table = 'industries'
+
 
 class Startup(models.Model):
     id = models.AutoField(primary_key=True)
@@ -27,4 +29,3 @@ class Startup(models.Model):
 
     class Meta:
         db_table = 'startups'
-

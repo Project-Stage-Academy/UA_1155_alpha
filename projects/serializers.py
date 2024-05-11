@@ -16,6 +16,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         project = Project.objects.create(**validated_data)
         return project
 
+
 class ProjectSerializerUpdate(serializers.ModelSerializer):
     industry = serializers.StringRelatedField()
     """
