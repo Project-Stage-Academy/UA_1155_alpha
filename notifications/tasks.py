@@ -10,6 +10,18 @@ from .utils import Util
 
 @shared_task(bind=True)
 def project_updating(self, investor_id, project_id, domain):
+    """
+    Celery task for notifying an investor about updates on a project.
+
+    Args:
+        self: The task instance.
+        investor_id (int): The ID of the investor to notify.
+        project_id (int): The ID of the project being updated.
+        domain (str): The domain name used to construct links in the notification email.
+
+    Returns:
+        str: A message indicating the completion of the task.
+    """
     project = Project.objects.get(id=project_id)
     investor = Investor.objects.get(id=investor_id)
     user = CustomUser.objects.get(id=investor.user_id)
@@ -35,6 +47,18 @@ def project_updating(self, investor_id, project_id, domain):
 
 @shared_task(bind=True)
 def project_subscription(self, project_id, subscriber_id, domain):
+    """
+    Celery task for notifying a startup owner about a new subscription by an investor.
+
+    Args:
+        self: The task instance.
+        project_id (int): The ID of the project being subscribed to.
+        subscriber_id (int): The ID of the investor subscribing to the project.
+        domain (str): The domain name used to construct links in the notification email.
+
+    Returns:
+        str: A message indicating the completion of the task.
+    """
     subscriber = Investor.objects.get(id=subscriber_id)
     subscriber_user = CustomUser.objects.get(id=subscriber.user_id)
     project = Project.objects.get(id=project_id)
