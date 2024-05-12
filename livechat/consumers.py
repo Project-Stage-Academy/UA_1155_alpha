@@ -3,11 +3,11 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Join room group
-        self.room_name = "chat_room"
+        # Отримати ім'я кімнати з URL
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
-        # Join room group
+        # Приєднатися до групи кімнати
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -16,31 +16,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Leave room group
+        # Відключитися від групи кімнати
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    # Receive message from WebSocket
     async def receive(self, text_data=None, bytes_data=None):
+        # Отримати повідомлення від WebSocket
         text_data_json = json.loads(text_data)
         message = text_data_json.get('message')
 
-        # Send message to room group
+        # Відправити повідомлення у групу кімнати
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
+                'type': 'chat.message',
                 'message': message
             }
         )
 
-    # Receive message from room group
     async def chat_message(self, event):
+        # Отримати повідомлення з групи кімнати
         message = event['message']
 
-        # Send message to WebSocket
+        # Відправити повідомлення у WebSocket
         await self.send(text_data=json.dumps({
             'message': message
         }))

@@ -25,12 +25,14 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
+from livechat.views import ChatsViewSet
 
 router = DefaultRouter()
 
 router.register(r"startups", StartupViewSet, basename="startups")
 router.register(r"projects", ProjectViewSet, basename="projects")
 router.register(r"investors", InvestorViewSet, basename="investors")
+router.register(r"livechat", ChatsViewSet, basename="livechat")
 # router.register(r'messages', MessageViewSet, basename='messages') #TODO: Implement the MessageViewSet logic
 
 
