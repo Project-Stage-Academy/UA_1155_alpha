@@ -1,5 +1,5 @@
 celery==5.3.6
-Django==5.0.4
+Django==4.0.4
 djangorestframework==3.14.0
 mongoengine==0.28.2
 psycopg2==2.9.9
@@ -13,3 +13,4 @@ django_rest_passwordreset==1.4.1
 django-rest-framework-mongoengine==3.4.1
 gevent==24.2.1
 drf-yasg==1.21.7
+mixer==7.2.2
