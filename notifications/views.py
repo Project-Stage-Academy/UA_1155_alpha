@@ -2,8 +2,9 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from notifications.models import Notification
-from .serializers import NotificationSerializer
 from rest_framework.decorators import action
+
+from .serializers import NotificationSerializer
 
 
 class NotificationsViewSet(viewsets.ViewSet):
