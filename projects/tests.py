@@ -25,18 +25,18 @@ class ProjectViewSetTest(TestCase):
         self.url = '/api/projects/'
         self.partial_data = {'description': 'Updated Description', 'industry': 'Testik'}
         self.data = {
-                'startup': self.startup.id,  # Ідентифікатор стартапу (може бути ідентифікатор або об'єкт)
+                'startup': self.startup.id,
                 'project_name': 'Назва вашого проекту',
                 'description': 'Опис вашого проекту',
                 'goals': 'Мети вашого проекту',
-                'budget_needed': 10000.0,  # Бюджет, який потрібен для проекту
-                'budget_ready': 5000.0,  # Бюджет, який вже готовий (необов'язково)
-                'industry': 'Testik',  # Ідентифікатор галузі (може бути ідентифікатор або об'єкт)
-                'promo_photo_url': 'URL фотографії для просування',  # (необов'язково)
-                'promo_video_url': 'URL відео для просування',  # (необов'язково)
-                'status': 'pending',  # Статус проекту (один із варіантів з вашого списку)
-                'rating': 4.5,  # Рейтинг проекту (необов'язково)
-                'is_active': True,  # Активний статус проекту (необов'язково)
+                'budget_needed': 10000.0,
+                'budget_ready': 5000.0,
+                'industry': 'Testik',
+                'promo_photo_url': 'URL фотографії для просування',
+                'promo_video_url': 'URL відео для просування',
+                'status': 'pending',
+                'rating': 4.5,
+                'is_active': True,
         }
 
         
