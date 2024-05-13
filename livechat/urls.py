@@ -3,5 +3,5 @@ from livechat.views import ChatsViewSet
 
 
 urlpatterns = [
-    path("", ChatsViewSet.as_view({'post': 'create'}), name="chats-create"),
+    path("", ChatsViewSet.as_view({'post': 'retrieve_or_create'}), name="chats-create"),
 ]
