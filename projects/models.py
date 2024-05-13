@@ -12,7 +12,6 @@ class Project(models.Model):
         ('completed', 'Completed'),
     ]
 
-
     startup = models.ForeignKey(Startup, on_delete=models.CASCADE, related_name='projects')
     project_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
@@ -29,7 +28,6 @@ class Project(models.Model):
     subscribers = models.ManyToManyField("investors.Investor", related_name='subscribed_projects', blank=True)
     investors = models.ManyToManyField("investors.Investor", related_name='participated_projects', blank=True)
     is_active = models.BooleanField(default=True)
-
 
     class Meta:
         db_table = 'projects'
