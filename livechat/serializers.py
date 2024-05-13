@@ -6,6 +6,4 @@ class DirectChatBetweenUsersSerializer(DocumentSerializer):
 
     class Meta:
         model = DirectChatBetweenUsers
-        fields = [
-            "text",
-        ]
+        fields = ["text"]

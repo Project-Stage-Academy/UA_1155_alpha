@@ -15,17 +15,20 @@ class Chats(models.Model):
 
 class DirectChatBetweenUsers(mongoengine.Document):
 
-    from_user = mongoengine.IntField(required=True)
-    to_user = mongoengine.IntField(required=True)
-    project_id = mongoengine.IntField(required=True)
+    recipient_id = mongoengine.IntField(required=True)
+    recevier_id = mongoengine.IntField(required=True)
+    chat_id = mongoengine.IntField(required=True)
     send_at = mongoengine.DateTimeField(default=datetime.now)
     is_read = mongoengine.BooleanField(default=False)
-    text = mongoengine.StringField(required=True, max_length=1000)
+    text = mongoengine.StringField(required=True, max_length=2000)
 
     @classmethod
-    def create_message(cls, from_user, to_user, project_id, text):
+    def create_message(cls, recipient_id, recevier_id, chat_id, text):
         message = cls(
-            from_user=from_user, to_user=to_user, project_id=project_id, text=text
+            recipient_id=recipient_id,
+            recevier_id=recevier_id,
+            chat_id=chat_id,
+            text=text,
         )
         message.save()
         return message
