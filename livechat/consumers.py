@@ -1,6 +1,8 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
 
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from .models import Chats
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -10,6 +12,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f'chat_{self.room_name}'
 
         # Приєднатися до групи кімнати
+        chat = await self.get_chat_object(self.room_name)
+        if not chat:
+            await self.close()
+
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -48,3 +54,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'type': 'chat',
             'message': message
         }))
+
+    @database_sync_to_async
+    def get_chat_object(self, room_name):
+        return Chats.objects.filter(chat_name=room_name).first()
