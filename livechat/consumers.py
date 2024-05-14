@@ -1,11 +1,18 @@
+import datetime
 import json
+
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.user = self.scope["user"]
         # Отримати ім'я кімнати з URL
-        self.username = self.scope['user'].username
+        self.first_name = self.scope['user'].first_name
+        self.last_name = self.scope['user'].last_name
+        self.username = f'{self.first_name} {self.last_name}'
+
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
@@ -28,14 +35,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Отримати повідомлення від WebSocket
         text_data_json = json.loads(text_data)
         message = text_data_json.get('message')
-
+        username = text_data_json.get('username')
+        timestamp = text_data_json.get('timestamp')
 
         # Відправити повідомлення у групу кімнати
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat.message',
-                'message': message
+                'message': message,
+                'username': username,
+                'timestamp': timestamp
             }
         )
 
@@ -46,5 +56,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Відправити повідомлення у WebSocket
         await self.send(text_data=json.dumps({
             'type': 'chat',
-            'message': message
+            'message': message,
+            'username': self.username,
+            'timestamp': str(datetime.datetime.now())
         }))

@@ -1,17 +1,26 @@
 import uuid
 
+import jwt
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .models import Chats
 from users.models import CustomUser
+from forum.settings import SECRET_KEY
+
+def encode_jwt(id, first_name, last_name):
+    payload = {'id': id, 'first_name': first_name, 'last_name': last_name}
+    return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
 
 
 class ChatsViewSet(viewsets.ViewSet):
     def retrieve_or_create(self, request):
+
         sender_id = request.user.id
+        sender_jwt_token = request.META.get('HTTP_AUTHORIZATION').split()[1]
+
         receiver_id = request.data.get('receiver_id')
 
         existing_chat = Chats.objects.filter(users_id=sender_id).filter(users_id=receiver_id).first()
@@ -28,7 +37,7 @@ class ChatsViewSet(viewsets.ViewSet):
             chat.users_id.add(receiver)
             chat_id = chat.id
         current_site = get_current_site(request).domain
-        chat_url = f"{current_site}/api/livechat/room/{chat_name}/"
+        chat_url = f"{current_site}/api/livechat/room/{chat_name}/?token={sender_jwt_token}"
 
         response_data = {
             'chat_id': chat_id,
@@ -40,6 +49,9 @@ class ChatsViewSet(viewsets.ViewSet):
 
 
 def room(request, chat_name):
+    token = request.GET.get('token')
+
     return render(request, 'livechat/lobby.html', {
-        'chat_name': chat_name
+        'chat_name': chat_name,
+        'token': token
     })
