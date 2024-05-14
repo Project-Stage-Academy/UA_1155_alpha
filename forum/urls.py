@@ -46,5 +46,5 @@ urlpatterns = [
     path("api/users/", include("users.urls")),
     path("api/notifications/", include("notifications.urls")),
     path("yasg/", include("forum.yasg")),
-    path("api/livechat/", include("livechat.urls")),
+    path("api/livechat/", include("livechat.urls"), name="livechat"),
 ]

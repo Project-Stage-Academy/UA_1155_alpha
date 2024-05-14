@@ -1,6 +1,8 @@
 import uuid
 
-from django.shortcuts import get_object_or_404
+from django.contrib.sites.shortcuts import get_current_site
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .models import Chats
@@ -16,6 +18,7 @@ class ChatsViewSet(viewsets.ViewSet):
         if existing_chat:
             chat_id = existing_chat.id
             chat_name = existing_chat.chat_name
+
         else:
             sender = get_object_or_404(CustomUser, pk=sender_id)
             receiver = get_object_or_404(CustomUser, pk=receiver_id)
@@ -24,12 +27,19 @@ class ChatsViewSet(viewsets.ViewSet):
             chat.users_id.add(sender)
             chat.users_id.add(receiver)
             chat_id = chat.id
-
-        chat_url = f"ws://127.0.0.1:8000/ws/chat/{chat_name}/"
+        current_site = get_current_site(request).domain
+        chat_url = f"{current_site}/api/livechat/room/{chat_name}/"
 
         response_data = {
             'chat_id': chat_id,
             'chat_name': chat_name,
             'chat_url': chat_url
         }
+
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+def room(request, chat_name):
+    return render(request, 'livechat/lobby.html', {
+        'chat_name': chat_name
+    })
