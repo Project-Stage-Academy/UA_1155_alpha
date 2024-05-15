@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from users.models import CustomUser
 
+
 from projects.models import Project
 from projects.serializers import ProjectSerializer
 from users.models import CustomUser

@@ -11,7 +11,7 @@ from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, Pro
 from projects.permissions import IsInvestor
 from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
-from notifications.tasks import project_updating
+from notifications.tasks import project_updating, project_subscription
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -262,6 +262,10 @@ class ProjectViewSet(viewsets.ViewSet):
                               f'{project.project_name}.'}, status=status.HTTP_400_BAD_REQUEST)
 
             project.subscribers.add(subscriber)
+
+            current_site = get_current_site(request).domain
+            project_subscription.delay(project.id, subscriber.id, current_site)
+
             return Response({'message': f'Investor {user.first_name} {user.last_name} successfully subscribed to '
                                         f'the project {project.project_name}'}, status=status.HTTP_200_OK)
         except Project.DoesNotExist:
