@@ -13,21 +13,19 @@ class Chats(models.Model):
         db_table = "chats"
 
 
-class DirectChatBetweenUsers(mongoengine.Document):
+class Livechat(mongoengine.Document):
 
-    recipient_id = mongoengine.IntField(required=True)
-    recevier_id = mongoengine.IntField(required=True)
-    chat_id = mongoengine.IntField(required=True)
+    sender_id = mongoengine.IntField(required=True)
+    room_name = mongoengine.IntField(required=True)
     send_at = mongoengine.DateTimeField(default=datetime.now)
     is_read = mongoengine.BooleanField(default=False)
     text = mongoengine.StringField(required=True, max_length=2000)
 
     @classmethod
-    def create_message(cls, recipient_id, recevier_id, chat_id, text):
+    def create_message(cls, sender_id, room_name, text):
         message = cls(
-            recipient_id=recipient_id,
-            recevier_id=recevier_id,
-            chat_id=chat_id,
+            sender_id=sender_id,
+            room_name=room_name,
             text=text,
         )
         message.save()
