@@ -45,8 +45,11 @@
             if (data.type === 'chat') {
                 let messages = document.getElementById('messages')
                 messages.insertAdjacentHTML('beforeend',
-                    `<div class="alert alert-info mt-2 " >
-                        <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
+                    `<div class="alert alert-info mt-2" style="display: flex" >
+                        <p>${data.message}</p>
+                        <div style="margin-left: auto">
+                            <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span>
+                        </div>
                     </div>`);
                 scrollToBottom();
             }
