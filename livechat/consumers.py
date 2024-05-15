@@ -1,4 +1,4 @@
-import asyncio
+
 import datetime
 import json
 
@@ -6,7 +6,9 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from livechat.models import Livechat
 
+
 from .models import Chats
+from users.models import CustomUser
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -28,6 +30,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
+
+        history = self.get_chat_history(self.room_name)
+        for message in history:
+            sender_id = message.sender_id
+            # username = await self.get_username(sender_id)
+            # await self.send(text_data=json.dumps({
+            #     "message": message.text,
+            #     "username": username,
+            # }))
+
 
     async def disconnect(self, close_code):
         # Відключитися від групи кімнати
@@ -86,6 +98,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_chat_object(self, room_name):
         return Chats.objects.filter(chat_name=room_name).first()
+
+
+    def get_chat_history(self, room_name):
+        return Livechat.objects.filter(room_name=room_name)
+
+    @database_sync_to_async
+    def get_username(self, sender_id):
+        user = CustomUser.objects.filter(id=sender_id).first()
+        if user:
+            return f"{user.first_name} {user.last_name}"
+        return None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # async def chat_message(self, event):
     #     # Отримати повідомлення з групи кімнати
