@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Lobby</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Let's chat</h1>
+<div class="container">
+    <h1 class="mt-5">Let's chat</h1>
 
     <form id="form">
-        <input type="text" name="message"/>
+        <div class="input-group">
+            <input type="text" class="form-control" name="message" placeholder="Type your message"/>
+            <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Send</button>
+            </div>
+        </div>
+
     </form>
-    <div id="messages">
+    <div id="messages" class="mt-4">
 
     </div>
 
     <script type="text/javascript">
-        let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/`
+        let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
 
         const chatSocket = new WebSocket(url)
 
@@ -25,9 +33,10 @@
 
             if (data.type === 'chat') {
                 let messages = document.getElementById('messages')
-                messages.insertAdjacentHTML('beforeend', `<div>
-                                    <p>${data.message}</p>
-                                </div>`)
+                messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2">
+                        <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
+                    </div>`)
             }
         }
 
@@ -43,5 +52,6 @@
 
 
     </script>
+</div>
 </body>
 </html>
