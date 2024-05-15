@@ -43,6 +43,7 @@ class ChatsViewSet(viewsets.ViewSet):
             receiver = get_object_or_404(CustomUser, pk=receiver_id)
 
             chat = Chats.objects.create(chat_name=f"room_{sender_id}_{receiver_id}")
+            chat_name = chat.chat_name
             chat.users_id.add(sender)
             chat.users_id.add(receiver)
             chat_id = chat.id

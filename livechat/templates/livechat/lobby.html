@@ -7,7 +7,7 @@
 </head>
 <body>
 <div class="container">
-    <h1 class="mt-5">Let's chat</h1>
+    <h1 class="mt-5">Let's chat, {{ username }}</h1>
 
     <form id="form">
         <div class="input-group">
@@ -35,7 +35,7 @@
                 let messages = document.getElementById('messages')
                 messages.insertAdjacentHTML('beforeend',
                     `<div class="alert alert-info mt-2">
-                        <p>${data.message} <span class="font-weight-bold">{{ username }}</span> <span class="text-muted">${data.timestamp}</span></p>
+                        <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
                     </div>`)
             }
         }
@@ -43,7 +43,6 @@
         let form = document.getElementById('form')
         form.addEventListener('submit', (e)=> {
             e.preventDefault()
-            console.log(e.target)
             let message = e.target.message.value
             chatSocket.send(JSON.stringify({
                 'message': message,
