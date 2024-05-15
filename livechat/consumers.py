@@ -66,6 +66,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         # Отримати повідомлення з групи кімнати
         message = event["message"]
+        username = event["username"]
+        sender_id=event["sender_id"]
 
         # Відправити повідомлення у WebSocket
         await self.send(
@@ -73,6 +75,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "chat",
                     "message": message,
+                    "username": username,
+                    "sender_id": sender_id,
                     "timestamp": str(datetime.datetime.now()),
                 }
             )
