@@ -7,37 +7,68 @@
 </head>
 <body>
 <div class="container">
+
     <h1 class="mt-5">Let's chat, {{ username }}</h1>
-
-    <form id="form">
-        <div class="input-group">
-            <input type="text" class="form-control" name="message" placeholder="Type your message"/>
-            <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit">Send</button>
-            </div>
-        </div>
-
-    </form>
-    <div id="messages" class="mt-4">
-
+    <div style="margin: 1ch">
+            <h3>Participants</h3>
+            <ul id="participants" class="list-group">
+                {% for user in participants %}
+                    <li class="list-group-item">{{ user.first_name }} {{user.last_name}}</li>
+                {% endfor %}
+            </ul>
     </div>
+
+    <div id="messages" class="mt-4" style="max-height: 400px; min-height: 400px; overflow-y: auto; margin-bottom: 2ch">
+    </div>
+    <form id="form" style="margin-bottom: 3ch">
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" placeholder="Type your message"/>
+                <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">Send</button>
+                </div>
+            </div>
+    </form>
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
 
         const chatSocket = new WebSocket(url)
+        const messagesContainer = document.getElementById('messages');
+        function scrollToBottom() {
 
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
         chatSocket.onmessage = function (e) {
             let data = JSON.parse(e.data)
             console.log('Data', data)
 
+            if (data.type === 'chat_history') {
+                let messages = document.getElementById('messages')
+                messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2" style="display: flex" >
+                        <p>${data.message}</p>
+                        <div style="margin-left: auto">
+                            <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                scrollToBottom();
+            }
+
             if (data.type === 'chat') {
                 let messages = document.getElementById('messages')
                 messages.insertAdjacentHTML('beforeend',
-                    `<div class="alert alert-info mt-2">
-                        <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
-                    </div>`)
+                    `<div class="alert alert-info mt-2" style="display: flex" >
+                        <p>${data.message}</p>
+                        <div style="margin-left: auto">
+                            <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                scrollToBottom();
             }
+
+
+
+
         }
 
         let form = document.getElementById('form')

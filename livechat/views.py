@@ -13,6 +13,9 @@ from users.models import CustomUser
 from forum.settings import SECRET_KEY
 
 
+
+
+
 def encode_jwt(id, first_name, last_name):
     payload = {'id': id, 'first_name': first_name, 'last_name': last_name}
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
@@ -72,9 +75,9 @@ def room(request, chat_name):
         return HttpResponse(status=404)
 
     return render(request, 'livechat/lobby.html', {
+        'participants': chat.users_id.all(),
         'chat_name': chat_name,
         'token': token,
         'username': f'{user.first_name} {user.last_name}',
         'sender_id': f'{user.id}',
-
     })

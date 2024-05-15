@@ -1,6 +1,8 @@
 
 import datetime
 import json
+import string
+import random
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -18,7 +20,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.first_name = self.scope["user"].first_name
         self.last_name = self.scope["user"].last_name
         self.username = f"{self.first_name} {self.last_name}"
-
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
@@ -34,11 +35,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         history = self.get_chat_history(self.room_name)
         for message in history:
             sender_id = message.sender_id
-            # username = await self.get_username(sender_id)
-            # await self.send(text_data=json.dumps({
-            #     "message": message.text,
-            #     "username": username,
-            # }))
+            username = await self.get_username(sender_id)
+
+            await self.send(text_data=json.dumps({
+                "message": message.text,
+                "username": username,
+                "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                "type": "chat_history"
+            }))
 
 
     async def disconnect(self, close_code):
@@ -63,7 +67,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": message,
                 "username": username,
                 "timestamp": timestamp,
-                "sender_id": sender_id
+                "sender_id": sender_id,
             },
         )
 
@@ -109,17 +113,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if user:
             return f"{user.first_name} {user.last_name}"
         return None
-
-
-
-
-
-
-
-
-
-
-
 
 
 
