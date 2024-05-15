@@ -56,10 +56,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Зберегти повідомлення у базі даних
         Livechat.create_message(
-            sender_id=666,
-            chat_id=1,
+            sender_id=self.user.id,
+            room_name=self.scope["url_route"]["kwargs"]["room_name"],
             text=message,
         )
+        print(self.user.id)
 
         # Відправити повідомлення у WebSocket
         await self.send(
