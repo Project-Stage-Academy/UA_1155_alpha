@@ -133,7 +133,6 @@ class ProjectViewSetTest(TestCase):
         Test for negative case of working PATCH method in Project because of not active project
         '''
         self.partial_data['is_active'] = None
-        print(self.data)
         request = self.factory.patch(f'{self.url}{self.project.id}/', self.partial_data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id)
