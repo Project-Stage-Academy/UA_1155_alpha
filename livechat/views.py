@@ -75,6 +75,7 @@ def room(request, chat_name):
         return HttpResponse(status=404)
     random_color = '#' + ''.join(random.choice(string.hexdigits) for _ in range(6))
     return render(request, 'livechat/lobby.html', {
+        'participants': chat.users_id.all(),
         'chat_name': chat_name,
         'token': token,
         'username': f'{user.first_name} {user.last_name}',
