@@ -17,20 +17,17 @@
                 {% endfor %}
             </ul>
     </div>
-    <form id="form">
-        <div class="input-group">
-            <input type="text" class="form-control" name="message" placeholder="Type your message"/>
-            <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit">Send</button>
-            </div>
-        </div>
 
-    </form>
-
-
-    <div id="messages" class="mt-4" style="max-height: 400px; overflow-y: auto;">
-
+    <div id="messages" class="mt-4" style="max-height: 400px; min-height: 400px; overflow-y: auto; margin-bottom: 2ch">
     </div>
+    <form id="form" style="margin-bottom: 3ch">
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" placeholder="Type your message"/>
+                <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">Send</button>
+                </div>
+            </div>
+    </form>
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
