@@ -28,7 +28,7 @@
     </form>
 
 
-    <div id="messages" class="mt-4">
+    <div id="messages" class="mt-4" style="max-height: 400px; overflow-y: auto;">
 
     </div>
 
@@ -36,7 +36,11 @@
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
 
         const chatSocket = new WebSocket(url)
+        const messagesContainer = document.getElementById('messages');
+        function scrollToBottom() {
 
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
         chatSocket.onmessage = function (e) {
             let data = JSON.parse(e.data)
             console.log('Data', data)
@@ -46,7 +50,8 @@
                 messages.insertAdjacentHTML('beforeend',
                     `<div class="alert alert-info mt-2 " >
                         <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
-                    </div>`)
+                    </div>`);
+                scrollToBottom();
             }
         }
 
