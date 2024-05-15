@@ -35,8 +35,8 @@ class CustomUser(AbstractBaseUser):
     is_startup = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    registration_date = models.DateTimeField(db_default=Now())
-    last_login = models.DateTimeField(db_default=Now())
+    registration_date = models.DateTimeField(default=Now())
+    last_login = models.DateTimeField(default=Now())
 
     objects = CustomUserManager()
 
