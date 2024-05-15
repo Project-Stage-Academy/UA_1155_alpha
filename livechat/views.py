@@ -69,8 +69,9 @@ def room(request, chat_name):
 
     if user not in chat.users_id.all():
         return HttpResponse(status=404)
-
     return render(request, 'livechat/lobby.html', {
         'chat_name': chat_name,
-        'token': token
+        'token': token,
+        'username': f'{user.first_name} {user.last_name}',
+        'sender_id': f'{user.id}'
     })

@@ -37,6 +37,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Отримати повідомлення від WebSocket
         text_data_json = json.loads(text_data)
         message = text_data_json.get("message")
+        sender_id = text_data_json.get("sender_id")
         username = text_data_json.get("username")
         timestamp = text_data_json.get("timestamp")
 
@@ -50,6 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": message,
                 "username": username,
                 "timestamp": timestamp,
+                "sender_id": sender_id
             },
         )
 
@@ -71,11 +73,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "chat",
                     "message": message,
-                    "username": self.username,
                     "timestamp": str(datetime.datetime.now()),
                 }
             )
         )
+
 
     @database_sync_to_async
     def get_chat_object(self, room_name):
