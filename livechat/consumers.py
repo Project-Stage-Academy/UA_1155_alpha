@@ -1,6 +1,8 @@
 import asyncio
 import datetime
 import json
+import string
+import random
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -16,7 +18,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.first_name = self.scope["user"].first_name
         self.last_name = self.scope["user"].last_name
         self.username = f"{self.first_name} {self.last_name}"
-
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
@@ -40,6 +41,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender_id = text_data_json.get("sender_id")
         username = text_data_json.get("username")
         timestamp = text_data_json.get("timestamp")
+        user_color = text_data_json.get("user_color")
 
         await self.save_message(message)
 
@@ -51,7 +53,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": message,
                 "username": username,
                 "timestamp": timestamp,
-                "sender_id": sender_id
+                "sender_id": sender_id,
+                "user_color": user_color,
             },
         )
 
@@ -68,6 +71,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         username = event["username"]
         sender_id=event["sender_id"]
+        user_color = event["user_color"]
 
         # Відправити повідомлення у WebSocket
         await self.send(
@@ -78,6 +82,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "username": username,
                     "sender_id": sender_id,
                     "timestamp": str(datetime.datetime.now()),
+                    "user_color": user_color,
+
                 }
             )
         )
