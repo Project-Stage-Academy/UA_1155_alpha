@@ -1,5 +1,5 @@
 celery==5.3.6
-Django==4.0.4
+Django==5.0.4
 djangorestframework==3.14.0
 mongoengine==0.28.2
 psycopg2==2.9.9
