@@ -1,18 +1,28 @@
-import uuid
-
 import jwt
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from rest_framework.response import Response
 from rest_framework import status, viewsets
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import AccessToken
+
 from .models import Chats
 from users.models import CustomUser
 from forum.settings import SECRET_KEY
+
 
 def encode_jwt(id, first_name, last_name):
     payload = {'id': id, 'first_name': first_name, 'last_name': last_name}
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
+
+def get_user(user_id):
+    try:
+        return CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return AnonymousUser()
 
 
 class ChatsViewSet(viewsets.ViewSet):
@@ -50,6 +60,15 @@ class ChatsViewSet(viewsets.ViewSet):
 
 def room(request, chat_name):
     token = request.GET.get('token')
+    chat = get_object_or_404(Chats, chat_name=chat_name)
+    try:
+        access_token = AccessToken(token)
+        user = get_user(access_token["user_id"])
+    except TokenError:
+        user = AnonymousUser()
+
+    if user not in chat.users_id.all():
+        return HttpResponse(status=404)
 
     return render(request, 'livechat/lobby.html', {
         'chat_name': chat_name,
