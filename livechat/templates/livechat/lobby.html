@@ -44,7 +44,7 @@
             if (data.type === 'chat') {
                 let messages = document.getElementById('messages')
                 messages.insertAdjacentHTML('beforeend',
-                    `<div class="alert alert-info mt-2 " style="background-color: ${data.user_color}" >
+                    `<div class="alert alert-info mt-2 " >
                         <p>${data.message} <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span></p>
                     </div>`)
             }
@@ -57,8 +57,7 @@
             chatSocket.send(JSON.stringify({
                 'message': message,
                 'username': '{{ username }}',
-                'sender_id': '{{ sender_id }}',
-                'user_color': '{{ user_color }}'
+                'sender_id': '{{ sender_id }}'
             }))
             form.reset()
         })

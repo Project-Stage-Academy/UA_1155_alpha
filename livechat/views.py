@@ -1,6 +1,3 @@
-import random
-import string
-
 import jwt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
@@ -14,6 +11,9 @@ from rest_framework_simplejwt.tokens import AccessToken
 from .models import Chats
 from users.models import CustomUser
 from forum.settings import SECRET_KEY
+
+
+
 
 
 def encode_jwt(id, first_name, last_name):
@@ -73,12 +73,10 @@ def room(request, chat_name):
 
     if user not in chat.users_id.all():
         return HttpResponse(status=404)
-    random_color = '#' + ''.join(random.choice(string.hexdigits) for _ in range(6))
     return render(request, 'livechat/lobby.html', {
         'participants': chat.users_id.all(),
         'chat_name': chat_name,
         'token': token,
         'username': f'{user.first_name} {user.last_name}',
         'sender_id': f'{user.id}',
-        'user_color': random_color
     })
