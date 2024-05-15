@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 
@@ -40,6 +41,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         username = text_data_json.get("username")
         timestamp = text_data_json.get("timestamp")
 
+        await self.save_message(message)
+
         # Відправити повідомлення у групу кімнати
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -52,17 +55,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             },
         )
 
-    async def chat_message(self, event):
-        # Отримати повідомлення з групи кімнати
-        message = event["message"]
-
+    async def save_message(self, message):
         # Зберегти повідомлення у базі даних
-        Livechat.create_message(
+        await database_sync_to_async(Livechat.create_message)(
             sender_id=self.user.id,
             room_name=self.scope["url_route"]["kwargs"]["room_name"],
             text=message,
         )
 
+    async def chat_message(self, event):
+        # Отримати повідомлення з групи кімнати
+        message = event["message"]
 
         # Відправити повідомлення у WebSocket
         await self.send(
@@ -79,3 +82,37 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_chat_object(self, room_name):
         return Chats.objects.filter(chat_name=room_name).first()
+
+    # async def chat_message(self, event):
+    #     # Отримати повідомлення з групи кімнати
+    #     message = event["message"]
+
+    #     # Перевірити, чи повідомлення вже збережене в базі даних
+    #     if not await self.is_message_saved(message):
+    #         # Зберегти повідомлення у базі даних
+    #         await Livechat.create_message(
+    #             sender_id=self.user.id,
+    #             room_name=self.scope["url_route"]["kwargs"]["room_name"],
+    #             text=message,
+    #         )
+
+    #     # Відправити повідомлення у WebSocket
+    #     await self.send(
+    #         text_data=json.dumps(
+    #             {
+    #                 "type": "chat",
+    #                 "message": message,
+    #                 "username": self.username,
+    #                 "timestamp": str(datetime.datetime.now()),
+    #             }
+    #         )
+    #     )
+
+    # @database_sync_to_async
+    # def is_message_saved(self, message):
+    #     # Перевірити, чи повідомлення вже збережене в базі даних
+    #     return Livechat.objects.filter(
+    #         sender_id=self.user.id,
+    #         room_name=self.scope["url_route"]["kwargs"]["room_name"],
+    #         text=message,
+    #     ).first()
