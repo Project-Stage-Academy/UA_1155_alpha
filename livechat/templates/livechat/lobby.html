@@ -81,10 +81,8 @@
                 let userId = data.user_id;
                 let status = data.status;
 
-                // Находим элемент списка участников по идентификатору пользователя
                 let participantStatus = document.getElementById(`status_${userId}`);
                 if (participantStatus) {
-                    // Обновляем текстовое содержимое элемента статуса
                     participantStatus.innerText = status;
                     if (status === 'Online'){
                         participantStatus.classList.remove('offline', 'away');
@@ -100,9 +98,6 @@
                     }
                 }
             }
-
-
-
         }
 
         let form = document.getElementById('form')
