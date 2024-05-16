@@ -8,7 +8,9 @@ from .models import Investor
 
 class InvestorSerializer(serializers.ModelSerializer):
     interests = serializers.ListField(
-        child=serializers.CharField(max_length=255), allow_empty=True, required=False)
+        child=serializers.CharField(max_length=255),
+        allow_empty=True,
+        required=False)
 
     class Meta:
         model = Investor

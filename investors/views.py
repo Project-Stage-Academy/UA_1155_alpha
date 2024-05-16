@@ -26,6 +26,9 @@ class IsInvestorPermission(permissions.BasePermission):
 
 
 class InvestorViewSet(viewsets.ViewSet):
+    queryset = Investor.objects.all()
+    serializer_class = InvestorSerializer
+
     def get_permissions(self):
         permission_list = ["list", "retrieve", "all_subscribed_projects", "remove_subscribed_project"]
         if self.action in permission_list:
@@ -36,21 +39,20 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def list(self, request):
         investors = Investor.objects.filter(is_active=True)
-        serializer = InvestorSerializer(investors, many=True)
-        for data in serializer.data:
-            investor = Investor.objects.get(id=data['id'])
-            interests = investor.interests.all().values_list('name', flat=True)
-            data['interests'] = list(interests)
+        data_list = []
+        for investor in investors:
+            interests = investor.interests.values_list('name', flat=True)
+            data_dict = investor.__dict__
+            data_dict['interests'] = list(interests)
+            data_list.append(data_dict)
+        serializer = InvestorSerializer(data_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk, is_active=True)
-        serializer = InvestorSerializer(investor)
-        for data in serializer.data:
-            investor = Investor.objects.get(id=data['id'])
-            interests = investor.interests.all().values_list('name', flat=True)
-            serializer.data['interests'] = list(interests)
+        serializer = self.serializer_class(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
     def create(self, request):
         jwt_token = request.auth
@@ -78,7 +80,7 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(instance=investor, data=request.data)
         if serializer.is_valid():
             interests_data = serializer.validated_data.pop('interests', [])
-            serializer.save()
+            serializer.save(**serializer.validated_data)
             industries = [Industry.objects.get_or_create(name=name)[0] for name in interests_data]
             investor.interests.set(industries)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -91,7 +93,7 @@ class InvestorViewSet(viewsets.ViewSet):
             instance=investor, data=request.data, partial=True)
         if serializer.is_valid():
             interests_data = serializer.validated_data.pop('interests', [])
-            serializer.save()
+            serializer.save(**serializer.validated_data)
             industries = [Industry.objects.get_or_create(name=name)[0] for name in interests_data]
             investor.interests.set(industries)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -168,23 +170,23 @@ class InvestorViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['patch'], url_path='add-new-interests')
-    def partial_interests_update(self, request, pk=None):
-        investor = get_object_or_404(Investor, id=pk)
-        new_interests = request.data.get('interests', [])
-        if not isinstance(new_interests, list):
-            return Response(
-                {"detail": "Interests should be a list of industry names."}, status=status.HTTP_400_BAD_REQUEST)
-        for interest_name in new_interests:
-            try:
-                industry = Industry.objects.get(name=interest_name)
-                if industry not in investor.interests.all():
-                    investor.interests.add(industry)
-            except Industry.DoesNotExist:
-                return Response(
-                    {"detail": f"Industry '{interest_name}' does not exist."}, status=status.HTTP_400_BAD_REQUEST)
-
-        investor.save()
-        serializer = InvestorSerializer(investor)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+    # @action(detail=True, methods=['patch'], url_path='add-new-interests')
+    # def partial_interests_update(self, request, pk=None):
+    #     investor = get_object_or_404(Investor, id=pk)
+    #     new_interests = request.data.get('interests', [])
+    #     if not isinstance(new_interests, list):
+    #         return Response(
+    #             {"detail": "Interests should be a list of industry names."}, status=status.HTTP_400_BAD_REQUEST)
+    #     for interest_name in new_interests:
+    #         try:
+    #             industry = Industry.objects.get(name=interest_name)
+    #             if industry not in investor.interests.all():
+    #                 investor.interests.add(industry)
+    #         except Industry.DoesNotExist:
+    #             return Response(
+    #                 {"detail": f"Industry '{interest_name}' does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     investor.save()
+    #     serializer = InvestorSerializer(investor)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    #
