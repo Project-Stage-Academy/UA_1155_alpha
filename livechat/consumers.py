@@ -1,8 +1,5 @@
-import asyncio
 import datetime
 import json
-import string
-import random
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -82,7 +79,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
-
 
     @database_sync_to_async
     def get_chat_object(self, room_name):
