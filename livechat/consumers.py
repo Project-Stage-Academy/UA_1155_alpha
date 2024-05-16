@@ -3,7 +3,7 @@ import json
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from livechat.models import Livechat
+from livechat.models import Livechat, Status
 from .models import Chats
 from users.models import CustomUser
 
@@ -19,13 +19,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f"chat_{self.room_name}"
 
         # Приєднатися до групи кімнати
-        chat = await self.get_chat_object(self.room_name)
-        if not chat:
+        self.chat = await self.get_chat_object(self.room_name)
+        if not self.chat:
             await self.close()
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
+
+        await self.send_status("Online")
+        statuses = Status.objects.filter(room_name=self.room_name)
+        for status in statuses:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "status_update",
+                    "user_id": status.user_id,
+                    "status": status.status
+                }
+            )
 
         history = self.get_chat_history(self.room_name)
         for message in history:
@@ -39,10 +51,51 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "chat_history"
             }))
 
+    async def send_status(self, status):
+        # Обработка сообщения о статусе
+        await self.update_users_status(status)
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "status_update",
+                "user_id": self.user.id,
+                "status": status
+            }
+        )
+
+    @database_sync_to_async
+    def update_users_status(self, status_arg):
+        if Status.objects.filter(room_name=self.room_name, user_id=self.user.id):
+            status = Status.objects.get(room_name=self.room_name, user_id=self.user.id)
+            status.status = status_arg
+            status.save()
+        else:
+            status = Status.objects.create(room_name=self.room_name, user_id=self.user.id, status=status)
+            status.save()
+
+    @database_sync_to_async
+    def get_participant_status(self, participant):
+        status = Status.objects.get(room_name=self.room_name, user_id=participant.id)
+        return status
+
+    async def status_update(self, event):
+        user_id = event["user_id"]
+        status = event["status"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "status_update",
+                    "user_id": user_id,
+                    "status": status
+                }
+            )
+        )
 
     async def disconnect(self, close_code):
         # Відключитися від групи кімнати
+        await self.send_status("Offline")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
 
     async def receive(self, text_data=None, bytes_data=None):
         # Отримати повідомлення від WebSocket
@@ -78,7 +131,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Отримати повідомлення з групи кімнати
         message = event["message"]
         username = event["username"]
-        sender_id=event["sender_id"]
+        sender_id = event["sender_id"]
 
         # Відправити повідомлення у WebSocket
         await self.send(
@@ -97,7 +150,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_chat_object(self, room_name):
         return Chats.objects.filter(chat_name=room_name).first()
 
-
     def get_chat_history(self, room_name):
         return Livechat.objects.filter(room_name=room_name)
 
@@ -108,11 +160,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return f"{user.first_name} {user.last_name}"
         return None
 
-
-
-
-
-
+    @database_sync_to_async
+    def get_chat_participants(self):
+        return self.chat.users_id.all()
 
     # async def chat_message(self, event):
     #     # Отримати повідомлення з групи кімнати

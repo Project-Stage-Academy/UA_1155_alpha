@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>Lobby</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .online {
+            color: green;
+        }
+        .offline {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -13,7 +21,10 @@
             <h3>Participants</h3>
             <ul id="participants" class="list-group">
                 {% for user in participants %}
-                    <li class="list-group-item">{{ user.first_name }} {{user.last_name}}</li>
+                    <li class="list-group-item" id="participant_{{ user.id }}">
+                        {{ user.first_name }} {{user.last_name}}
+                        <span id="status_{{ user.id }}"></span>
+                    </li>
                 {% endfor %}
             </ul>
     </div>
@@ -65,7 +76,30 @@
                     </div>`);
                 scrollToBottom();
             }
+            if (data.type === 'status_update') {
+                console.log("data", data)
+                let userId = data.user_id;
+                let status = data.status;
 
+                // Находим элемент списка участников по идентификатору пользователя
+                let participantStatus = document.getElementById(`status_${userId}`);
+                if (participantStatus) {
+                    // Обновляем текстовое содержимое элемента статуса
+                    participantStatus.innerText = status;
+                    if (status === 'Online'){
+                        participantStatus.classList.remove('offline', 'away');
+                        participantStatus.classList.add('online');
+                    }
+                    else if (status === 'Offline'){
+                        participantStatus.classList.remove('online', 'away');
+                        participantStatus.classList.add('offline');
+                    }
+                    else if (status === 'Away') {
+                        participantStatus.classList.remove('online', 'offline');
+                        participantStatus.classList.add('away');
+                    }
+                }
+            }
 
 
 

@@ -36,3 +36,7 @@ class Livechat(mongoengine.Document):
     #     return cls.objects(room_name=room_name)
 
 
+class Status(mongoengine.Document):
+    room_name = mongoengine.StringField(required=True)
+    user_id = mongoengine.IntField(required=True)
+    status = mongoengine.StringField()
