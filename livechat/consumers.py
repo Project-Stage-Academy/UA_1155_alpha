@@ -3,7 +3,7 @@ import json
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from livechat.models import Livechat, Status
+from livechat.models import Livechat, Status, LastLogin
 from .models import Chats
 from users.models import CustomUser
 
@@ -26,7 +26,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
-
+        await self.update_last_login()
         await self.send_status("Online")
         statuses = Status.objects.filter(room_name=self.room_name)
         for status in statuses:
@@ -61,6 +61,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "status": status
             }
         )
+
+    async def update_last_login(self):
+        last_login = LastLogin.objects.filter(room_name=self.room_name, user_id=self.user.id).first()
+        if last_login:
+            last_login.last_seen = datetime.datetime.now()
+            last_login.save()
+        else:
+            LastLogin.objects.create(room_name=self.room_name, user_id=self.user.id, last_seen=datetime.datetime.now())
+
 
     @database_sync_to_async
     def update_users_status(self, status_arg):

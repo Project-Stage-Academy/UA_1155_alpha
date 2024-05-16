@@ -40,3 +40,9 @@ class Status(mongoengine.Document):
     room_name = mongoengine.StringField(required=True)
     user_id = mongoengine.IntField(required=True)
     status = mongoengine.StringField()
+
+
+class LastLogin(mongoengine.Document):
+    room_name = mongoengine.StringField(required=True)
+    user_id = mongoengine.IntField(required=True)
+    last_seen = mongoengine.DateTimeField(default=datetime.now)
