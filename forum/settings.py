@@ -103,6 +103,7 @@ DATABASES = {
         "PORT": os.environ.get("POSTGRES_PORT"),
     },
 }
+
 # Added MongoDB
 MONGO_DB = os.environ.get("MONGO_DATABASE")
 mongoengine.connect(MONGO_DB)
@@ -150,6 +151,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    'EXCEPTION_HANDLER': 'forum.exceptions.custom_exception_handler',
 }
 
 SWAGGER_SETTINGS = {"SECURITY_DEFINITIONS": {"Basic": {"type": "basic"}}}
