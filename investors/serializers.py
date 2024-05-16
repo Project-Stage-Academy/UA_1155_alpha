@@ -35,3 +35,5 @@ class InvestorSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
 
         return data
+
+

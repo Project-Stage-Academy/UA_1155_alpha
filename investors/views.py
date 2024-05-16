@@ -50,7 +50,12 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk, is_active=True)
-        serializer = self.serializer_class(investor)
+        data_list = []
+        interests = investor.interests.values_list('name', flat=True)
+        data_dict = investor.__dict__
+        data_dict['interests'] = list(interests)
+        data_list.append(data_dict)
+        serializer = InvestorSerializer(data_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -68,8 +73,10 @@ class InvestorViewSet(viewsets.ViewSet):
             user_instance.is_investor = 1
             user_instance.save()
             interests_data = serializer.validated_data.pop('interests', [])
+            industries = [Industry.objects.get(name=name) for name in interests_data]
+            if len(industries) != len(interests_data):
+                return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
             investor = Investor.objects.create(user=user_instance, **serializer.validated_data)
-            industries = [Industry.objects.get_or_create(name=name)[0] for name in interests_data]
             investor.interests.set(industries)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -80,9 +87,13 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(instance=investor, data=request.data)
         if serializer.is_valid():
             interests_data = serializer.validated_data.pop('interests', [])
-            serializer.save(**serializer.validated_data)
-            industries = [Industry.objects.get_or_create(name=name)[0] for name in interests_data]
+            industries = [Industry.objects.get(name=name) for name in interests_data]
+
+            if len(industries) != len(interests_data):
+                return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
             investor.interests.set(industries)
+            serializer.save(**serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
