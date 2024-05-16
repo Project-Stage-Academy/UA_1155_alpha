@@ -1,8 +1,12 @@
 from celery import shared_task
+from django.shortcuts import get_object_or_404
 
 from investors.models import Investor
+from investors.serializers import InvestorSerializer
 from projects.models import Project
+from projects.serializers import ProjectSerializer
 from startups.models import Startup
+from startups.serializers import StartupSerializer
 from users.models import CustomUser
 from .models import Notification
 from .utils import Util
@@ -83,3 +87,46 @@ def project_subscription(self, project_id, subscriber_id, domain):
     }
     Util.send_email(sent_data)
     return "Project subscription task completed"
+
+
+# WILL BE REMOVED!!!
+TRUSTED_ADMIN_EMAIL = "olegtsirkun@gmail.com"
+
+
+def get_serializer(data_type, instance):
+    """
+    Get the serializer based on the data_type.
+    """
+    if data_type.__name__ == "Investor":
+        return InvestorSerializer(instance)
+    elif data_type.__name__ == "Project":
+        return ProjectSerializer(instance)
+    elif data_type.__name__ == "Startup":
+        return StartupSerializer(instance)
+    else:
+        raise ValueError("Invalid data_type")
+
+
+@shared_task(bind=True)
+def send_for_moderation(self, data_type, data_id):
+    """
+    Celery task to send email notification to the admin when any profile is updated.
+    """
+    instance = get_object_or_404(data_type, id=data_id)
+    # instance = data_type.objects.get(id=data_id)
+
+    serializer = get_serializer(data_type, instance)
+    serializer_data = serializer.data
+
+    subject = f'{data_type.__name__} verification'
+    email_body = f'Hello! {data_type.__name__} profile is awaiting moderation\n\n'
+    for field, value in serializer_data.items():
+        email_body += f'{field}: {value}\n'
+
+    sent_data = {
+        "email_subject": subject,
+        "email_body": email_body,
+        "to_email": TRUSTED_ADMIN_EMAIL,
+    }
+    Util.send_email(sent_data)
+    return "Notification for admin task completed"
