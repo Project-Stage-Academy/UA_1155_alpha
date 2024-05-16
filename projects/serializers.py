@@ -16,6 +16,25 @@ class ProjectSerializer(serializers.ModelSerializer):
         project = Project.objects.create(**validated_data)
         return project
 
+    def validate(self, data):
+        self.validate_budget(data)
+        return data
+
+    @staticmethod
+    def validate_budget(data):
+        budget_needed = data.get('budget_needed')
+        budget_ready = data.get('budget_ready')
+        if budget_ready and budget_needed:
+            budget_needed = float(budget_needed)
+            budget_ready = float(budget_ready)
+            if budget_ready > budget_needed:
+                raise serializers.ValidationError(
+                    {
+                        "status": "failed",
+                        "message": "Budget ready cannot be greater than budget needed"
+                    }
+                )
+
 
 class ProjectSerializerUpdate(serializers.ModelSerializer):
     industry = serializers.StringRelatedField()
@@ -42,15 +61,7 @@ class ProjectSerializerUpdate(serializers.ModelSerializer):
         return instance
 
     def validate(self, data):
-        budget_needed = data.get('budget_needed')
-        budget_ready = data.get('budget_ready')
-        if budget_ready and budget_needed and budget_ready > budget_needed:
-            raise serializers.ValidationError(
-                {
-                    "status": "failed",
-                    "message": "Budget ready cannot be greater than budget needed"
-                }
-            )
+        ProjectSerializer.validate_budget(data)
         return data
 
 
@@ -84,3 +95,31 @@ class ProjectViewSerializer(serializers.ModelSerializer):
             fields_to_display = ['project_name', 'description', 'industry']
             filtered_data = {key: data[key] for key in fields_to_display}
             return filtered_data
+
+
+class InvestToProjectSerializer(serializers.Serializer):
+    investment_amount = serializers.DecimalField(required=True, max_digits=100, decimal_places=2)
+
+    def validate_investment_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError({
+                "status": "failed",
+                "message": "Investment amount must be greater than zero."
+            })
+        return value
+
+    def validate(self, data):
+        errors = False
+        msg = ""
+        investor = self.context.get('investor')
+        investors_money = float(investor.investment_amount)
+        investment_amount = float(data['investment_amount'])
+        if investment_amount > investors_money and not errors:
+            msg = "Not enough money for investing. Please - top up the balance."
+            errors = True
+        if errors:
+            raise serializers.ValidationError({
+                "status": "failed",
+                "message": msg
+            })
+        return data
