@@ -1,10 +1,15 @@
 from rest_framework import serializers
 
 from forum.utils import ValidationPatterns
+from startups.models import Industry
 from .models import Investor
 
 
+
 class InvestorSerializer(serializers.ModelSerializer):
+    interests = serializers.ListField(
+        child=serializers.CharField(max_length=255), allow_empty=True, required=False)
+
     class Meta:
         model = Investor
         fields = '__all__'
