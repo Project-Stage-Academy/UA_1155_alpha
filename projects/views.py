@@ -1,15 +1,17 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from investors.models import Investor
-from projects.models import Project
-from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
-from projects.permissions import IsInvestor
-from projects.utils import filter_projects, calculate_difference
+from projects.models import Investment, Project
+from projects.serializers import InvestToProjectSerializer, ProjectSerializerUpdate, ProjectSerializer, \
+    ProjectViewSerializer
+from projects.permissions import InvestorPermissionDenied, IsInvestor
+from projects.utils import calculate_investment, filter_projects, calculate_difference
 from startups.models import Startup, Industry
 from notifications.tasks import project_updating, project_subscription
 
@@ -96,7 +98,7 @@ class ProjectViewSet(viewsets.ViewSet):
         project_info = request.data
         project_info['industry'] = industry.id
         serializer = ProjectSerializer(data=project_info)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save(startup=startup)
             data = {
                 'message': "You successfully created new project",
@@ -137,7 +139,6 @@ class ProjectViewSet(viewsets.ViewSet):
         current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
             project_updating.delay(investor.id, project.id, current_site)
-
 
         data = {
             'project_id': pk,
@@ -200,7 +201,7 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='my')
     def get_my_projects(self, request):
         user = self.request.user
-        investors_projects = Project.objects.filter(investors__id=user.id, is_active=True)
+        investors_projects = Project.objects.filter(investors__user=user, is_active=True)
         serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -209,31 +210,29 @@ class ProjectViewSet(viewsets.ViewSet):
         """
         This function allows adding an investor to a project.
         The user must be authenticated and have an active investor linked to their account.
-        The investor is added to the project only if the project is active and does not already contain this investor
+        The investor is added to the project only if the project is active.
 
         :param self: Allow an instance of a class to access its attributes and methods
         :param request: Get the user from the request
         :param pk: The primary key of the project.
         :return: Response: A response with a detailed message about the result of the operation.
-        Examples:
-        Use this method by sending a POST request to the URL: /api/projects/12/invest
-        where 12 is the ID of the project you want to add an investor to.
         """
-
-        user = request.user
-        project = get_object_or_404(Project, is_active=True, id=pk)
-        investor = get_object_or_404(Investor, user=user, is_active=True)
-
-        if project.investors.filter(id=investor.id).exists():
+        try:
+            user = request.user
+            project = get_object_or_404(Project, is_active=True, id=pk)
+            investor = get_object_or_404(Investor, user=user, is_active=True)
+            serializer = InvestToProjectSerializer(data=request.data,
+                                                   context={'project': project, 'investor': investor})
+            serializer.is_valid(raise_exception=True)
+            investment_amount = serializer.validated_data['investment_amount']
+            result = calculate_investment(investor, project, investment_amount)
+            if not project.investors.filter(id=investor.id).exists():
+                project.investors.add(investor)
+            return Response(result, status=status.HTTP_200_OK)
+        except Http404 as e:
             return Response({
-                'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        project.investors.add(investor)
-
-        return Response({
-            'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
-        }, status=status.HTTP_200_OK)
+                'detail': f'{str(e)}'
+            }, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['post'], url_path='add_subscriber')
     def add_subscriber(self, request, pk=None):
@@ -270,7 +269,6 @@ class ProjectViewSet(viewsets.ViewSet):
                                         f'the project {project.project_name}'}, status=status.HTTP_200_OK)
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
-
 
     @action(detail=False, methods=['post'], url_path='compare_projects')
     def compare_projects(self, request):
