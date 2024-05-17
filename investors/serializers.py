@@ -5,12 +5,23 @@ from startups.models import Industry
 from .models import Investor
 
 
+class IndustryNameField(serializers.RelatedField):
+    def to_representation(self, value):
+        return value.name
+
+    def to_internal_value(self, data):
+        try:
+            industry = Industry.objects.get(name=data)
+        except Industry.DoesNotExist:
+            raise serializers.ValidationError(f"Industry with name '{data}' does not exist.")
+        return industry
 
 class InvestorSerializer(serializers.ModelSerializer):
-    interests = serializers.ListField(
-        child=serializers.CharField(max_length=255),
-        allow_empty=True,
-        required=False)
+    interests = serializers.SlugRelatedField(
+        queryset=Industry.objects.all(),
+        slug_field='name',
+        many=True
+    )
 
     class Meta:
         model = Investor
@@ -36,4 +47,11 @@ class InvestorSerializer(serializers.ModelSerializer):
 
         return data
 
-
+    def update(self, instance, validated_data):
+        interests_data = validated_data.pop('interests', None)
+        if interests_data is not None:
+            industries = [Industry.objects.get(name=name) for name in interests_data]
+            instance.interests.set(industries)
+        else:
+            instance.interests.clear()
+        return super().update(instance, validated_data)

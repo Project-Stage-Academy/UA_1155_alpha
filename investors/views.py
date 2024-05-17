@@ -30,7 +30,8 @@ class InvestorViewSet(viewsets.ViewSet):
     serializer_class = InvestorSerializer
 
     def get_permissions(self):
-        permission_list = ["list", "retrieve", "all_subscribed_projects", "remove_subscribed_project"]
+        permission_list = ["list", "retrieve", "update", "partial_update", "all_subscribed_projects",
+                           "remove_subscribed_project"]
         if self.action in permission_list:
             return []
         elif self.action == "create":
@@ -39,23 +40,12 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def list(self, request):
         investors = Investor.objects.filter(is_active=True)
-        data_list = []
-        for investor in investors:
-            interests = investor.interests.values_list('name', flat=True)
-            data_dict = investor.__dict__
-            data_dict['interests'] = list(interests)
-            data_list.append(data_dict)
-        serializer = InvestorSerializer(data_list, many=True)
+        serializer = InvestorSerializer(investors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk, is_active=True)
-        data_list = []
-        interests = investor.interests.values_list('name', flat=True)
-        data_dict = investor.__dict__
-        data_dict['interests'] = list(interests)
-        data_list.append(data_dict)
-        serializer = InvestorSerializer(data_list, many=True)
+        serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -84,33 +74,22 @@ class InvestorViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
-        serializer = InvestorSerializer(instance=investor, data=request.data)
+        serializer = InvestorSerializer(investor, data=request.data, partial=False)
         if serializer.is_valid():
-            interests_data = serializer.validated_data.pop('interests', [])
-            industries = [Industry.objects.get(name=name) for name in interests_data]
-
-            if len(industries) != len(interests_data):
-                return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-            investor.interests.set(industries)
-            serializer.save(**serializer.validated_data)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
-        serializer = InvestorSerializer(
-            instance=investor, data=request.data, partial=True)
+        partial = request.method == 'PATCH'
+        serializer = InvestorSerializer(investor, data=request.data, partial=partial)
         if serializer.is_valid():
-            interests_data = serializer.validated_data.pop('interests', [])
-            serializer.save(**serializer.validated_data)
-            industries = [Industry.objects.get_or_create(name=name)[0] for name in interests_data]
-            investor.interests.set(industries)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def destroy(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
@@ -181,23 +160,36 @@ class InvestorViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=True, methods=['patch'], url_path='add-new-interests')
-    # def partial_interests_update(self, request, pk=None):
-    #     investor = get_object_or_404(Investor, id=pk)
-    #     new_interests = request.data.get('interests', [])
-    #     if not isinstance(new_interests, list):
-    #         return Response(
-    #             {"detail": "Interests should be a list of industry names."}, status=status.HTTP_400_BAD_REQUEST)
-    #     for interest_name in new_interests:
-    #         try:
-    #             industry = Industry.objects.get(name=interest_name)
-    #             if industry not in investor.interests.all():
-    #                 investor.interests.add(industry)
-    #         except Industry.DoesNotExist:
-    #             return Response(
-    #                 {"detail": f"Industry '{interest_name}' does not exist."}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     investor.save()
-    #     serializer = InvestorSerializer(investor)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    #
+    @action(detail=True, methods=['post'], url_path='add_interests')
+    def add_interests(self, request, pk=None):
+        investor = get_object_or_404(Investor, id=pk)
+        interests_data = request.data.get('interests', [])
+        industries = []
+        for interest_name in interests_data:
+            try:
+                industry = Industry.objects.get(name=interest_name)
+                industries.append(industry)
+            except Industry.DoesNotExist:
+                return Response({"error": f"Industry '{interest_name}' does not exist"},
+                                status=status.HTTP_400_BAD_REQUEST)
+        investor.interests.add(*industries)
+        investor.save()
+        serializer = InvestorSerializer(investor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='remove_interests')
+    def remove_interests(self, request, pk=None):
+        investor = get_object_or_404(Investor, id=pk)
+        interests_data = request.data.get('interests', [])
+        industries = []
+        for interest_name in interests_data:
+            try:
+                industry = Industry.objects.get(name=interest_name)
+                industries.append(industry)
+            except Industry.DoesNotExist:
+                return Response({"error": f"Industry '{interest_name}' does not exist"},
+                                status=status.HTTP_400_BAD_REQUEST)
+        investor.interests.remove(*industries)
+        investor.save()
+        serializer = InvestorSerializer(investor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
