@@ -2,7 +2,6 @@ import os
 
 from celery import shared_task
 from django.apps import apps
-from django.shortcuts import get_object_or_404
 
 from investors.models import Investor
 from investors.serializers import InvestorSerializer
@@ -95,8 +94,7 @@ def send_for_moderation(self, app_label, data_type, data_id):
     """
     model_class = apps.get_model(app_label=app_label, model_name=data_type)
 
-    instance = get_object_or_404(model_class, id=data_id)
-    # instance = data_type.objects.get(id=data_id)
+    instance = model_class.objects.get(id=data_id)
 
     serializer = get_serializer(data_type, instance)
     serializer_data = serializer.data
