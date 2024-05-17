@@ -1,5 +1,6 @@
 import os
 
+from django.apps import apps
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 
@@ -25,15 +26,25 @@ class Util:
         email.send()
 
 
-def get_serializer(data_type, instance):
+def get_serializer(model_name, instance):
     """
-    Get the serializer based on the data_type.
+    Get the serializer based on the model_name.
     """
-    if data_type == "Investor":
+    if model_name == "Investor":
         return InvestorSerializer(instance)
-    elif data_type == "Project":
+    elif model_name == "Project":
         return ProjectSerializer(instance)
-    elif data_type == "Startup":
+    elif model_name == "Startup":
         return StartupSerializer(instance)
     else:
         raise ValueError("Invalid data_type")
+
+
+def get_model_by_name(model_name):
+    """
+    Get the model based on the model_name.
+    """
+    for model in apps.get_models():
+        if model.__name__ == model_name:
+            return model
+    raise LookupError(f"Model '{model_name}' not found.")

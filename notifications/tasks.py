@@ -10,7 +10,7 @@ from projects.models import Project
 from startups.models import Startup
 from users.models import CustomUser
 from .models import Notification
-from .utils import Util, get_serializer
+from .utils import Util, get_serializer, get_model_by_name
 
 
 @shared_task(bind=True)
@@ -73,25 +73,25 @@ def project_subscription(self, project_id, subscriber_id, domain):
 
 
 @shared_task(bind=True)
-def send_for_moderation(self, app_label, data_type, data_id):
+def send_for_moderation(self, model_name, data_id):
     """
     Celery task to send email notification to the admin when any profile is updated.
     """
-    model_class = apps.get_model(app_label=app_label, model_name=data_type)
+    model = get_model_by_name(model_name)
 
-    instance = model_class.objects.get(id=data_id)
+    instance = model.objects.get(id=data_id)
 
-    serializer = get_serializer(data_type, instance)
+    serializer = get_serializer(model_name, instance)
     serializer_data = serializer.data
 
-    subject = f"{data_type} verification"
-    email_body = f"Hello! {data_type} profile is awaiting moderation\n\n"
+    subject = f"{model_name} verification"
+    email_body = f"Hello! {model_name} profile is awaiting moderation\n\n"
     for field, value in serializer_data.items():
         email_body += f"{field}: {value}\n"
     to_email = os.environ.get("TRUSTED_ADMIN_EMAIL")
 
-    approve_path = reverse("approve")
-    decline_path = reverse("decline")
+    approve_path = reverse("approve", args=[model_name, data_id])
+    decline_path = reverse("decline", args=[model_name, data_id])
 
     approve_url = f"http://localhost:8000/{approve_path}"
     decline_url = f"http://localhost:8000/{decline_path}"
