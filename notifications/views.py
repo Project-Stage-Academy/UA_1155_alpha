@@ -81,6 +81,7 @@ def approve(request, model_name, data_id):
     model = get_model_by_name(model_name)
     instance = model.objects.get(pk=data_id)
     instance.is_verified = True
+    instance.save()
     return HttpResponse(f"{model_name} profile #{data_id} passed moderation approval")
 
 

@@ -73,7 +73,7 @@ def project_subscription(self, project_id, subscriber_id, domain):
 
 
 @shared_task(bind=True)
-def send_for_moderation(self, model_name, data_id):
+def send_for_moderation(self, model_name, data_id, domain):
     """
     Celery task to send email notification to the admin when any profile is updated.
     """
@@ -93,8 +93,8 @@ def send_for_moderation(self, model_name, data_id):
     approve_path = reverse("approve", args=[model_name, data_id])
     decline_path = reverse("decline", args=[model_name, data_id])
 
-    approve_url = f"http://localhost:8000/{approve_path}"
-    decline_url = f"http://localhost:8000/{decline_path}"
+    approve_url = f"http://{domain}{approve_path}"
+    decline_url = f"http://{domain}{decline_path}"
 
     sent_data = {"email_subject": subject, "email_body": email_body, "to_email": to_email,
                  "html_template": "content_moderation.html",
