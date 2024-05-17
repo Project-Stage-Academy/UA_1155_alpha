@@ -17,7 +17,4 @@ def profile_created_or_updated(sender, instance, created, **kwargs):
     app_label = sender._meta.app_label
     data_type = sender.__name__
     data_id = instance.id
-    send_for_moderation(app_label, data_type, data_id)
-
-    #not working???
-    #send_for_moderation.delay(app_label, data_type, data_id)
+    send_for_moderation.delay(app_label, data_type, data_id)

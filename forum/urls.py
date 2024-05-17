@@ -46,6 +46,6 @@ urlpatterns = [
     path("api/users/", include("users.urls")),
     path('api/investors/<int:pk>/follows/', InvestorViewSet.as_view({'get': 'all_subscribed_projects'}), name='investor_follows'),
     path("yasg/", include("forum.yasg")),
-
+    path("notifications/", include("notifications.urls")),
 ]
 

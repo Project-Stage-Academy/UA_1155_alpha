@@ -3,6 +3,10 @@ import os
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from investors.serializers import InvestorSerializer
+from projects.serializers import ProjectSerializer
+from startups.serializers import StartupSerializer
+
 
 class Util:
     @staticmethod
@@ -19,3 +23,17 @@ class Util:
 
         email.attach_alternative(html_content, "text/html")
         email.send()
+
+
+def get_serializer(data_type, instance):
+    """
+    Get the serializer based on the data_type.
+    """
+    if data_type == "Investor":
+        return InvestorSerializer(instance)
+    elif data_type == "Project":
+        return ProjectSerializer(instance)
+    elif data_type == "Startup":
+        return StartupSerializer(instance)
+    else:
+        raise ValueError("Invalid data_type")

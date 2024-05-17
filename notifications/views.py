@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -73,3 +74,11 @@ class NotificationsViewSet(viewsets.ViewSet):
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def approve(request):
+    return HttpResponse("Approved")
+
+
+def decline(request):
+    return HttpResponse("Declined")

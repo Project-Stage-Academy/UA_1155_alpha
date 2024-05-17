@@ -2,16 +2,15 @@ import os
 
 from celery import shared_task
 from django.apps import apps
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
 
 from investors.models import Investor
-from investors.serializers import InvestorSerializer
 from projects.models import Project
-from projects.serializers import ProjectSerializer
 from startups.models import Startup
-from startups.serializers import StartupSerializer
 from users.models import CustomUser
 from .models import Notification
-from .utils import Util
+from .utils import Util, get_serializer
 
 
 @shared_task(bind=True)
@@ -73,20 +72,6 @@ def project_subscription(self, project_id, subscriber_id, domain):
     return "Project subscription task completed"
 
 
-def get_serializer(data_type, instance):
-    """
-    Get the serializer based on the data_type.
-    """
-    if data_type == "Investor":
-        return InvestorSerializer(instance)
-    elif data_type == "Project":
-        return ProjectSerializer(instance)
-    elif data_type == "Startup":
-        return StartupSerializer(instance)
-    else:
-        raise ValueError("Invalid data_type")
-
-
 @shared_task(bind=True)
 def send_for_moderation(self, app_label, data_type, data_id):
     """
@@ -105,14 +90,16 @@ def send_for_moderation(self, app_label, data_type, data_id):
         email_body += f"{field}: {value}\n"
     to_email = os.environ.get("TRUSTED_ADMIN_EMAIL")
 
-    # TEST VARIANT WILL BE REMOVED!!!
-    approve_button_link = "https://htmlcolorcodes.com/colors/light-green/"
-    decline_button_link = "https://htmlcolorcodes.com/colors/red/"
+    approve_path = reverse("approve")
+    decline_path = reverse("decline")
+
+    approve_url = f"http://localhost:8000/{approve_path}"
+    decline_url = f"http://localhost:8000/{decline_path}"
 
     sent_data = {"email_subject": subject, "email_body": email_body, "to_email": to_email,
                  "html_template": "content_moderation.html",
-                 "context": {"email_body": email_body, "approve_button_link": approve_button_link,
-                             "decline_button_link": decline_button_link, }}
+                 "context": {"email_body": email_body, "approve_button_link": approve_url,
+                             "decline_button_link": decline_url, }}
 
     Util.send_html(sent_data)
 
