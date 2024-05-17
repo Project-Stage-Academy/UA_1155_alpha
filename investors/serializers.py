@@ -16,12 +16,13 @@ class IndustryNameField(serializers.RelatedField):
             raise serializers.ValidationError(f"Industry with name '{data}' does not exist.")
         return industry
 
+
 class InvestorSerializer(serializers.ModelSerializer):
     interests = serializers.SlugRelatedField(
         queryset=Industry.objects.all(),
         slug_field='name',
-        many=True
-    )
+        many=True)
+
 
     class Meta:
         model = Investor
@@ -33,25 +34,45 @@ class InvestorSerializer(serializers.ModelSerializer):
             data['contact_email'] = data['contact_email'].lower()
         return super().to_internal_value(data)
 
-    def validate(self, data):
-        number = data.get('contact_phone')
-        fop_code = data.get('number_for_investor_validation')
-        investment_amount = data.get('investment_amount')
+    # def validate(self, data):
+    #     number = data.get('contact_phone')
+    #     fop_code = data.get('number_for_investor_validation')
+    #     investment_amount = data.get('investment_amount')
+    #
+    #     ValidationPatterns.validate_phone_number(number)
+    #
+    #     ValidationPatterns.validate_fop(fop_code)
+    #
+    #     if investment_amount <= 0:
+    #         raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
+    #
+    #     return data
+    #
 
-        ValidationPatterns.validate_phone_number(number)
 
-        ValidationPatterns.validate_fop(fop_code)
+class InvestorCreateSerializer(serializers.ModelSerializer):
+    interests = serializers.SlugRelatedField(
+        queryset=Industry.objects.all(),
+        slug_field='name',
+        many=True
+    )
 
-        if investment_amount <= 0:
-            raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
+    class Meta:
+        model = Investor
+        fields = ['user', 'location', 'contact_phone', 'contact_email', 'investment_amount', 'interests', 'number_for_investor_validation', 'is_active']
 
-        return data
+    def create(self, validated_data):
+        interests_data = validated_data.pop('interests', [])
+        industries = []
+        for name in interests_data:
+            try:
+                industry = Industry.objects.get(name=name)
+                industries.append(industry)
+            except Industry.DoesNotExist:
+                raise serializers.ValidationError(f"Industry '{name}' does not exist")
 
-    def update(self, instance, validated_data):
-        interests_data = validated_data.pop('interests', None)
-        if interests_data is not None:
-            industries = [Industry.objects.get(name=name) for name in interests_data]
-            instance.interests.set(industries)
-        else:
-            instance.interests.clear()
-        return super().update(instance, validated_data)
+        investor = Investor.objects.create(**validated_data)
+        investor.interests.set(industries)
+
+        return investor
+

@@ -13,7 +13,7 @@ from projects.models import Project
 from projects.serializers import ProjectSerializer
 from users.models import CustomUser
 from .models import Investor
-from .serializers import InvestorSerializer
+from .serializers import InvestorSerializer, InvestorCreateSerializer
 
 
 class IsInvestorPermission(permissions.BasePermission):
@@ -48,6 +48,28 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # def create(self, request):
+    #     jwt_token = request.auth
+    #     user_id = jwt_token.payload.get("id")
+    #
+    #     existing_investor = Investor.objects.filter(user=user_id).first()
+    #     if existing_investor:
+    #         return Response({"error": "Investor already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     serializer = InvestorSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         user_instance = CustomUser.objects.get(id=user_id)
+    #         user_instance.is_investor = 1
+    #         user_instance.save()
+    #         interests_data = serializer.validated_data.pop('interests', [])
+    #         industries = [Industry.objects.get(name=name) for name in interests_data]
+    #         if len(industries) != len(interests_data):
+    #             return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
+    #         investor = Investor.objects.create(user=user_instance, **serializer.validated_data)
+    #         investor.interests.set(industries)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     else:
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request):
         jwt_token = request.auth
@@ -57,20 +79,18 @@ class InvestorViewSet(viewsets.ViewSet):
         if existing_investor:
             return Response({"error": "Investor already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = InvestorSerializer(data=request.data)
+        serializer = InvestorCreateSerializer(data=request.data)
         if serializer.is_valid():
             user_instance = CustomUser.objects.get(id=user_id)
             user_instance.is_investor = 1
             user_instance.save()
-            interests_data = serializer.validated_data.pop('interests', [])
-            industries = [Industry.objects.get(name=name) for name in interests_data]
-            if len(industries) != len(interests_data):
-                return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
-            investor = Investor.objects.create(user=user_instance, **serializer.validated_data)
-            investor.interests.set(industries)
+
+            investor = serializer.save()
+            serializer = InvestorSerializer(investor)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
