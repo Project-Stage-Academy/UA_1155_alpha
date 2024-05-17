@@ -6,6 +6,7 @@ from notifications.models import Notification
 from rest_framework.decorators import action
 
 from .serializers import NotificationSerializer
+from .utils import get_model_by_name
 
 
 class NotificationsViewSet(viewsets.ViewSet):
@@ -76,9 +77,14 @@ class NotificationsViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-def approve(request):
-    return HttpResponse("Approved")
+def approve(request, model_name, data_id):
+    model = get_model_by_name(model_name)
+    instance = model.objects.get(pk=data_id)
+    instance.is_verified = True
+    return HttpResponse(f"{model_name} profile #{data_id} passed moderation approval")
 
 
-def decline(request):
-    return HttpResponse("Declined")
+def decline(request, model_name, data_id):
+    model = get_model_by_name(model_name)
+    instance = model.objects.get(pk=data_id)
+    return HttpResponse(f"{model_name} profile #{data_id} did not pass moderation approval")
