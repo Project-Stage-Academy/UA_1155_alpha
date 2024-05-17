@@ -31,8 +31,5 @@ class Livechat(mongoengine.Document):
         message.save()
         return message
 
-    # @classmethod
-    # def get_chat_history(cls, room_name):
-    #     return cls.objects(room_name=room_name)
 
 

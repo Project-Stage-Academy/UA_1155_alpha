@@ -7,11 +7,9 @@ import random
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from livechat.models import Livechat
-
-
 from .models import Chats
 from users.models import CustomUser
-
+from plyer import notification
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
