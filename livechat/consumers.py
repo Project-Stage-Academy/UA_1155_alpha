@@ -78,7 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             status.status = status_arg
             status.save()
         else:
-            status = Status.objects.create(room_name=self.room_name, user_id=self.user.id, status=status)
+            status = Status.objects.create(room_name=self.room_name, user_id=self.user.id, status=status_arg)
             status.save()
 
     @database_sync_to_async
