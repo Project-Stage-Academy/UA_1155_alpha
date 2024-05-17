@@ -15,7 +15,7 @@ class Util:
         html_content = render_to_string(data['html_template'], data['context'])
 
         email = EmailMultiAlternatives(subject=data['email_subject'], body=data['email_body'],
-            from_email=os.environ.get('EMAIL_HOST_USER'), to=[data['to_email']])
+                                       from_email=os.environ.get('EMAIL_HOST_USER'), to=[data['to_email']])
 
         email.attach_alternative(html_content, "text/html")
         email.send()
