@@ -1,13 +1,13 @@
 from django.http import HttpResponse
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from notifications.models import Notification
-from rest_framework.decorators import action
 
+from notifications.models import Notification
 from .serializers import NotificationSerializer
 from .tasks import send_approve, send_decline
-from .utils import get_model_by_name, Util
+from .utils import get_model_by_name
 
 
 class NotificationsViewSet(viewsets.ViewSet):
@@ -97,7 +97,11 @@ def approve(request, model_name, data_id):
 def decline(request, model_name, data_id):
     model = get_model_by_name(model_name)
     instance = model.objects.get(pk=data_id)
-    contact_email = instance.contact_email
+
+    if model_name == 'Project':
+        contact_email = instance.startup.contact_email
+    else:
+        contact_email = instance.contact_email
 
     send_decline(model_name, contact_email)
     return HttpResponse(f"{model_name} profile #{data_id} did not pass moderation approval")
