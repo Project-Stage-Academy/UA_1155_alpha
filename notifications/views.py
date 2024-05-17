@@ -6,7 +6,8 @@ from notifications.models import Notification
 from rest_framework.decorators import action
 
 from .serializers import NotificationSerializer
-from .utils import get_model_by_name
+from .tasks import send_approve, send_decline
+from .utils import get_model_by_name, Util
 
 
 class NotificationsViewSet(viewsets.ViewSet):
@@ -80,12 +81,23 @@ class NotificationsViewSet(viewsets.ViewSet):
 def approve(request, model_name, data_id):
     model = get_model_by_name(model_name)
     instance = model.objects.get(pk=data_id)
+
     instance.is_verified = True
     instance.save()
+
+    if model_name == 'Project':
+        contact_email = instance.startup.contact_email
+    else:
+        contact_email = instance.contact_email
+
+    send_approve(model_name, contact_email)
     return HttpResponse(f"{model_name} profile #{data_id} passed moderation approval")
 
 
 def decline(request, model_name, data_id):
     model = get_model_by_name(model_name)
     instance = model.objects.get(pk=data_id)
+    contact_email = instance.contact_email
+
+    send_decline(model_name, contact_email)
     return HttpResponse(f"{model_name} profile #{data_id} did not pass moderation approval")

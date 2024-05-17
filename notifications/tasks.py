@@ -104,3 +104,27 @@ def send_for_moderation(self, model_name, data_id, domain):
     Util.send_html(sent_data)
 
     return "Notification for admin task completed"
+
+
+@shared_task(bind=True)
+def send_approve(self, model_name, contact_email):
+    sent_data = {
+        "email_subject": "Forum content moderation",
+        "email_body": f"Congratulations, your {model_name} profile passed moderation!",
+        "to_email": contact_email,
+    }
+
+    Util.send_email(sent_data)
+    return "Approve notification task completed"
+
+
+@shared_task(bind=True)
+def send_decline(self, model_name, contact_email):
+    sent_data = {
+        "email_subject": "Forum content moderation",
+        "email_body": f"Unfortunately, your {model_name} profile did not pass moderation.",
+        "to_email": contact_email,
+    }
+
+    Util.send_email(sent_data)
+    return "Decline notification task completed"
