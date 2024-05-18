@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     "notifications",
     "rest_framework_mongoengine",
     "channels",
-    "livechat"
+    "livechat",
+    "websocket_notifications",
 ]
 
 MIDDLEWARE = [

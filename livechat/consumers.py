@@ -123,6 +123,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "username": username,
                 "timestamp": timestamp,
                 "sender_id": sender_id,
+
             },
         )
 
@@ -149,6 +150,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "username": username,
                     "sender_id": sender_id,
                     "timestamp": str(datetime.datetime.now()),
+                    "user_id": self.user.id,
                 }
             )
         )
@@ -171,36 +173,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_chat_participants(self):
         return self.chat.users_id.all()
 
-    # async def chat_message(self, event):
-    #     # Отримати повідомлення з групи кімнати
-    #     message = event["message"]
-
-    #     # Перевірити, чи повідомлення вже збережене в базі даних
-    #     if not await self.is_message_saved(message):
-    #         # Зберегти повідомлення у базі даних
-    #         await Livechat.create_message(
-    #             sender_id=self.user.id,
-    #             room_name=self.scope["url_route"]["kwargs"]["room_name"],
-    #             text=message,
-    #         )
-
-    #     # Відправити повідомлення у WebSocket
-    #     await self.send(
-    #         text_data=json.dumps(
-    #             {
-    #                 "type": "chat",
-    #                 "message": message,
-    #                 "username": self.username,
-    #                 "timestamp": str(datetime.datetime.now()),
-    #             }
-    #         )
-    #     )
-
-    # @database_sync_to_async
-    # def is_message_saved(self, message):
-    #     # Перевірити, чи повідомлення вже збережене в базі даних
-    #     return Livechat.objects.filter(
-    #         sender_id=self.user.id,
-    #         room_name=self.scope["url_route"]["kwargs"]["room_name"],
-    #         text=message,
-    #     ).first()
