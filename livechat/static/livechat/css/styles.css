@@ -1,0 +1,33 @@
+.online {
+    color: green;
+}
+.offline {
+    color: red;
+}
+
+/* Styles for chat messages */
+.message {
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 60%;
+    clear: both;
+}
+
+.message .message-info {
+    font-size: 0.8em;
+    color: gray;
+    text-align: right;
+}
+
+.message.sent {
+    background-color: #d4f7dc; /* Light green color for sent messages */
+    margin-left: auto;
+    text-align: left;
+}
+
+.message.received {
+    background-color: #d4eaf7; /* Light blue color for received messages */
+    margin-right: auto;
+    text-align: left;
+}

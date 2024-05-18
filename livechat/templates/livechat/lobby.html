@@ -4,83 +4,68 @@
     <meta charset="UTF-8">
     <title>Lobby</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .online {
-            color: green;
-        }
-        .offline {
-            color: red;
-        }
-    </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'livechat/css/styles.css' %}">
 </head>
 <body>
 <div class="container">
-
     <h1 class="mt-5">Let's chat, {{ username }}</h1>
     <div style="margin: 1ch">
-            <h3>Participants</h3>
-            <ul id="participants" class="list-group">
-                {% for user in participants %}
-                    <li class="list-group-item" id="participant_{{ user.id }}">
-                        {{ user.first_name }} {{user.last_name}}
-                        <span id="status_{{ user.id }}"></span>
-                    </li>
-                {% endfor %}
-            </ul>
+        <h3>Participants</h3>
+        <ul id="participants" class="list-group">
+            {% for user in participants %}
+                <li class="list-group-item" id="participant_{{ user.id }}">
+                    {{ user.first_name }} {{user.last_name}}
+                    <span id="status_{{ user.id }}"></span>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
 
     <div id="messages" class="mt-4" style="max-height: 400px; min-height: 400px; overflow-y: auto; margin-bottom: 2ch">
     </div>
     <form id="form" style="margin-bottom: 3ch">
-            <div class="input-group">
-                <input type="text" class="form-control" name="message" placeholder="Type your message"/>
-                <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">Send</button>
-                </div>
+        <div class="input-group">
+            <input type="text" class="form-control" name="message" placeholder="Type your message"/>
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">Send</button>
             </div>
+        </div>
     </form>
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
-
+    
         const chatSocket = new WebSocket(url)
         const messagesContainer = document.getElementById('messages');
+        
         function scrollToBottom() {
-
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }
+        }
+    
         chatSocket.onmessage = function (e) {
             let data = JSON.parse(e.data)
             console.log('Data', data)
-
-            if (data.type === 'chat_history') {
+    
+            if (data.type === 'chat_history' || data.type === 'chat') {
                 let messages = document.getElementById('messages')
+                let messageClass = data.sender_id == '{{ sender_id }}' ? 'sent' : 'received';
                 messages.insertAdjacentHTML('beforeend',
-                    `<div class="alert alert-info mt-2" style="display: flex" >
+                    `<div class="alert alert-info mt-2 message ${messageClass}" >
                         <p>${data.message}</p>
-                        <div style="margin-left: auto">
-                            <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span>
+                        <div class="message-info">
+                            <span class="font-weight-bold">${data.username}</span> 
+                            <span class="text-muted">${data.timestamp}</span>
                         </div>
                     </div>`);
                 scrollToBottom();
             }
-
-            if (data.type === 'chat') {
-                let messages = document.getElementById('messages')
-                messages.insertAdjacentHTML('beforeend',
-                    `<div class="alert alert-info mt-2" style="display: flex" >
-                        <p>${data.message}</p>
-                        <div style="margin-left: auto">
-                            <span class="font-weight-bold">${data.username}</span> <span class="text-muted">${data.timestamp}</span>
-                        </div>
-                    </div>`);
-                scrollToBottom();
-            }
+    
             if (data.type === 'status_update') {
                 console.log("data", data)
                 let userId = data.user_id;
                 let status = data.status;
-
+    
                 let participantStatus = document.getElementById(`status_${userId}`);
                 if (participantStatus) {
                     participantStatus.innerText = status;
@@ -99,7 +84,7 @@
                 }
             }
         }
-
+    
         let form = document.getElementById('form')
         form.addEventListener('submit', (e)=> {
             e.preventDefault()
@@ -111,7 +96,7 @@
             }))
             form.reset()
         })
-    </script>
+    </script>    
 </div>
 </body>
 </html>

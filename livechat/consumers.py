@@ -3,9 +3,10 @@ import json
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from livechat.models import Livechat, Status, LastLogin
-from .models import Chats
+from livechat.models import LastLogin, Livechat, Status
 from users.models import CustomUser
+
+from .models import Chats
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -35,8 +36,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "status_update",
                     "user_id": status.user_id,
-                    "status": status.status
-                }
+                    "status": status.status,
+                },
             )
 
         history = self.get_chat_history(self.room_name)
@@ -44,32 +45,38 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender_id = message.sender_id
             username = await self.get_username(sender_id)
 
-            await self.send(text_data=json.dumps({
-                "message": message.text,
-                "username": username,
-                "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                "type": "chat_history"
-            }))
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "message": message.text,
+                        "username": username,
+                        "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                        "type": "chat_history",
+                        "sender_id": message.sender_id,
+                    }
+                )
+            )
 
     async def send_status(self, status):
         await self.update_users_status(status)
         await self.channel_layer.group_send(
             self.room_group_name,
-            {
-                "type": "status_update",
-                "user_id": self.user.id,
-                "status": status
-            }
+            {"type": "status_update", "user_id": self.user.id, "status": status},
         )
 
     async def update_last_login(self):
-        last_login = LastLogin.objects.filter(room_name=self.room_name, user_id=self.user.id).first()
+        last_login = LastLogin.objects.filter(
+            room_name=self.room_name, user_id=self.user.id
+        ).first()
         if last_login:
             last_login.last_seen = datetime.datetime.now()
             last_login.save()
         else:
-            LastLogin.objects.create(room_name=self.room_name, user_id=self.user.id, last_seen=datetime.datetime.now())
-
+            LastLogin.objects.create(
+                room_name=self.room_name,
+                user_id=self.user.id,
+                last_seen=datetime.datetime.now(),
+            )
 
     @database_sync_to_async
     def update_users_status(self, status_arg):
@@ -78,7 +85,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             status.status = status_arg
             status.save()
         else:
-            status = Status.objects.create(room_name=self.room_name, user_id=self.user.id, status=status_arg)
+            status = Status.objects.create(
+                room_name=self.room_name, user_id=self.user.id, status=status_arg
+            )
             status.save()
 
     @database_sync_to_async
@@ -91,11 +100,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         status = event["status"]
         await self.send(
             text_data=json.dumps(
-                {
-                    "type": "status_update",
-                    "user_id": user_id,
-                    "status": status
-                }
+                {"type": "status_update", "user_id": user_id, "status": status}
             )
         )
 
@@ -103,7 +108,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Відключитися від групи кімнати
         await self.send_status("Offline")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
 
     async def receive(self, text_data=None, bytes_data=None):
         # Отримати повідомлення від WebSocket
@@ -171,37 +175,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_chat_participants(self):
         return self.chat.users_id.all()
-
-    # async def chat_message(self, event):
-    #     # Отримати повідомлення з групи кімнати
-    #     message = event["message"]
-
-    #     # Перевірити, чи повідомлення вже збережене в базі даних
-    #     if not await self.is_message_saved(message):
-    #         # Зберегти повідомлення у базі даних
-    #         await Livechat.create_message(
-    #             sender_id=self.user.id,
-    #             room_name=self.scope["url_route"]["kwargs"]["room_name"],
-    #             text=message,
-    #         )
-
-    #     # Відправити повідомлення у WebSocket
-    #     await self.send(
-    #         text_data=json.dumps(
-    #             {
-    #                 "type": "chat",
-    #                 "message": message,
-    #                 "username": self.username,
-    #                 "timestamp": str(datetime.datetime.now()),
-    #             }
-    #         )
-    #     )
-
-    # @database_sync_to_async
-    # def is_message_saved(self, message):
-    #     # Перевірити, чи повідомлення вже збережене в базі даних
-    #     return Livechat.objects.filter(
-    #         sender_id=self.user.id,
-    #         room_name=self.scope["url_route"]["kwargs"]["room_name"],
-    #         text=message,
-    #     ).first()
