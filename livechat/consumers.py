@@ -19,7 +19,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
-        # Приєднатися до групи кімнати
         self.chat = await self.get_chat_object(self.room_name)
         if not self.chat:
             await self.close()
@@ -105,12 +104,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        # Відключитися від групи кімнати
         await self.send_status("Offline")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):
-        # Отримати повідомлення від WebSocket
         text_data_json = json.loads(text_data)
         message = text_data_json.get("message")
         sender_id = text_data_json.get("sender_id")
@@ -119,7 +116,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.save_message(message)
 
-        # Відправити повідомлення у групу кімнати
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -132,7 +128,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def save_message(self, message):
-        # Зберегти повідомлення у базі даних
         await database_sync_to_async(Livechat.create_message)(
             sender_id=self.user.id,
             room_name=self.scope["url_route"]["kwargs"]["room_name"],
@@ -140,12 +135,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
-        # Отримати повідомлення з групи кімнати
         message = event["message"]
         username = event["username"]
         sender_id = event["sender_id"]
 
-        # Відправити повідомлення у WebSocket
         await self.send(
             text_data=json.dumps(
                 {
@@ -153,7 +146,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     "username": username,
                     "sender_id": sender_id,
-                    "timestamp": str(datetime.datetime.now()),
+                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 }
             )
         )
