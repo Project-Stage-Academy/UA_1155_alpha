@@ -35,7 +35,7 @@
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
-
+    
         const chatSocket = new WebSocket(url)
         const messagesContainer = document.getElementById('messages');
 
