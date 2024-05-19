@@ -7,7 +7,7 @@ class Notification(mongoengine.Document):
     TYPES_OF_NOTIFICATIONS = [
         ("project_updating", "Project Updating"),
         ("investor_subscription", "Investors Subscription"),
-        ("new_message", "New Message")
+
     ]
     TYPES_OF_RECIPIENTS = [
         ("investor", "Investor"),

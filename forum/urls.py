@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from investors.views import InvestorViewSet
+from livechat.views import ChatsViewSet
+from notifications.views import NotificationsViewSet
 from projects.views import ProjectViewSet
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
@@ -25,13 +27,13 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from startups.views import StartupViewSet
-from livechat.views import ChatsViewSet
 
 router = DefaultRouter()
 
 router.register(r"startups", StartupViewSet, basename="startups")
 router.register(r"projects", ProjectViewSet, basename="projects")
 router.register(r"investors", InvestorViewSet, basename="investors")
+router.register(r"notifications", NotificationsViewSet, basename="notifications")
 router.register(r"livechat", ChatsViewSet, basename="livechat")
 # router.register(r'messages', MessageViewSet, basename='messages') #TODO: Implement the MessageViewSet logic
 
@@ -44,7 +46,11 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/users/", include("users.urls")),
-    path("api/notifications/", include("notifications.urls")),
+    path(
+        "api/investors/<int:pk>/follows/",
+        InvestorViewSet.as_view({"get": "all_subscribed_projects"}),
+        name="investor_follows",
+    ),
     path("yasg/", include("forum.yasg")),
     path("api/livechat/", include("livechat.urls"), name="livechat"),
 ]

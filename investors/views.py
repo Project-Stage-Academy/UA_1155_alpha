@@ -4,9 +4,12 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from users.models import CustomUser
 
+
+from projects.models import Project
+from projects.serializers import ProjectSerializer
+from users.models import CustomUser
 from .models import Investor
 from .serializers import InvestorSerializer
 
@@ -22,7 +25,7 @@ class IsInvestorPermission(permissions.BasePermission):
 
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        permission_list = ["list", "retrieve"]
+        permission_list = ["list", "retrieve", "all_subscribed_projects", "remove_subscribed_project"]
         if self.action in permission_list:
             return []
         elif self.action == "create":
@@ -89,6 +92,52 @@ class InvestorViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=['get'], url_path='follows')
+    def all_subscribed_projects(self, request, pk=None):
+        """
+        Get all subscribed projects of the investor.
+        This action retrieves a list of all projects that the investor is subscribed to.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the investor. If provided, fetch projects subscribed by this investor.
+        Returns:
+        Response: A JSON response containing a list of subscribed projects.
+        """
+        try:
+            user = request.user
+            if pk is None:
+                investor = get_object_or_404(Investor, pk=user.id, is_active=True)
+            else:
+                investor = get_object_or_404(Investor, pk=pk, is_active=True)
+            subscribed_projects = investor.subscribed_projects.all()
+            serializer = ProjectSerializer(subscribed_projects, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], url_path='remove_subscribed_project')
+    def remove_subscribed_project(self, request, pk=None):
+        """
+        Remove a project from the investor's subscribed projects.
+        This action allows removing a project from the list of subscribed projects of the investor.
+        It expects a POST request with the project's ID included in the request data.
+        Upon successful removal, it returns a success message along with HTTP 200 OK status code.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the investor.
+        Returns:
+        Response: A JSON response containing a success message upon successful removal of the project.
+        """
+        try:
+            investor = Investor.objects.get(pk=pk)
+            project_id = request.data.get('project_id')
+            project = get_object_or_404(Project, pk=project_id)
+            investor.subscribed_projects.remove(project)
+            return Response({'message': f'Project {project_id} successfully removed from subscribed projects'},
+                            status=status.HTTP_200_OK)
+        except Investor.DoesNotExist:
+            return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=False, methods=["get"], url_path="profile")
     def get_my_profile(self, request):
         jwt_token = request.auth
@@ -99,4 +148,5 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(investor)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
