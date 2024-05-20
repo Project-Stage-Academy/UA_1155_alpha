@@ -165,14 +165,11 @@ class InvestorViewSet(viewsets.ViewSet):
         This action allows adding interests to the specified investor's profile. It expects a POST request with the
         interests included in the request data. If the interests already exist in the profile, it returns an error message.
         Upon successful addition, it returns the updated investor profile along with an HTTP 200 OK status code.
-
         Parameters:
         - request (Request): The HTTP request object.
         - pk (int): The primary key of the investor to whom the interests will be added.
-
         Returns:
         Response: A JSON response containing the updated investor profile upon successful addition of the interests.
-
         Raises:
         Http404: If the specified investor does not exist.
         """
@@ -206,14 +203,11 @@ class InvestorViewSet(viewsets.ViewSet):
         This action allows removing interests from the specified investor's profile. It expects a POST request with the
         interests included in the request data. If the specified interests do not exist, it returns an error message.
         Upon successful removal, it returns the updated investor profile along with an HTTP 200 OK status code.
-
         Parameters:
         - request (Request): The HTTP request object.
         - pk (int): The primary key of the investor from whom the interests will be removed.
-
         Returns:
         Response: A JSON response containing the updated investor profile upon successful removal of the interests.
-
         Raises:
         Http404: If the specified investor does not exist.
         """
@@ -221,6 +215,13 @@ class InvestorViewSet(viewsets.ViewSet):
         investor = get_object_or_404(Investor, id=pk)
         interests_data = request.data.get('interests', [])
         industries = []
+
+        existing_interests = investor.interests.values_list('name', flat=True)
+        non_existing_interests = [name for name in interests_data if name not in existing_interests]
+        if non_existing_interests:
+            return Response({"error": f"Interests '{', '.join(non_existing_interests)}' don't exist in the profile"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         for interest_name in interests_data:
             try:
                 industry = Industry.objects.get(name=interest_name)
