@@ -48,28 +48,6 @@ class InvestorViewSet(viewsets.ViewSet):
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # def create(self, request):
-    #     jwt_token = request.auth
-    #     user_id = jwt_token.payload.get("id")
-    #
-    #     existing_investor = Investor.objects.filter(user=user_id).first()
-    #     if existing_investor:
-    #         return Response({"error": "Investor already exists for this user"}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     serializer = InvestorSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         user_instance = CustomUser.objects.get(id=user_id)
-    #         user_instance.is_investor = 1
-    #         user_instance.save()
-    #         interests_data = serializer.validated_data.pop('interests', [])
-    #         industries = [Industry.objects.get(name=name) for name in interests_data]
-    #         if len(industries) != len(interests_data):
-    #             return Response({"error": "One or more industries do not exist"}, status=status.HTTP_400_BAD_REQUEST)
-    #         investor = Investor.objects.create(user=user_instance, **serializer.validated_data)
-    #         investor.interests.set(industries)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     else:
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request):
         jwt_token = request.auth
@@ -182,9 +160,33 @@ class InvestorViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'], url_path='add_interests')
     def add_interests(self, request, pk=None):
+        """
+        Add interests to an investor's profile.
+        This action allows adding interests to the specified investor's profile. It expects a POST request with the
+        interests included in the request data. If the interests already exist in the profile, it returns an error message.
+        Upon successful addition, it returns the updated investor profile along with an HTTP 200 OK status code.
+
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the investor to whom the interests will be added.
+
+        Returns:
+        Response: A JSON response containing the updated investor profile upon successful addition of the interests.
+
+        Raises:
+        Http404: If the specified investor does not exist.
+        """
+
         investor = get_object_or_404(Investor, id=pk)
         interests_data = request.data.get('interests', [])
         industries = []
+
+        existing_interests = investor.interests.values_list('name', flat=True)
+        duplicate_interests = [name for name in interests_data if name in existing_interests]
+        if duplicate_interests:
+            return Response({"error": f"Interests '{', '.join(duplicate_interests)}' already exist in the profile"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         for interest_name in interests_data:
             try:
                 industry = Industry.objects.get(name=interest_name)
@@ -199,6 +201,23 @@ class InvestorViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'], url_path='remove_interests')
     def remove_interests(self, request, pk=None):
+        """
+        Remove interests from an investor's profile.
+        This action allows removing interests from the specified investor's profile. It expects a POST request with the
+        interests included in the request data. If the specified interests do not exist, it returns an error message.
+        Upon successful removal, it returns the updated investor profile along with an HTTP 200 OK status code.
+
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the investor from whom the interests will be removed.
+
+        Returns:
+        Response: A JSON response containing the updated investor profile upon successful removal of the interests.
+
+        Raises:
+        Http404: If the specified investor does not exist.
+        """
+
         investor = get_object_or_404(Investor, id=pk)
         interests_data = request.data.get('interests', [])
         industries = []

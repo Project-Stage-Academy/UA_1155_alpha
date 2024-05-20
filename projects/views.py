@@ -274,6 +274,22 @@ class ProjectViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'], url_path='compare_projects')
     def compare_projects(self, request):
+        """
+        Compare multiple projects.
+        This action allows comparing multiple projects based on their attributes. It expects a POST request with the
+        project IDs included in the request data. If fewer than two project IDs are provided, it returns an error message.
+        Upon successful comparison, it returns a dictionary of differences between the projects along with an HTTP 200 OK status code.
+
+        Parameters:
+        - request (Request): The HTTP request object.
+
+        Returns:
+        Response: A JSON response containing the differences between the projects upon successful comparison.
+
+        Raises:
+        ValueError: If fewer than two project IDs are provided.
+        """
+
         try:
             project_ids = request.data.get('project_ids', [])
             projects = Project.objects.filter(pk__in=project_ids)

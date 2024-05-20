@@ -51,7 +51,6 @@ class InvestorSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class InvestorCreateSerializer(serializers.ModelSerializer):
     interests = serializers.SlugRelatedField(
         queryset=Industry.objects.all(),
@@ -61,7 +60,8 @@ class InvestorCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Investor
-        fields = ['user', 'location', 'contact_phone', 'contact_email', 'investment_amount', 'interests', 'number_for_investor_validation', 'is_active']
+        fields = ['user', 'location', 'contact_phone', 'contact_email', 'investment_amount', 'interests',
+                  'number_for_investor_validation', 'is_active']
 
     def create(self, validated_data):
         interests_data = validated_data.pop('interests', [])
