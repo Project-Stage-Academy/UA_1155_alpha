@@ -9,9 +9,9 @@ from investors.models import Investor
 from projects.models import Project
 from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
 from projects.permissions import IsInvestor
-from projects.utils import filter_projects
+from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
-from notifications.tasks import project_updating
+from notifications.tasks import project_updating, project_subscription
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -40,8 +40,8 @@ class ProjectViewSet(viewsets.ViewSet):
     - Responses contain the status of the operation, messages, and project data (in list, retrieve, create, update, partial_update operations).
     """
 
-    free_methods = ("list", "retrieve")
-    investors_methods = ("invest_to_project", "get_my_projects")
+    free_methods = ("list", "retrieve", "compare_projects")
+    investors_methods = ("invest_to_project", "get_my_projects", "add_subscriber")
     allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
 
     def get_permissions(self):
@@ -235,3 +235,61 @@ class ProjectViewSet(viewsets.ViewSet):
             'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
         }, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='add_subscriber')
+    def add_subscriber(self, request, pk=None):
+        """
+        Add a subscriber to the project.
+        This action allows adding a subscriber to the specified project. It expects a POST request with the subscriber's
+        ID included in the request data. Upon successful addition, it returns a success message along with
+        HTTP 200 OK status code.
+        Parameters:
+        - request (Request): The HTTP request object.
+        - pk (int): The primary key of the project to which the subscriber will be added.
+        Returns:
+        Response: A JSON response containing a success message upon successful addition of the subscriber.
+        Raises:
+        Http404: If the specified project does not exist.
+        """
+        try:
+            user = request.user
+            project = get_object_or_404(Project, is_active=True, id=pk)
+            subscriber = get_object_or_404(Investor, user=user, is_active=True)
+
+            if project.subscribers.filter(id=subscriber.id).exists():
+                project.subscribers.remove(subscriber)
+                return Response({
+                    'detail': f'Investor {user.first_name} {user.last_name} successfully unsubscribed from the project '
+                              f'{project.project_name}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            project.subscribers.add(subscriber)
+
+            current_site = get_current_site(request).domain
+            project_subscription.delay(project.id, subscriber.id, current_site)
+
+            return Response({'message': f'Investor {user.first_name} {user.last_name} successfully subscribed to '
+                                        f'the project {project.project_name}'}, status=status.HTTP_200_OK)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+    @action(detail=False, methods=['post'], url_path='compare_projects')
+    def compare_projects(self, request):
+        try:
+            project_ids = request.data.get('project_ids', [])
+            projects = Project.objects.filter(pk__in=project_ids)
+
+            if len(project_ids) < 2:
+                return Response({'error': 'At least two projects are required for comparison'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            differences = {}
+            for i in range(len(projects)):
+                for j in range(i + 1, len(projects)):
+                    project1 = projects[i]
+                    project2 = projects[j]
+                    key = f'comparison_{i + 1}_{j + 1}'
+                    differences[key] = calculate_difference(project1, project2)
+
+            return Response(differences, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

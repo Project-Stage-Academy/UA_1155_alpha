@@ -1,7 +1,9 @@
 from django.urls import path
-from .views import NotificationListView, NotificationsAllView
+from .views import approve, decline
 
 urlpatterns = [
-    path('new/', NotificationListView.as_view(), name='new_notifications'),
-    path('all/', NotificationsAllView.as_view(), name='all_notifications')
+    path("approve/<str:model_name>/<int:data_id>", approve, name='approve'),
+    path("decline/<str:model_name>/<int:data_id>", decline, name='decline'),
 ]
+
+

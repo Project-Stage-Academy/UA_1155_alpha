@@ -24,7 +24,7 @@ class Startup(models.Model):
     contact_email = models.CharField(max_length=128, unique=True)
     number_for_startup_validation = models.IntegerField(null=True)
     is_verified = models.BooleanField(default=False)
-    registration_date = models.DateTimeField(db_default=Now())
+    registration_date = models.DateTimeField(default=Now())
     is_active = models.BooleanField(default=True)
 
     class Meta:
