@@ -1,7 +1,7 @@
 # Forum-Project-Stage-CC
 Forum Project Stage CC Template Repo
 
-**To run project locally:**
+## To run project locally:
 
  1) Make a copy of .env.example file, rename it to .env, and add your local settings. Ask any team members for email settings and secret key.
  2) Create Postgres DB 
@@ -12,7 +12,7 @@ Forum Project Stage CC Template Repo
  7) Run "python manage.py runserver" 
  8) Open second terminal and run "celery -A forum  worker -l info -P gevent" - to run celery
 
-**To see all project endpoins:**
+## To see all project endpoins:
 
 Go to /yasg/swagger/
 Here you can see all endpoints, json examples for requests and responses
