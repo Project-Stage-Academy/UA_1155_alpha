@@ -34,20 +34,22 @@ class InvestorSerializer(serializers.ModelSerializer):
             data['contact_email'] = data['contact_email'].lower()
         return super().to_internal_value(data)
 
-    # def validate(self, data):
-    #     number = data.get('contact_phone')
-    #     fop_code = data.get('number_for_investor_validation')
-    #     investment_amount = data.get('investment_amount')
-    #
-    #     ValidationPatterns.validate_phone_number(number)
-    #
-    #     ValidationPatterns.validate_fop(fop_code)
-    #
-    #     if investment_amount <= 0:
-    #         raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
-    #
-    #     return data
-    #
+    def validate(self, data):
+        number = data.get('contact_phone')
+        fop_code = data.get('number_for_investor_validation')
+        investment_amount = data.get('investment_amount')
+
+        if number:
+            ValidationPatterns.validate_phone_number(number)
+
+        if fop_code:
+            ValidationPatterns.validate_fop(fop_code)
+
+        if investment_amount is not None and investment_amount <= 0:
+            raise serializers.ValidationError({'Error': 'Investment amount must be greater than 0'})
+
+        return data
+
 
 
 class InvestorCreateSerializer(serializers.ModelSerializer):
