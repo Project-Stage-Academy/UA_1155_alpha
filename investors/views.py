@@ -12,7 +12,8 @@ from projects.serializers import ProjectSerializer
 from users.models import CustomUser
 from .models import Investor
 from .serializers import InvestorSerializer
-
+from .swagger_auto_schema_settings import *
+from drf_yasg.utils import swagger_auto_schema
 
 class IsInvestorPermission(permissions.BasePermission):
     """
@@ -32,16 +33,29 @@ class InvestorViewSet(viewsets.ViewSet):
             return [IsAuthenticated()]
         return [IsInvestorPermission()]
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        responses=fetch_list_of_all_users_responses_GET,
+    )
     def list(self, request):
         investors = Investor.objects.filter(is_active=True)
         serializer = InvestorSerializer(investors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        responses=fetch_particular_investor_GET,
+    )
     def retrieve(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk, is_active=True)
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        request_body=fetch_create_investor_body_POST,
+        responses=fetch_create_investor_responses_POST,
+    )
     def create(self, request):
         jwt_token = request.auth
         user_id = jwt_token.payload.get("id")
@@ -59,7 +73,12 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        request_body=fetch_update_investor_body_PUT,
+        responses=fetch_update_investor_responses_PUT,
+    )
     def update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
         serializer = InvestorSerializer(instance=investor, data=request.data)
@@ -68,7 +87,11 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        request_body=fetch_partial_update_investor_body_PATCH,
+        responses=fetch_partial_update_investor_responses_PATCH,
+    )
     def partial_update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
         serializer = InvestorSerializer(
@@ -80,6 +103,10 @@ class InvestorViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        responses=fetch_destroy_investor_responses_DELETE,
+    )
     def destroy(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
         investor.is_active = 0
@@ -92,6 +119,10 @@ class InvestorViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        responses=fetch_all_subscribed_projects_responses_GET,
+    )
     @action(detail=False, methods=['get'], url_path='follows')
     def all_subscribed_projects(self, request, pk=None):
         """
@@ -115,6 +146,11 @@ class InvestorViewSet(viewsets.ViewSet):
         except Investor.DoesNotExist:
             return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        request_body=remove_subscribed_project_body_POST,
+        responses=fetch_remove_subscribed_project_responses_POST,
+    )
     @action(detail=True, methods=['post'], url_path='remove_subscribed_project')
     def remove_subscribed_project(self, request, pk=None):
         """
@@ -138,6 +174,10 @@ class InvestorViewSet(viewsets.ViewSet):
         except Investor.DoesNotExist:
             return Response({'error': 'Investor not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        tags=["INVESTORS"],
+        responses=fetch_my_profile_responses_GET,
+    )
     @action(detail=False, methods=["get"], url_path="profile")
     def get_my_profile(self, request):
         jwt_token = request.auth
