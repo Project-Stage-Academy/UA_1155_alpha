@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ email_subject }}</title>
+</head>
+<body>
+    <h1>{{ email_subject }}</h1>
+    <p>{{ email_body | linebreaks }}</p>
+    <p>
+        <a href={{ approve_button_link }} style="background-color: green; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Approve</a>
+        <a href={{ decline_button_link }} style="background-color: red; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Decline</a>
+    </p>
+</body>
+</html>

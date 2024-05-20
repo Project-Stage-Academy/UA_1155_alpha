@@ -14,6 +14,7 @@ class Investor(models.Model):
     interests = models.CharField(max_length=500, blank=True)
     number_for_investor_validation = models.IntegerField(null=True)
     is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'investors'
