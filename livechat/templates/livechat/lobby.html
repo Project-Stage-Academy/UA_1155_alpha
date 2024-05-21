@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="https://icons.iconarchive.com/icons/studiomx/web/256/Earth-icon.png" id="favicon" type="image/x-icon">
+    <link rel="icon" href="https://icons.iconarchive.com/icons/studiomx/web/256/Earth-icon.png" id="favicon"
+          type="image/x-icon">
     <title>Lobby</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     {% load static %}
@@ -16,7 +17,7 @@
         <ul id="participants" class="list-group">
             {% for user in participants %}
                 <li class="list-group-item" id="participant_{{ user.id }}">
-                    {{ user.first_name }} {{user.last_name}}
+                    {{ user.first_name }} {{ user.last_name }}
                     <span id="status_{{ user.id }}"></span>
                 </li>
             {% endfor %}
@@ -36,7 +37,7 @@
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
-    
+
         const chatSocket = new WebSocket(url)
         const messagesContainer = document.getElementById('messages');
 
@@ -85,15 +86,13 @@
                 let participantStatus = document.getElementById(`status_${userId}`);
                 if (participantStatus) {
                     participantStatus.innerText = status;
-                    if (status === 'Online'){
+                    if (status === 'Online') {
                         participantStatus.classList.remove('offline', 'away');
                         participantStatus.classList.add('online');
-                    }
-                    else if (status === 'Offline'){
+                    } else if (status === 'Offline') {
                         participantStatus.classList.remove('online', 'away');
                         participantStatus.classList.add('offline');
-                    }
-                    else if (status === 'Away') {
+                    } else if (status === 'Away') {
                         participantStatus.classList.remove('online', 'offline');
                         participantStatus.classList.add('away');
                     }
@@ -102,7 +101,7 @@
         }
 
         let form = document.getElementById('form')
-        form.addEventListener('submit', (e)=> {
+        form.addEventListener('submit', (e) => {
             e.preventDefault()
             let message = e.target.message.value
             chatSocket.send(JSON.stringify({

@@ -1,6 +1,5 @@
-from datetime import datetime
-
 import mongoengine
+from datetime import datetime
 from django.db import models
 from users.models import CustomUser
 
@@ -14,7 +13,6 @@ class Chats(models.Model):
 
 
 class Livechat(mongoengine.Document):
-
     sender_id = mongoengine.IntField(required=True)
     room_name = mongoengine.StringField(required=True, max_length=100)
     send_at = mongoengine.DateTimeField(default=datetime.now)
@@ -30,7 +28,6 @@ class Livechat(mongoengine.Document):
         )
         message.save()
         return message
-
 
 
 class Status(mongoengine.Document):

@@ -5,6 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
 from users.models import CustomUser
 
+
 @database_sync_to_async
 def get_user(user_id):
     try:

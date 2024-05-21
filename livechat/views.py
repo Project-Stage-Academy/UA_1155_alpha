@@ -3,17 +3,14 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from rest_framework.response import Response
 from rest_framework import status, viewsets
+from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Chats, Livechat
-from users.models import CustomUser
 from forum.settings import SECRET_KEY
-
-
-
+from users.models import CustomUser
+from .models import Chats
 
 
 def encode_jwt(id, first_name, last_name):
