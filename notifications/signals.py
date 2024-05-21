@@ -34,3 +34,6 @@ def project_updated(sender, investor_id, project_id, **kwargs):
     request = get_current_request()
     current_site = get_current_site(request).domain if request else "localhost:8000/"
     project_updating.delay(investor_id, project_id, current_site)
+
+
+def project_subscription(sender, investor_)
