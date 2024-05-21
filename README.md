@@ -21,7 +21,7 @@ Here you can see all endpoints, json examples for requests and responses
 
 > Or Contributors/People
 
-<img src="https://avatars.githubusercontent.com/u/81677984?s=400&u=70db613ceba8b7cd7d3bd4c84636c99acc8e1119&v=4" alt="@YuliaShap" width="200">
+[![@YuliaShap](https://avatars.githubusercontent.com/u/81677984?s=200&u=70db613ceba8b7cd7d3bd4c84636c99acc8e1119&v=4)](https://github.com/YuliaShap)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam) 
