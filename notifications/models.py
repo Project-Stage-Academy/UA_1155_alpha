@@ -14,6 +14,10 @@ class Notification(mongoengine.Document):
     send_at = mongoengine.DateTimeField(default=datetime.now)
     text = mongoengine.StringField(required=True, max_length=1000)
 
+    meta = {
+        'allow_inheritance': True
+    }
+
     @classmethod
     def create_notification(cls, recipient_type, recipient_id, text):
         notification = cls(
