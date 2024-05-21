@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from notifications.models import ProjectNotification
+from notifications.models import ProjectNotification, Notification
 from .serializers import ProjectNotificationSerializer
 from .tasks import send_approve, send_decline
 from .utils import get_model_by_name
@@ -71,6 +71,9 @@ class NotificationsViewSet(viewsets.ViewSet):
         user = request.user
 
         notifications = ProjectNotification.get_all_notifications(recipient_id=user.id)
+
+        print(ProjectNotification.objects.all())
+        print(Notification.objects.all())
 
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)

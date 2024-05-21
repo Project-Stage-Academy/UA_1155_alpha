@@ -15,7 +15,8 @@ class Notification(mongoengine.Document):
     text = mongoengine.StringField(required=True, max_length=1000)
 
     meta = {
-        'allow_inheritance': True
+        'allow_inheritance': True,
+        'collection': 'notifications'
     }
 
     @classmethod
@@ -38,6 +39,10 @@ class ProjectNotification(Notification):
     project_id = mongoengine.IntField(required=True)
     type_of_notification = mongoengine.StringField(choices=TYPES_OF_NOTIFICATIONS)
     is_read = mongoengine.BooleanField(default=False)
+
+    meta = {
+        'collection': 'notifications'
+    }
 
     @classmethod
     def create_notification(cls, recipient_type, recipient_id, project_id, type_of_notification, text):
