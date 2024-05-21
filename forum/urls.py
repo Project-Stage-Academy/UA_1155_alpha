@@ -53,4 +53,5 @@ urlpatterns = [
     ),
     path("yasg/", include("forum.yasg")),
     path("api/livechat/", include("livechat.urls"), name="livechat"),
+    path("notifications/", include("notifications.urls")),
 ]
