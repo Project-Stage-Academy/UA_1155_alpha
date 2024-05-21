@@ -6,7 +6,7 @@ from django.dispatch import receiver, Signal
 from investors.models import Investor
 from projects.models import Project
 from startups.models import Startup
-from .tasks import send_for_moderation, project_updating
+from .tasks import send_for_moderation, project_updating, project_subscription
 
 project_updated_signal = Signal()
 project_subscription_signal = Signal()
@@ -27,7 +27,7 @@ def profile_created_or_updated(sender, instance, created, **kwargs):
 
 
 @receiver(project_updated_signal)
-def project_updated(sender, investor_id, project_id, **kwargs):
+def project_updated_receiver(sender, investor_id, project_id, **kwargs):
     """
     Signal handler to perform actions when a project updated.
     """
@@ -36,4 +36,11 @@ def project_updated(sender, investor_id, project_id, **kwargs):
     project_updating.delay(investor_id, project_id, current_site)
 
 
-def project_subscription(sender, investor_)
+@receiver(project_subscription_signal)
+def project_subscription_receiver(sender, project_id, subscriber_id, **kwargs):
+    """
+    Signal handler to perform actions when an investor subscribes to a project.
+    """
+    request = get_current_request()
+    current_site = get_current_site(request).domain if request else "localhost:8000/"
+    project_subscription.delay(project_id, subscriber_id, current_site)
