@@ -110,7 +110,7 @@ def send_approve(self, model_name, contact_email, data_id):
                  "email_body": f"Congratulations, your {model_name} profile passed moderation!",
                  "to_email": contact_email, }
 
-    Notification.create_notification(recipient_type=model_name, recipient_id=data_id,
+    Notification.create_notification(recipient_type=model_name.lower(), recipient_id=data_id,
                                      text=f"{model_name} profile with id={data_id} passed moderation")
 
     Util.send_email(sent_data)
@@ -123,7 +123,7 @@ def send_decline(self, model_name, contact_email, data_id):
                  "email_body": f"Unfortunately, your {model_name} profile did not pass moderation.",
                  "to_email": contact_email, }
 
-    Notification.create_notification(recipient_type=model_name, recipient_id=data_id,
+    Notification.create_notification(recipient_type=model_name.lower(), recipient_id=data_id,
                                      text=f"{model_name} profile with id={data_id} did not pass moderation")
 
     Util.send_email(sent_data)
