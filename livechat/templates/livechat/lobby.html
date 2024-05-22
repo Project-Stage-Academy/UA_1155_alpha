@@ -77,15 +77,21 @@
 
                 if (data.type === 'chat' || data.type === 'chat_history') {
                     console.log(data);
-                    if (data.message) {
+                    if (data.audio) {
                         messages.insertAdjacentHTML('beforeend',
                         `<div class="alert alert-info mt-2 message ${messageClass}" >
-                            <p>${data.message}</p>
+                            <p>${data.text}</p>
+                            <audio controls>
+
+                                <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
                             <div class="message-info">
                                 <span class="font-weight-bold">${data.username}</span>
                                 <span class="text-muted">${data.timestamp}</span>
                             </div>
                         </div>`);
+
                     } else if (data.image) {
                         messages.insertAdjacentHTML('beforeend',
                             `<div class="alert alert-info mt-2 message ${messageClass}" >
@@ -95,13 +101,10 @@
                                 <span class="text-muted">${data.timestamp}</span>
                             </div>
                         </div>`);
-                    } else if (data.audio)  {
-                        messages.insertAdjacentHTML('beforeend',
+                    } else if (data.message)  {
+                            messages.insertAdjacentHTML('beforeend',
                         `<div class="alert alert-info mt-2 message ${messageClass}" >
-                            <audio controls>
-                                <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
+                            <p>${data.message}</p>
                             <div class="message-info">
                                 <span class="font-weight-bold">${data.username}</span>
                                 <span class="text-muted">${data.timestamp}</span>
@@ -120,6 +123,8 @@
                 } else if (data.type === 'audio') {
                     messages.insertAdjacentHTML('beforeend',
                     `<div class="alert alert-info mt-2 message ${messageClass}" >
+
+                        <p>${data.text}</p>
                         <audio controls>
                             <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
                             Your browser does not support the audio element.
@@ -168,6 +173,7 @@
         function sendFile() {
             const input = document.getElementById('formFile');
             const file = input.files[0];
+            const fileTitle = file.name;
             if (file) {
                 const reader = new FileReader()
 
@@ -176,11 +182,11 @@
                     const fileType = file.type.split('/')[0];
                     const message = JSON.stringify({
                         file: fileData,
+                        'name': fileTitle,
                         'type': fileType,
                         'username': '{{ username }}',
                         'sender_id': '{{ sender_id }}'
                     });
-                    console.log(message)
                     chatSocket.send(message)
                     input.value = '';
                 };

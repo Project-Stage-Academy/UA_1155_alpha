@@ -16,7 +16,6 @@ from .models import Chats
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
-        # Отримати ім'я кімнати з URL
         self.first_name = self.scope["user"].first_name
         self.last_name = self.scope["user"].last_name
         self.username = f"{self.first_name} {self.last_name}"
@@ -66,6 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 audio_base64 = base64.b64encode(audio_data).decode('utf-8')
                 data_to_send = {
                     "audio": audio_base64,
+                    "text": message.text,
                     "username": username,
                     "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
                     "type": "chat_history",
@@ -162,16 +162,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             file_data = text_data_json.get('file')
             if file_data:
                 file_bytes = base64.b64decode(file_data)
+                text = text_data_json.get("name")
                 sender_id = text_data_json.get("sender_id")
                 username = text_data_json.get("username")
                 timestamp = text_data_json.get("timestamp")
 
-                await self.save_audio(file_bytes)
+                await self.save_audio(file_bytes, text)
                 file_base64 = base64.b64encode(file_bytes).decode('utf-8')
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
                         "type": "chat.audio",
+                        "text": text,
                         "audio": file_base64,
                         "sender_id": sender_id,
                         "username": username,
@@ -213,13 +215,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text=message,
         )
 
-    async def save_audio(self, audio_bytes):
+    async def save_audio(self, audio_bytes, text):
         file_name = f"{self.room_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
         file = ContentFile(audio_bytes, name=file_name)
         await database_sync_to_async(Livechat.create_message)(
             sender_id=self.user.id,
             room_name=self.scope["url_route"]["kwargs"]["room_name"],
             audio=file,
+            text=text
         )
 
     async def chat_message(self, event):
@@ -261,12 +264,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         audio_bytes = event["audio"]
         sender_id = event["sender_id"]
         username = event["username"]
+        text = event["text"]
 
         await self.send(
             text_data=json.dumps(
                 {
                     "type": "audio",
                     "audio": audio_bytes,
+                    "text": text,
                     "sender_id": sender_id,
                     "username": username,
                     "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
