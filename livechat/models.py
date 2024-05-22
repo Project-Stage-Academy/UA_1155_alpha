@@ -21,11 +21,12 @@ class Livechat(mongoengine.Document):
     image = mongoengine.ImageField(blank=True, null=True)
 
     @classmethod
-    def create_message(cls, sender_id, room_name, text):
+    def create_message(cls, sender_id, room_name, text='', image=None):
         message = cls(
             sender_id=sender_id,
             room_name=room_name,
             text=text,
+            image=image
         )
         message.save()
         return message
