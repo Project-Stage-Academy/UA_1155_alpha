@@ -34,6 +34,14 @@
             </div>
         </div>
     </form>
+    <div class="mb-3">
+        <div class="input-group">
+            <input class="form-control" type="file" id="formFile">
+            <div class="input-group-append">
+                <button onclick="sendImage()" class="btn btn-primary">Send Image</button>
+            </div>
+        </div>
+    </div>
 
     <script type="text/javascript">
         let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
@@ -111,6 +119,27 @@
             }))
             form.reset()
         })
+        function sendImage() {
+             const input = document.getElementById('formFile');
+             const file = input.files[0];
+             if (file) {
+                 const reader  =new FileReader()
+
+                 reader.onload = function (e) {
+                     const imageData  = e.target.result.split(',')[1];
+                     const message = JSON.stringify({
+                        image: imageData,
+                        'type': 'image',
+                        'username': '{{ username }}',
+                        'sender_id': '{{ sender_id }}'
+                     });
+                     console.log(message)
+                     chatSocket.send(message)
+                     input.value = '';
+                 };
+                reader.readAsDataURL(file);
+             }
+         }
     </script>
 </div>
 </body>
