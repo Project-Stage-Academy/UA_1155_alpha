@@ -170,6 +170,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 },
             )
 
+    async def save_image(self, image_bytes):
+        image_name = f"{self.room_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png"
+        image = ContentFile(image_bytes, name=image_name)
+        await database_sync_to_async(Livechat.create_message)(
+            sender_id=self.user.id,
+            room_name=self.scope["url_route"]["kwargs"]["room_name"],
+            image=image,
+        )
     async def save_message(self, message):
         await database_sync_to_async(Livechat.create_message)(
             sender_id=self.user.id,
