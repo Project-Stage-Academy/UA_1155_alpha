@@ -5,18 +5,30 @@ from users.models import CustomUser
 from startups.models import Startup, Industry
 from mixer.backend.django import mixer
 from startups.views import StartupViewSet
+from django.db.utils import IntegrityError
 
 
 class IndustryModelTestCase(TestCase):
+    def setUp(self):
+        Industry.objects.all().delete()
+
+    def tearDown(self):
+        try:
+            Startup.objects.all().delete()
+            Industry.objects.all().delete()
+        except Exception as e:
+            print("Error during cleanup:", e)
+
     def test_industry_creation(self):
         industry = mixer.blend(Industry, name="Technology")
         self.assertEqual(str(industry), "Technology")
         self.assertTrue(isinstance(industry, Industry))
 
     def test_unique_industry_name(self):
-        mixer.blend(Industry, name='Education')
+        name = "Technology"
+        Industry.objects.create(name=name)
         with self.assertRaises(Exception):
-            mixer.blend(Industry, name='Education')
+            Industry.objects.create(name=name)
 
 
 class StartupModelTestCase(TestCase):
@@ -62,7 +74,7 @@ class StartupViewSetTest(TestCase):
             'location': 'Yellowstone-National Park',
             'contact_phone': '+31234567899',
             'contact_email': 'info@2example.com',
-            'number_for_startup_validation': 1234567111,
+            'number_for_startup_validation': 12345671,
             'is_verified': True,
             'is_active': True,
         }
@@ -80,6 +92,30 @@ class StartupViewSetTest(TestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Startup.objects.filter(owner=self.user).exists())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
