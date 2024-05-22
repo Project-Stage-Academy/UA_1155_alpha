@@ -128,23 +128,47 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
-        message = text_data_json.get("message")
-        sender_id = text_data_json.get("sender_id")
-        username = text_data_json.get("username")
-        timestamp = text_data_json.get("timestamp")
+        type = text_data_json.get("type")
+        if type == "image":
+            image_data = text_data_json.get('image')
+            if image_data:
+                image_bytes = base64.b64decode(image_data)
+                sender_id = text_data_json.get("sender_id")
+                username = text_data_json.get("username")
+                timestamp = text_data_json.get("timestamp")
+                print(timestamp)
 
-        await self.save_message(message)
+                await self.save_image(image_bytes)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "chat.message",
-                "message": message,
-                "username": username,
-                "timestamp": timestamp,
-                "sender_id": sender_id,
-            },
-        )
+                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat.image",
+                        "image": image_base64,  # Отправляем обратно байты изображения
+                        "sender_id": sender_id,
+                        "username": username,
+                        "timestamp": timestamp,
+                    },
+                )
+        else:
+            message = text_data_json.get("message")
+            sender_id = text_data_json.get("sender_id")
+            username = text_data_json.get("username")
+            timestamp = text_data_json.get("timestamp")
+
+            await self.save_message(message)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.message",
+                    "message": message,
+                    "username": username,
+                    "timestamp": timestamp,
+                    "sender_id": sender_id,
+                },
+            )
 
     async def save_message(self, message):
         await database_sync_to_async(Livechat.create_message)(
