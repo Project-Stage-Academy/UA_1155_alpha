@@ -19,14 +19,18 @@ class Livechat(mongoengine.Document):
     is_read = mongoengine.BooleanField(default=False)
     text = mongoengine.StringField(blank=True, null=True, max_length=2000)
     image = mongoengine.ImageField(blank=True, null=True)
+    video = mongoengine.FileField(blank=True, null=True)
+    audio = mongoengine.FileField(blank=True, null=True)
 
     @classmethod
-    def create_message(cls, sender_id, room_name, text='', image=None):
+    def create_message(cls, sender_id, room_name, text='', image=None, video=None, audio=None):
         message = cls(
             sender_id=sender_id,
             room_name=room_name,
             text=text,
-            image=image
+            image=image,
+            video=video,
+            audio=audio
         )
         message.save()
         return message

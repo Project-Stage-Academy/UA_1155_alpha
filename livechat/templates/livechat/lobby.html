@@ -36,31 +36,30 @@
     </form>
     <div class="mb-3">
         <div class="input-group">
-            <input class="form-control" type="file" id="formFile" accept="image/*">
+            <input class="form-control" type="file" id="formFile" accept="image/*,video/*,audio/*">
             <div class="input-group-append">
-                <button onclick="sendImage()" class="btn btn-primary">Send Image</button>
+                <button onclick="sendFile()" class="btn btn-primary">Send File</button>
             </div>
         </div>
     </div>
 
     <script type="text/javascript">
-        let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`
+        let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`;
 
-        const chatSocket = new WebSocket(url)
+        const chatSocket = new WebSocket(url);
         const messagesContainer = document.getElementById('messages');
 
         function scrollToBottom() {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        let new_messages = 0
+        let new_messages = 0;
         chatSocket.onmessage = function (e) {
-            let data = JSON.parse(e.data)
-            console.log('Data', data)
+            let data = JSON.parse(e.data);
+            console.log('Data', data);
 
-            if (data.type === 'chat_history' || data.type === 'chat' || data.type === 'image') {
-
-                if (data.type === 'chat' || data.type === 'image' && document.visibilityState === 'hidden' && data.sender_id != data.user_id) {
+            if (data.type === 'chat_history' || data.type === 'chat' || data.type === 'image' || data.type === 'audio' ) {
+                if ((data.type === 'chat' || data.type === 'image' || data.type === 'audio' ) && document.visibilityState === 'hidden' && data.sender_id != '{{ sender_id }}') {
                     new_messages++;
                     document.title = new_messages + " new msg";
                     document.getElementById('favicon').href = 'https://icons.iconarchive.com/icons/studiomx/web/256/Earth-Alert-icon.png';
@@ -73,10 +72,11 @@
                     }
                 });
 
-                let messages = document.getElementById('messages')
+                let messages = document.getElementById('messages');
                 let messageClass = data.sender_id == '{{ sender_id }}' ? 'sent' : 'received';
 
                 if (data.type === 'chat' || data.type === 'chat_history') {
+                    console.log(data);
                     if (data.message) {
                         messages.insertAdjacentHTML('beforeend',
                         `<div class="alert alert-info mt-2 message ${messageClass}" >
@@ -88,30 +88,52 @@
                         </div>`);
                     } else if (data.image) {
                         messages.insertAdjacentHTML('beforeend',
-                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            `<div class="alert alert-info mt-2 message ${messageClass}" >
                             <img src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
                             <div class="message-info">
                                 <span class="font-weight-bold">${data.username}</span>
                                 <span class="text-muted">${data.timestamp}</span>
                             </div>
                         </div>`);
+                    } else if (data.audio)  {
+                        messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <audio controls>
+                                <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
                     }
-
-        } else if (data.type === 'image') {
-            messages.insertAdjacentHTML('beforeend',
-                `<div class="alert alert-info mt-2 message ${messageClass}" >
-                    <img  src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
-                    <div class="message-info">
-                        <span class="font-weight-bold">${data.username}</span>
-                        <span class="text-muted">${data.timestamp}</span>
-                    </div>
-                </div>`);
-        }
-        scrollToBottom();
+                } else if (data.type === 'image') {
+                    messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2 message ${messageClass}" >
+                        <img  src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
+                        <div class="message-info">
+                            <span class="font-weight-bold">${data.username}</span>
+                            <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                } else if (data.type === 'audio') {
+                    messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2 message ${messageClass}" >
+                        <audio controls>
+                            <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div class="message-info">
+                            <span class="font-weight-bold">${data.username}</span>
+                            <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                }
+                scrollToBottom();
             }
 
             if (data.type === 'status_update') {
-                console.log("data", data)
                 let userId = data.user_id;
                 let status = data.status;
 
@@ -130,8 +152,7 @@
                     }
                 }
             }
-        }
-
+        };
         let form = document.getElementById('form')
         form.addEventListener('submit', (e) => {
             e.preventDefault()
@@ -143,27 +164,29 @@
             }))
             form.reset()
         })
-        function sendImage() {
-             const input = document.getElementById('formFile');
-             const file = input.files[0];
-             if (file) {
-                 const reader  =new FileReader()
 
-                 reader.onload = function (e) {
-                     const imageData  = e.target.result.split(',')[1];
-                     const message = JSON.stringify({
-                        image: imageData,
-                        'type': 'image',
+        function sendFile() {
+            const input = document.getElementById('formFile');
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader()
+
+                reader.onload = function (e) {
+                    const fileData = e.target.result.split(',')[1];
+                    const fileType = file.type.split('/')[0];
+                    const message = JSON.stringify({
+                        file: fileData,
+                        'type': fileType,
                         'username': '{{ username }}',
                         'sender_id': '{{ sender_id }}'
-                     });
-                     console.log(message)
-                     chatSocket.send(message)
-                     input.value = '';
-                 };
+                    });
+                    console.log(message)
+                    chatSocket.send(message)
+                    input.value = '';
+                };
                 reader.readAsDataURL(file);
-             }
-         }
+            }
+        }
     </script>
 </div>
 </body>

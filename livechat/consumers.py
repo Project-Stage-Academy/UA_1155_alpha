@@ -61,6 +61,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "chat_history",
                     "sender_id": message.sender_id,
                 }
+            elif message.audio:
+                audio_data = message.audio.read()
+                audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+                data_to_send = {
+                    "audio": audio_base64,
+                    "username": username,
+                    "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                    "type": "chat_history",
+                    "sender_id": message.sender_id,
+                }
             else:
                 data_to_send = {
                     "message": message.text,
@@ -128,7 +138,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         type = text_data_json.get("type")
         if type == "image":
-            image_data = text_data_json.get('image')
+            image_data = text_data_json.get('file')
             if image_data:
                 image_bytes = base64.b64decode(image_data)
                 sender_id = text_data_json.get("sender_id")
@@ -143,6 +153,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     {
                         "type": "chat.image",
                         "image": image_base64,  # Отправляем обратно байты изображения
+                        "sender_id": sender_id,
+                        "username": username,
+                        "timestamp": timestamp,
+                    },
+                )
+        elif type == "audio":
+            file_data = text_data_json.get('file')
+            if file_data:
+                file_bytes = base64.b64decode(file_data)
+                sender_id = text_data_json.get("sender_id")
+                username = text_data_json.get("username")
+                timestamp = text_data_json.get("timestamp")
+
+                await self.save_audio(file_bytes)
+                file_base64 = base64.b64encode(file_bytes).decode('utf-8')
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat.audio",
+                        "audio": file_base64,
                         "sender_id": sender_id,
                         "username": username,
                         "timestamp": timestamp,
@@ -183,6 +213,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text=message,
         )
 
+    async def save_audio(self, audio_bytes):
+        file_name = f"{self.room_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
+        file = ContentFile(audio_bytes, name=file_name)
+        await database_sync_to_async(Livechat.create_message)(
+            sender_id=self.user.id,
+            room_name=self.scope["url_route"]["kwargs"]["room_name"],
+            audio=file,
+        )
+
     async def chat_message(self, event):
         message = event["message"]
         username = event["username"]
@@ -199,6 +238,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+
 
     async def chat_image(self, event):
         image_bytes = event["image"]
@@ -217,6 +257,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def chat_audio(self, event):
+        audio_bytes = event["audio"]
+        sender_id = event["sender_id"]
+        username = event["username"]
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "audio",
+                    "audio": audio_bytes,
+                    "sender_id": sender_id,
+                    "username": username,
+                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                }
+            )
+        )
     @database_sync_to_async
     def get_chat_object(self, room_name):
         return Chats.objects.filter(chat_name=room_name).first()
