@@ -101,25 +101,6 @@ class StartupViewSetTest(TestCase):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # def test_create_startup_existing_user(self):
     #     '''
     #     Test for negative case of creating a startup for user with an existing startup
