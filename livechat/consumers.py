@@ -136,7 +136,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sender_id = text_data_json.get("sender_id")
                 username = text_data_json.get("username")
                 timestamp = text_data_json.get("timestamp")
-                print(timestamp)
 
                 await self.save_image(image_bytes)
 
