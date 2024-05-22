@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 class Notification(mongoengine.Document):
+    meta = {"collection": "notifications"}
+
     TYPES_OF_RECIPIENTS = [
         ("investor", "Investor"),
         ("startup", "Startup"),
@@ -13,11 +15,6 @@ class Notification(mongoengine.Document):
     recipient_type = mongoengine.StringField(choices=TYPES_OF_RECIPIENTS)
     send_at = mongoengine.DateTimeField(default=datetime.now)
     text = mongoengine.StringField(required=True, max_length=1000)
-
-    meta = {
-        'allow_inheritance': True,
-        'collection': 'notifications'
-    }
 
     @classmethod
     def create_notification(cls, recipient_type, recipient_id, text):
@@ -30,19 +27,26 @@ class Notification(mongoengine.Document):
         return notification
 
 
-class ProjectNotification(Notification):
+class ProjectNotification(mongoengine.Document):
+    meta = {"collection": "project_notification"}
+
     TYPES_OF_NOTIFICATIONS = [
         ("project_updating", "Project Updating"),
         ("investor_subscription", "Investors Subscription"),
     ]
 
+    TYPES_OF_RECIPIENTS = [
+        ("investor", "Investor"),
+        ("startup", "Startup"),
+    ]
+
+    recipient_id = mongoengine.IntField(required=True)
+    recipient_type = mongoengine.StringField(choices=TYPES_OF_RECIPIENTS)
+    send_at = mongoengine.DateTimeField(default=datetime.now)
+    text = mongoengine.StringField(required=True, max_length=1000)
     project_id = mongoengine.IntField(required=True)
     type_of_notification = mongoengine.StringField(choices=TYPES_OF_NOTIFICATIONS)
     is_read = mongoengine.BooleanField(default=False)
-
-    meta = {
-        'collection': 'notifications'
-    }
 
     @classmethod
     def create_notification(cls, recipient_type, recipient_id, project_id, type_of_notification, text):
