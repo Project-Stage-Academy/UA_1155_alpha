@@ -87,7 +87,7 @@ We are committed to delivering a platform that is not just a marketplace for ide
 
 > Or Contributors/People
 
-[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@AlexanderSychev2005](https://avatars.githubusercontent.com/u/49594203?v=4&s=200)](https://github.com/AlexanderSychev2005)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam) 
