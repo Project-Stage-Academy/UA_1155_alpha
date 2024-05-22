@@ -1,5 +1,11 @@
+import base64
 import datetime
 import json
+
+import base64
+from io import BytesIO
+from PIL import Image
+from django.core.files.base import ContentFile
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -43,17 +49,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for message in history:
             sender_id = message.sender_id
             username = await self.get_username(sender_id)
+            if message.image:
+                image = Image.open(BytesIO(message.image.read()))
+                image_bytes = BytesIO()
+                image.save(image_bytes, format=image.format)
+                image_data = image_bytes.getvalue()
 
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
+                data_to_send = {
+                    "image": image_base64,
+                    "username": username,
+                    "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                    "type": "chat_history",
+                    "sender_id": message.sender_id,
+                }
+            else:
+                data_to_send = {
+                    "message": message.text,
+                    "username": username,
+                    "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                    "type": "chat_history",
+                    "sender_id": message.sender_id,
+                }
             await self.send(
-                text_data=json.dumps(
-                    {
-                        "message": message.text,
-                        "username": username,
-                        "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                        "type": "chat_history",
-                        "sender_id": message.sender_id,
-                    }
-                )
+                text_data=json.dumps(data_to_send)
             )
 
     async def send_status(self, status):
