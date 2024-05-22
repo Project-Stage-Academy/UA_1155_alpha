@@ -1,12 +1,10 @@
-import base64
 import datetime
 import json
-
 import base64
 from io import BytesIO
 from PIL import Image
-from django.core.files.base import ContentFile
 
+from django.core.files.base import ContentFile
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from livechat.models import LastLogin, Livechat, Status
