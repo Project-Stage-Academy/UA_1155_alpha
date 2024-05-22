@@ -83,5 +83,22 @@ We are committed to delivering a platform that is not just a marketplace for ide
 - Each user story can be broken down into smaller tasks and developed in sprints.
 - Regular feedback from both user groups (startups and investors) should be incorporated.
 
+## Team
+
+> Or Contributors/People
+
+[![@AlexanderSychev2005](https://avatars.githubusercontent.com/u/49594203?v=4&s=200)](https://github.com/AlexanderSychev2005)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam) 
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)  
+
+- You can just grab their GitHub profile image URL
+- You should probably resize their picture using `?s=200` at the end of the image URL.
+
+---
 
 

@@ -22,12 +22,14 @@ class Project(models.Model):
     promo_photo_url = models.CharField(max_length=1000, blank=True)
     promo_video_url = models.CharField(max_length=1000, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    registration_date = models.DateTimeField(db_default=Now())
+    registration_date = models.DateTimeField(default=Now())
     updated_at = models.DateTimeField(auto_now=True)
     rating = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     subscribers = models.ManyToManyField("investors.Investor", related_name='subscribed_projects', blank=True)
     investors = models.ManyToManyField("investors.Investor", related_name='participated_projects', blank=True)
     is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'projects'
+        app_label = 'projects'
