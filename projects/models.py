@@ -28,7 +28,7 @@ class Project(models.Model):
     subscribers = models.ManyToManyField("investors.Investor", related_name='subscribed_projects', blank=True)
     investors = models.ManyToManyField("investors.Investor", related_name='participated_projects', blank=True)
     is_active = models.BooleanField(default=True)
-    is_verified = models.BooleanField(default=False)
+    # is_verified = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'projects'

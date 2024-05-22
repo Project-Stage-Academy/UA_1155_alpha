@@ -41,6 +41,23 @@ class StartupSerializer(serializers.ModelSerializer):
             validated_data['owner'] = user
         startup = Startup.objects.create(**validated_data)
         return startup
+    
+
+    def validate(self, data):
+        location = data.get('location')
+        contact_phone = data.get('contact_phone')
+        number_for_startup_validation = data.get('number_for_startup_validation')
+
+        if location is not None:
+            ValidationPatterns.validate_location(location)
+
+        if contact_phone is not None:
+            ValidationPatterns.validate_phone_number(contact_phone)
+
+        if number_for_startup_validation is not None:
+            ValidationPatterns.validate_edrpou(number_for_startup_validation)
+
+        return data
 
 
 class StartupSerializerUpdate(serializers.ModelSerializer):
@@ -71,10 +88,13 @@ class StartupSerializerUpdate(serializers.ModelSerializer):
         contact_phone = data.get('contact_phone')
         number_for_startup_validation = data.get('number_for_startup_validation')
 
-        ValidationPatterns.validate_location(location)
+        if location is not None:
+            ValidationPatterns.validate_location(location)
 
-        ValidationPatterns.validate_phone_number(contact_phone)
+        if contact_phone is not None:
+            ValidationPatterns.validate_phone_number(contact_phone)
 
-        ValidationPatterns.validate_edrpou(number_for_startup_validation)
+        if number_for_startup_validation is not None:
+            ValidationPatterns.validate_edrpou(number_for_startup_validation)
 
         return data
