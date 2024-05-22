@@ -178,6 +178,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             room_name=self.scope["url_route"]["kwargs"]["room_name"],
             image=image,
         )
+
     async def save_message(self, message):
         await database_sync_to_async(Livechat.create_message)(
             sender_id=self.user.id,
@@ -197,6 +198,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     "username": username,
                     "sender_id": sender_id,
+                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                }
+            )
+        )
+
+    async def chat_image(self, event):
+        image_bytes = event["image"]
+        sender_id = event["sender_id"]
+        username = event["username"]
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "image",
+                    "image": image_bytes,
+                    "sender_id": sender_id,
+                    "username": username,
                     "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 }
             )
