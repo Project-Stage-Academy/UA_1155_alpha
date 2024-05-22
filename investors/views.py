@@ -5,12 +5,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from startups.models import Industry
-from users.models import CustomUser
-
-
 from projects.models import Project
 from projects.serializers import ProjectSerializer
+from startups.models import Industry
 from users.models import CustomUser
 from .models import Investor
 from .serializers import InvestorSerializer, InvestorCreateSerializer
@@ -26,9 +23,6 @@ class IsInvestorPermission(permissions.BasePermission):
 
 
 class InvestorViewSet(viewsets.ViewSet):
-    queryset = Investor.objects.all()
-    serializer_class = InvestorSerializer
-
     def get_permissions(self):
         permission_list = ["list", "retrieve", "update", "partial_update", "all_subscribed_projects",
                            "remove_subscribed_project"]
@@ -47,7 +41,6 @@ class InvestorViewSet(viewsets.ViewSet):
         investor = get_object_or_404(Investor, id=pk, is_active=True)
         serializer = InvestorSerializer(investor)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
     def create(self, request):
         jwt_token = request.auth
@@ -68,7 +61,6 @@ class InvestorViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def update(self, request, pk=None):
         investor = get_object_or_404(Investor, id=pk)
@@ -149,6 +141,20 @@ class InvestorViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], url_path="profile")
     def get_my_profile(self, request):
+        """
+        Retrieve the authenticated user's profile.
+        This action retrieves the profile of the currently authenticated user. It uses the JWT token passed in the
+        request to identify the user and fetches the corresponding investor profile that is active.
+        If the user is not found or does not have an associated active investor profile,
+        it returns a 404 Not Found error. Otherwise, it returns the investor's profile data in JSON
+        format with a 200 OK status code.
+        Parameters:
+        - request (Request): The HTTP request object containing the JWT token for authentication.
+        Returns:
+        Response: A JSON response containing the authenticated user's investor profile data upon successful retrieval.
+        Raises:
+        Http404: If the authenticated user does not exist or does not have an associated active investor profile
+        """
         jwt_token = request.auth
         user_id = jwt_token.payload.get("id")
         user_instance = CustomUser.objects.get(id=user_id)

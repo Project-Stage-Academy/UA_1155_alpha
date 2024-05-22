@@ -23,7 +23,6 @@ class InvestorSerializer(serializers.ModelSerializer):
         slug_field='name',
         many=True)
 
-
     class Meta:
         model = Investor
         fields = '__all__'
@@ -77,4 +76,3 @@ class InvestorCreateSerializer(serializers.ModelSerializer):
         investor.interests.set(industries)
 
         return investor
-
