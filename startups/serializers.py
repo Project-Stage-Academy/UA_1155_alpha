@@ -63,6 +63,7 @@ class StartupSerializerUpdate(serializers.ModelSerializer):
         instance.contact_phone = validated_data.get('contact_phone', instance.contact_phone)
         instance.contact_email = validated_data.get('contact_email', instance.contact_email)
         instance.number_for_startup_validation = validated_data.get('number_for_startup_validation', instance.number_for_startup_validation)
+        instance.is_verified = validated_data.get('is_verified', instance.is_verified)
         instance.save()
         return instance
 

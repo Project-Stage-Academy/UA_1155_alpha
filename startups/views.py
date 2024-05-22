@@ -131,6 +131,7 @@ class StartupViewSet(viewsets.ViewSet):
             serializer.is_valid(raise_exception=True)
             if industry is not None:
                 serializer.validated_data['industries'] = industry
+            serializer.validated_data['is_verified'] = False
             serializer.save()
             if not startup.is_active:
                 raise ValidationError({"error": "Startup not active"})
@@ -154,6 +155,7 @@ class StartupViewSet(viewsets.ViewSet):
             serializer.is_valid(raise_exception=True)
             if industry is not None:
                 serializer.validated_data['industries'] = industry
+            serializer.validated_data['is_verified'] = False
             serializer.save()
             if not startup.is_active:
                 raise ValidationError({"error": "Startup not active"})

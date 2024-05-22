@@ -132,6 +132,7 @@ class ProjectViewSet(viewsets.ViewSet):
             serializer.validated_data['industry'] = industry
         else:
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.validated_data['is_verified'] = False
         serializer.save()
 
         for investor in project.subscribers.all():
@@ -172,6 +173,7 @@ class ProjectViewSet(viewsets.ViewSet):
             serializer.validated_data['industry'] = industry
         else:
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.validated_data['is_verified'] = False
         serializer.save()
 
         for investor in project.subscribers.all():
