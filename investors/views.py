@@ -25,7 +25,7 @@ class IsInvestorPermission(permissions.BasePermission):
 class InvestorViewSet(viewsets.ViewSet):
     def get_permissions(self):
         permission_list = ["list", "retrieve", "update", "partial_update", "all_subscribed_projects",
-                           "remove_subscribed_project"]
+                           "remove_subscribed_project", "add_interests", "remove_interests"]
         if self.action in permission_list:
             return []
         elif self.action == "create":
