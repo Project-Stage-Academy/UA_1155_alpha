@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from projects.models import Project
+from projects.permissions import IsInvestor
 from projects.serializers import ProjectSerializer
 from startups.models import Industry
 from users.models import CustomUser
@@ -23,14 +24,17 @@ class IsInvestorPermission(permissions.BasePermission):
 
 
 class InvestorViewSet(viewsets.ViewSet):
+    free_methods = ("list", "retrieve", "compare_projects")
+    investors_methods = ("invest_to_project", "get_my_projects", "add_subscriber")
+    allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
+
     def get_permissions(self):
-        permission_list = ["list", "retrieve", "update", "partial_update", "all_subscribed_projects",
-                           "remove_subscribed_project", "add_interests", "remove_interests"]
-        if self.action in permission_list:
+        if self.action in self.free_methods:
             return []
-        elif self.action == "create":
+        elif self.action in self.investors_methods:
+            return [IsInvestor()]
+        else:
             return [IsAuthenticated()]
-        return [IsInvestorPermission()]
 
     def list(self, request):
         investors = Investor.objects.filter(is_active=True)
