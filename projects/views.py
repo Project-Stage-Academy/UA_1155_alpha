@@ -1,6 +1,7 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from investors.models import Investor
+from notifications.signals import project_subscription_signal, project_updated_signal
 from notifications.tasks import project_subscription, project_updating
 from projects.models import Location, Project
 from projects.permissions import IsInvestor
@@ -191,9 +192,10 @@ class ProjectViewSet(viewsets.ViewSet):
             )
         serializer.save()
 
-        current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
-            project_updating.delay(investor.id, project.id, current_site)
+            project_updated_signal.send(
+                sender=Project, investor_id=investor.id, project_id=project.id
+            )
 
         data = {
             "project_id": pk,
@@ -259,9 +261,10 @@ class ProjectViewSet(viewsets.ViewSet):
             )
         serializer.save()
 
-        current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
-            project_updating.delay(investor.id, project.id, current_site)
+            project_updated_signal.send(
+                sender=Project, investor_id=investor.id, project_id=project.id
+            )
 
         data = {
             "project_id": pk,
@@ -360,8 +363,9 @@ class ProjectViewSet(viewsets.ViewSet):
 
             project.subscribers.add(subscriber)
 
-            current_site = get_current_site(request).domain
-            project_subscription.delay(project.id, subscriber.id, current_site)
+            project_subscription_signal.send(
+                sender=Project, project_id=project.id, subscriber_id=subscriber.id
+            )
 
             return Response(
                 {
