@@ -58,8 +58,8 @@
             let data = JSON.parse(e.data);
             console.log('Data', data);
 
-            if (data.type === 'chat_history' || data.type === 'chat' || data.type === 'image' || data.type === 'audio' ) {
-                if ((data.type === 'chat' || data.type === 'image' || data.type === 'audio' ) && document.visibilityState === 'hidden' && data.sender_id != '{{ sender_id }}') {
+            if (data.type === 'chat_history' || data.type === 'chat' || data.type === 'image' || data.type === 'audio' || data.type === 'video' ) {
+                if ((data.type === 'chat' || data.type === 'image' || data.type === 'audio' || data.type === 'video' ) && document.visibilityState === 'hidden' && data.sender_id != '{{ sender_id }}') {
                     new_messages++;
                     document.title = new_messages + " new msg";
                     document.getElementById('favicon').href = 'https://icons.iconarchive.com/icons/studiomx/web/256/Earth-Alert-icon.png';
@@ -91,8 +91,19 @@
                                 <span class="text-muted">${data.timestamp}</span>
                             </div>
                         </div>`);
-
-                    } else if (data.image) {
+                    } else if (data.video) {
+                        messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.text}</p>
+                            <video controls style="max-width: 300px; max-height: 300px;">
+                                <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                            </video>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                } else if (data.image) {
                         messages.insertAdjacentHTML('beforeend',
                             `<div class="alert alert-info mt-2 message ${messageClass}" >
                             <img src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
@@ -134,6 +145,18 @@
                             <span class="text-muted">${data.timestamp}</span>
                         </div>
                     </div>`);
+                } else if (data.type === 'video') {
+                    messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.text}</p>
+                            <video controls style="max-width: 300px; max-height: 300px;">
+                                <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                            </video>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
                 }
                 scrollToBottom();
             }

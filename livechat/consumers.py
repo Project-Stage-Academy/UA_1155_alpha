@@ -71,6 +71,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "chat_history",
                     "sender_id": message.sender_id,
                 }
+            elif message.video:
+                video_data = message.video.read()
+                video_base64 = base64.b64encode(video_data).decode('utf-8')
+                data_to_send = {
+                    "video": video_base64,
+                    "text": message.text,
+                    "username": username,
+                    "timestamp": message.send_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                    "type": "chat_history",
+                    "sender_id": message.sender_id,
+                }
             else:
                 data_to_send = {
                     "message": message.text,
@@ -180,6 +191,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "timestamp": timestamp,
                     },
                 )
+        elif type == "video":
+            file_data = text_data_json.get('file')
+            if file_data:
+                file_bytes = base64.b64decode(file_data)
+                text = text_data_json.get("name")
+                sender_id = text_data_json.get("sender_id")
+                username = text_data_json.get("username")
+                timestamp = text_data_json.get("timestamp")
+
+                await self.save_video(file_bytes, text)
+
         else:
             message = text_data_json.get("message")
             sender_id = text_data_json.get("sender_id")
@@ -206,6 +228,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender_id=self.user.id,
             room_name=self.scope["url_route"]["kwargs"]["room_name"],
             image=image,
+        )
+
+    async def save_video(self, video_bytes, text):
+        file_name = f"{self.room_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.mp4"
+        file = ContentFile(video_bytes, name=file_name)
+        await database_sync_to_async(Livechat.create_message)(
+            sender_id=self.user.id,
+            room_name=self.scope["url_route"]["kwargs"]["room_name"],
+            video=file,
+            text=text
         )
 
     async def save_message(self, message):
@@ -242,7 +274,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         )
 
-
     async def chat_image(self, event):
         image_bytes = event["image"]
         sender_id = event["sender_id"]
@@ -278,6 +309,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+
     @database_sync_to_async
     def get_chat_object(self, room_name):
         return Chats.objects.filter(chat_name=room_name).first()
