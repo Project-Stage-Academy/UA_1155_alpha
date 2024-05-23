@@ -201,7 +201,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 timestamp = text_data_json.get("timestamp")
 
                 await self.save_video(file_bytes, text)
-
+                file_base64 = base64.b64encode(file_bytes).decode('utf-8')
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat.video",
+                        "text": text,
+                        "video": file_base64,
+                        "sender_id": sender_id,
+                        "username": username,
+                        "timestamp": timestamp,
+                    },
+                )
         else:
             message = text_data_json.get("message")
             sender_id = text_data_json.get("sender_id")
@@ -269,6 +280,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     "username": username,
                     "sender_id": sender_id,
+                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                }
+            )
+        )
+
+    async def chat_video(self, event):
+        text = event["text"]
+        video_bytes = event["video"]
+        sender_id = event["sender_id"]
+        username = event["username"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "video",
+                    "text": text,
+                    "video": video_bytes,
+                    "sender_id": sender_id,
+                    "username": username,
                     "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 }
             )
