@@ -5,7 +5,7 @@ from users.models import CustomUser
 from startups.models import Startup, Industry
 from mixer.backend.django import mixer
 from startups.views import StartupViewSet
-from django.db.utils import IntegrityError
+
 
 
 class IndustryModelTestCase(TestCase):
@@ -93,38 +93,60 @@ class StartupViewSetTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Startup.objects.filter(owner=self.user).exists())
 
+    def test_create_startup_existing_user(self):
+        '''
+        Test for negative case of creating a startup for user with an existing startup
+        '''
+        mixer.blend(Startup, owner=self.user, industries=self.industry)
+        request = self.factory.post(self.url, self.data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], "Startup already exists for this user")
+
+    def test_invalid_contact_email(self):
+        """
+          Invalid contact email test.
+          """
+        new_user = mixer.blend(CustomUser)
+        invalid_data = self.data.copy()
+        invalid_data['contact_email'] = 'invalid_email'
+        request = self.factory.post(self.url, invalid_data, format='json')
+        force_authenticate(request, user=new_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertIn('contact_email', response.data)
+
+    def test_invalid_contact_phone(self):
+        """
+        Invalid contact phone number test.
+        """
+        new_user = mixer.blend(CustomUser)
+        invalid_data = self.data.copy()
+        invalid_data['contact_phone'] = 'invalid_phone_number'
+        request = self.factory.post(self.url, invalid_data, format='json')
+        force_authenticate(request, user=new_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertIn('Error', response.data)
+
+    def test_invalid_startup_validation_number(self):
+        """
+        Test for invalid startup validation number.
+        """
+        new_user = mixer.blend(CustomUser)
+        invalid_data = self.data.copy()
+        invalid_data['number_for_startup_validation'] = 'invalid_number'
+        request = self.factory.post(self.url, invalid_data, format='json')
+        force_authenticate(request, user=new_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(isinstance(response.data, dict))
+        self.assertIn('number_for_startup_validation', response.data)
 
 
-
-
-
-
-
-
-    # def test_create_startup_existing_user(self):
-    #     '''
-    #     Test for negative case of creating a startup for user with an existing startup
-    #     '''
-    #     mixer.blend(Startup, owner=self.user, industries=self.industry)
-    #     request = self.factory.post(self.url, self.data, format='json')
-    #     force_authenticate(request, user=self.user)
-    #     response = self.view(request)
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #     self.assertEqual(response.data['error'], "Startup already exists for this user")
-    #
-    # def test_create_startup_invalid_data(self):
-    #     '''
-    #     Test for negative case of creating a startup with invalid data
-    #     '''
-    #     invalid_data = {'description': 'Missing required fields'}
-    #     request = self.factory.post(self.url, invalid_data, format='json')
-    #     force_authenticate(request, user=self.user)
-    #     response = self.view(request)
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #     self.assertIn('startup_name', response.data)
-    #     self.assertIn('industries', response.data)
-    #     self.assertIn('contact_phone', response.data)
-    #     self.assertIn('contact_email', response.data)
     #
     # def test_update_startup_success(self):
     #     '''
