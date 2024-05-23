@@ -17,7 +17,7 @@ class IsStartupPermission(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        return request.user.is_startup == 1 and request.user.is_authenticated
+        return request.user.is_authenticated and getattr(request.user, 'is_startup', False) == 1
 
 
 class StartupViewSet(viewsets.ViewSet):
