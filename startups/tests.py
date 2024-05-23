@@ -1,12 +1,12 @@
 from rest_framework import status
 from rest_framework.test import force_authenticate, APIRequestFactory
 from django.test import TestCase
+from mixer.backend.django import mixer
+
 from users.models import CustomUser
 from startups.models import Startup, Industry
-from mixer.backend.django import mixer
 from startups.views import StartupViewSet
 from projects.models import Project
-from rest_framework.response import Response
 
 
 class IndustryModelTestCase(TestCase):
