@@ -11,7 +11,7 @@ from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, Pro
 from projects.permissions import IsInvestor
 from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
-from notifications.tasks import project_updating, project_subscription
+from notifications.signals import project_updated_signal, project_subscription_signal
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -134,10 +134,8 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
-        current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
-            project_updating.delay(investor.id, project.id, current_site)
-
+            project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
 
         data = {
             'project_id': pk,
@@ -176,9 +174,8 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
-        current_site = get_current_site(request).domain
         for investor in project.subscribers.all():
-            project_updating.delay(investor.id, project.id, current_site)
+            project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
 
         data = {
             'project_id': pk,
@@ -263,17 +260,31 @@ class ProjectViewSet(viewsets.ViewSet):
 
             project.subscribers.add(subscriber)
 
-            current_site = get_current_site(request).domain
-            project_subscription.delay(project.id, subscriber.id, current_site)
+            project_subscription_signal.send(sender=Project, project_id=project.id, subscriber_id=subscriber.id)
 
             return Response({'message': f'Investor {user.first_name} {user.last_name} successfully subscribed to '
                                         f'the project {project.project_name}'}, status=status.HTTP_200_OK)
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
-
     @action(detail=False, methods=['post'], url_path='compare_projects')
     def compare_projects(self, request):
+        """
+        Compare multiple projects.
+        This action allows comparing multiple projects based on their attributes. It expects a POST request with the
+        project IDs included in the request data. If fewer than two project IDs are provided, it returns an error message.
+        Upon successful comparison, it returns a dictionary of differences between the projects along with an HTTP 200 OK status code.
+
+        Parameters:
+        - request (Request): The HTTP request object.
+
+        Returns:
+        Response: A JSON response containing the differences between the projects upon successful comparison.
+
+        Raises:
+        ValueError: If fewer than two project IDs are provided.
+        """
+
         try:
             project_ids = request.data.get('project_ids', [])
             projects = Project.objects.filter(pk__in=project_ids)

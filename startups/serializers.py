@@ -66,15 +66,15 @@ class StartupSerializerUpdate(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def validate(self, data):
-        location = data.get('location')
-        contact_phone = data.get('contact_phone')
-        number_for_startup_validation = data.get('number_for_startup_validation')
-
-        ValidationPatterns.validate_location(location)
-
-        ValidationPatterns.validate_phone_number(contact_phone)
-
-        ValidationPatterns.validate_edrpou(number_for_startup_validation)
-
-        return data
+    # def validate(self, data):
+    #     location = data.get('location')
+    #     contact_phone = data.get('contact_phone')
+    #     number_for_startup_validation = data.get('number_for_startup_validation')
+    #
+    #     ValidationPatterns.validate_location(location)
+    #
+    #     ValidationPatterns.validate_phone_number(contact_phone)
+    #
+    #     ValidationPatterns.validate_edrpou(number_for_startup_validation)
+    #
+    #     return data

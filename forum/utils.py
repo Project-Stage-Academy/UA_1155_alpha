@@ -24,10 +24,10 @@ class ValidationPatterns:
         if password != password2:
             raise serializers.ValidationError({"Error": "Passwords do not match"})
 
-    @staticmethod
-    def validate_phone_number(phone_number):
-        if not re.match(ValidationPatterns.PHONE_NUMBER_REGEX, phone_number):
-            raise serializers.ValidationError({'Error': 'Mobile phone number must be in the format +XXXXXXXXXX'})
+    # @staticmethod
+    # def validate_phone_number(phone_number):
+    #     if not re.match(ValidationPatterns.PHONE_NUMBER_REGEX, phone_number):
+    #         raise serializers.ValidationError({'Error': 'Mobile phone number must be in the format +XXXXXXXXXX'})
 
     @staticmethod
     def validate_location(location):
