@@ -10,10 +10,16 @@ from projects.models import Project
 
 
 class IndustryModelTestCase(TestCase):
+    """
+    Test case for the Industry model.
+    """
     def setUp(self):
         Industry.objects.all().delete()
 
     def tearDown(self):
+        """
+        Clean up after each test by deleting all Industry and Startup instances.
+        """
         try:
             Startup.objects.all().delete()
             Industry.objects.all().delete()
@@ -21,11 +27,17 @@ class IndustryModelTestCase(TestCase):
             print("Error during cleanup:", e)
 
     def test_industry_creation(self):
+        """
+        Test creating a new Industry instance.
+        """
         industry = mixer.blend(Industry, name="Technology")
         self.assertEqual(str(industry), "Technology")
         self.assertTrue(isinstance(industry, Industry))
 
     def test_unique_industry_name(self):
+        """
+        Test ensuring uniqueness of the Industry name.
+        """
         name = "Technology"
         Industry.objects.create(name=name)
         with self.assertRaises(Exception):
@@ -60,9 +72,9 @@ class StartupViewSetTest(TestCase):
         }
 
     def test_create_startup_success(self):
-        '''
+        """
         Test for positive case of creating a startup
-        '''
+        """
         existing_startup = Startup.objects.filter(owner=self.user).first()
         if existing_startup:
             existing_startup.delete()
@@ -74,9 +86,9 @@ class StartupViewSetTest(TestCase):
         self.assertTrue(Startup.objects.filter(owner=self.user).exists())
 
     def test_create_startup_existing_user(self):
-        '''
+        """
         Test for negative case of creating a startup for user with an existing startup
-        '''
+        """
         mixer.blend(Startup, owner=self.user, industries=self.industry)
         request = self.factory.post(self.url, self.data, format='json')
         force_authenticate(request, user=self.user)
@@ -86,8 +98,8 @@ class StartupViewSetTest(TestCase):
 
     def test_invalid_contact_email(self):
         """
-          Invalid contact email test.
-          """
+        Invalid contact email test.
+        """
         new_user = mixer.blend(CustomUser, is_startup=True)
         invalid_data = self.data.copy()
         invalid_data['contact_email'] = 'invalid_email'
@@ -127,9 +139,9 @@ class StartupViewSetTest(TestCase):
         self.assertIn('number_for_startup_validation', response.data)
 
     def test_update_startup_success(self):
-        '''
+        """
         Test for positive case of updating a startup
-        '''
+        """
         request = self.factory.put(f'{self.url}{self.startup.id}/', self.data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.startup.id)
@@ -137,26 +149,26 @@ class StartupViewSetTest(TestCase):
         self.assertEqual(Startup.objects.get(pk=self.startup.id).description, self.data['description'])
 
     def test_update_not_authorized(self):
-        '''
+        """
         Test for negative case of updating a startup by not-authorized user
-        '''
+        """
         request = self.factory.put(f'{self.url}{self.startup.id}/', self.data, format='json')
         response = self.view(request, pk=self.startup.id)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_update_startup_not_exist(self):
-        '''
+        """
         Test for negative case of updating a non-existing startup
-        '''
+        """
         request = self.factory.put(f'{self.url}{self.startup.id}/', self.data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.startup.id + 1)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_partial_update_startup_success(self):
-        '''
+        """
         Test for positive case of partially updating a startup
-        '''
+        """
         self.partial_data = {
             'contact_phone': '+380501234567'
         }
@@ -167,26 +179,26 @@ class StartupViewSetTest(TestCase):
         self.assertEqual(Startup.objects.get(pk=self.startup.id).contact_phone, self.partial_data['contact_phone'])
 
     def test_partial_update_not_authorized(self):
-        '''
+        """
         Test for negative case of partially updating a startup by not-authorized user
-        '''
+        """
         request = self.factory.patch(f'{self.url}{self.startup.id}/', self.partial_data, format='json')
         response = self.view(request, pk=self.startup.id)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_partial_update_startup_not_exist(self):
-        '''
+        """
         Test for negative case of partially updating a non-existing startup
-        '''
+        """
         request = self.factory.patch(f'{self.url}{self.startup.id}/', self.partial_data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.startup.id + 1)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_partial_update_startup_wrong_industry(self):
-        '''
+        """
         Test for negative case of partially updating a startup with a wrong industry
-        '''
+        """
         self.partial_data = {
             'industries': 'Wrong Industry'
         }
@@ -196,9 +208,9 @@ class StartupViewSetTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_destroy_startup_success(self):
-        '''
+        """
         Test for positive case of deleting a startup
-        '''
+        """
         request = self.factory.delete(f'{self.url}{self.startup.id}/')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.startup.id)
@@ -206,26 +218,26 @@ class StartupViewSetTest(TestCase):
         self.assertFalse(Startup.objects.get(pk=self.startup.id).is_active)
 
     def test_destroy_not_authorized(self):
-        '''
+        """
         Test for negative case of deleting a startup by not-authorized user
-        '''
+        """
         request = self.factory.delete(f'{self.url}{self.startup.id}/')
         response = self.view(request, pk=self.startup.id)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_destroy_startup_not_exist(self):
-        '''
+        """
         Test for negative case of deleting a non-existing startup
-        '''
+        """
         request = self.factory.delete(f'{self.url}{self.startup.id + 1}/')
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.startup.id + 1)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_destroy_startup_with_active_projects(self):
-        '''
+        """
         Test for the case of deleting a startup with active projects
-        '''
+        """
         request = self.factory.delete(f'{self.url}{self.startup.id}/')
         force_authenticate(request, user=self.user)
         projects_exist = Project.objects.filter(startup=self.startup, is_active=True).exists()
