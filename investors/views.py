@@ -24,9 +24,9 @@ class IsInvestorPermission(permissions.BasePermission):
 
 
 class InvestorViewSet(viewsets.ViewSet):
-    free_methods = ("list", "retrieve", "compare_projects")
-    investors_methods = ("invest_to_project", "get_my_projects", "add_subscriber")
-    allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
+    free_methods = ("list", "retrieve")
+    investors_methods = ("update", "partial_update", "destroy", "all_subscribed_projects", "remove_subscribed_project",
+                         "get_my_profile", "add_interests", "remove_interests")
 
     def get_permissions(self):
         if self.action in self.free_methods:
