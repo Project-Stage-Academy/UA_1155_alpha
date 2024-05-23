@@ -51,6 +51,7 @@ class ProjectSerializerUpdate(serializers.ModelSerializer):
         instance.promo_video_url = validated_data.get(
             "promo_video_url", instance.promo_video_url
         )
+        instance.is_verified = validated_data.get('is_verified', instance.is_verified)
         instance.save()
         return instance
 
