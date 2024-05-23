@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "notifications",
     "rest_framework_mongoengine",
     "channels",
-    "livechat"
+    "livechat",
 ]
 
 MIDDLEWARE = [
@@ -91,13 +91,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "forum.wsgi.application"
-ASGI_APPLICATION = 'forum.asgi.application'
+ASGI_APPLICATION = "forum.asgi.application"
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('172.18.221.195', 6379)],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv("REDIS_URL_FOR_CHANNELS"), 6379)],
         },
     },
 }
@@ -153,7 +153,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

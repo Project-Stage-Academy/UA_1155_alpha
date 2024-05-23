@@ -1,4 +1,4 @@
-celery==5.3.6
+﻿celery==5.3.6
 Django==5.0.4
 djangorestframework==3.14.0
 mongoengine==0.28.2
@@ -14,3 +14,8 @@ django-rest-framework-mongoengine==3.4.1
 gevent==24.2.1
 drf-yasg==1.21.7
 mixer==7.2.2
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+pillow
+

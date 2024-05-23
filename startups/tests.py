@@ -63,7 +63,6 @@ class StartupViewSetTest(TestCase):
             'startup_name': 'My new startup',
             'description': 'This is the description of my startup',
             'industries': 'Health Care',
-            'location': 'Yellowstone-National Park',
             'contact_phone': '+31234567899',
             'contact_email': 'info@2example.com',
             'number_for_startup_validation': 12345671,
