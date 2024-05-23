@@ -1,17 +1,21 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
+from investors.models import Investor
+from notifications.signals import project_subscription_signal, project_updated_signal
+from notifications.tasks import project_subscription, project_updating
+from projects.models import Location, Project
+from projects.permissions import IsInvestor
+from projects.serializers import (
+    ProjectSerializer,
+    ProjectSerializerUpdate,
+    ProjectViewSerializer,
+)
+from projects.utils import calculate_difference, filter_projects
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from investors.models import Investor
-from projects.models import Project
-from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
-from projects.permissions import IsInvestor
-from projects.utils import filter_projects, calculate_difference
-from startups.models import Startup, Industry
-from notifications.signals import project_updated_signal, project_subscription_signal
+from startups.models import Industry, Startup
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -42,7 +46,14 @@ class ProjectViewSet(viewsets.ViewSet):
 
     free_methods = ("list", "retrieve", "compare_projects")
     investors_methods = ("invest_to_project", "get_my_projects", "add_subscriber")
-    allowed_uqery_keys = ('project_name', 'description', 'industry', 'status', 'bgt', 'blt')
+    allowed_uqery_keys = (
+        "project_name",
+        "description",
+        "industry",
+        "status",
+        "bgt",
+        "blt",
+    )
 
     def get_permissions(self):
         # Configure permissions based on the action (method) that is called
@@ -59,9 +70,17 @@ class ProjectViewSet(viewsets.ViewSet):
         queryset_projects = Project.objects.filter(is_active=True)
         query_params = request.query_params
         if query_params:
-            filtered_query_data = {key: query_params[key] for key in query_params if key in self.allowed_uqery_keys}
-            queryset_projects = filter_projects(queryset_projects, filtered_query_data, request)
-        serializer = ProjectViewSerializer(queryset_projects, many=True, context={'request': request})
+            filtered_query_data = {
+                key: query_params[key]
+                for key in query_params
+                if key in self.allowed_uqery_keys
+            }
+            queryset_projects = filter_projects(
+                queryset_projects, filtered_query_data, request
+            )
+        serializer = ProjectViewSerializer(
+            queryset_projects, many=True, context={"request": request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
@@ -71,11 +90,14 @@ class ProjectViewSet(viewsets.ViewSet):
         try:
             project = get_object_or_404(Project, is_active=True, id=project_id)
         except Project.DoesNotExist:
-            return Response({
-                'detail': f'Project with id {pk} not found.'
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": f"Project with id {pk} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = ProjectViewSerializer(project, many=False, context={'request': request})
+        serializer = ProjectViewSerializer(
+            project, many=False, context={"request": request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
@@ -86,22 +108,31 @@ class ProjectViewSet(viewsets.ViewSet):
         """
         user = request.user
         if not user.is_startup:
-            return Response({'message': 'You\'re not a startup user'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "You're not a startup user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         startup = Startup.objects.filter(owner=user).first()
 
         if not startup:
-            return Response({'message': 'Please create a startup first'}, status=status.HTTP_400_BAD_REQUEST)
-        industry_name = request.data.get('industry')
+            return Response(
+                {"message": "Please create a startup first"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        industry_name = request.data.get("industry")
         industry = get_object_or_404(Industry, name=industry_name)
+        location_name = request.data.get("location")
+        location = get_object_or_404(Location, name=location_name)
         project_info = request.data
-        project_info['industry'] = industry.id
+        project_info["industry"] = industry.id
+        project_info["location"] = location.id
         serializer = ProjectSerializer(data=project_info)
         if serializer.is_valid():
             serializer.save(startup=startup)
             data = {
-                'message': "You successfully created new project",
-                'project_info': project_info,
-                'status': status.HTTP_200_OK
+                "message": "You successfully created new project",
+                "project_info": project_info,
+                "status": status.HTTP_200_OK,
             }
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -118,30 +149,59 @@ class ProjectViewSet(viewsets.ViewSet):
                 raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        industry_name = request.data.get('industry')
+        industry_name = request.data.get("industry")
+        location_name = request.data.get("location")
         if industry_name:
             try:
                 industry = Industry.objects.get(name=industry_name)
             except Industry.DoesNotExist:
-                return Response({"error": "Industry does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Industry does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             industry = project.industry
-        serializer = ProjectSerializerUpdate(instance=project, data=request.data, partial=False)
-        serializer.is_valid(raise_exception=True)
-        if industry is not None:
-            serializer.validated_data['industry'] = industry
+
+        if location_name:
+            try:
+                location = Location.objects.get(name=location_name)
+            except Location.DoesNotExist:
+                return Response(
+                    {"error": "Location does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
-            return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
+            location = project.location
+
+        serializer = ProjectSerializerUpdate(
+            instance=project, data=request.data, partial=False
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if industry is not None:
+            serializer.validated_data["industry"] = industry
+        else:
+            return Response(
+                {"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if location is not None:
+            serializer.validated_data["location"] = location
+        else:
+            return Response(
+                {"error": "Please provide location"}, status=status.HTTP_400_BAD_REQUEST
+            )
         serializer.save()
 
         for investor in project.subscribers.all():
-            project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
+            project_updated_signal.send(
+                sender=Project, investor_id=investor.id, project_id=project.id
+            )
 
         data = {
-            'project_id': pk,
-            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
-            'updated_data': request.data,
-            'status': status.HTTP_200_OK
+            "project_id": pk,
+            "message": f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
+            "updated_data": request.data,
+            "status": status.HTTP_200_OK,
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -158,30 +218,59 @@ class ProjectViewSet(viewsets.ViewSet):
                 raise ValueError("Project is not active")
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        industry_name = request.data.get('industry')
+        industry_name = request.data.get("industry")
         if industry_name:
             try:
                 industry = Industry.objects.get(name=industry_name)
             except Industry.DoesNotExist:
-                return Response({"error": "Industry does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Industry does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             industry = project.industry
-        serializer = ProjectSerializerUpdate(instance=project, data=request.data, partial=True)
+
+        location_name = request.data.get("location")
+        if location_name:
+            try:
+                location = Location.objects.get(name=location_name)
+            except Location.DoesNotExist:
+                return Response(
+                    {"error": "Location does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            location = project.location
+
+        serializer = ProjectSerializerUpdate(
+            instance=project, data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         if industry is not None:
-            serializer.validated_data['industry'] = industry
+            serializer.validated_data["industry"] = industry
         else:
-            return Response({"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Please provide industry"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if location is not None:
+            serializer.validated_data["location"] = location
+        else:
+            return Response(
+                {"error": "Please provide location"}, status=status.HTTP_400_BAD_REQUEST
+            )
         serializer.save()
 
         for investor in project.subscribers.all():
-            project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
+            project_updated_signal.send(
+                sender=Project, investor_id=investor.id, project_id=project.id
+            )
 
         data = {
-            'project_id': pk,
-            'message': f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
-            'updated_data': request.data,
-            'status': status.HTTP_200_OK
+            "project_id": pk,
+            "message": f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
+            "updated_data": request.data,
+            "status": status.HTTP_200_OK,
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -194,14 +283,18 @@ class ProjectViewSet(viewsets.ViewSet):
         project.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'], url_path='my')
+    @action(detail=False, methods=["get"], url_path="my")
     def get_my_projects(self, request):
         user = self.request.user
-        investors_projects = Project.objects.filter(investors__id=user.id, is_active=True)
-        serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
+        investors_projects = Project.objects.filter(
+            investors__id=user.id, is_active=True
+        )
+        serializer = ProjectViewSerializer(
+            investors_projects, many=True, context={"request": request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='invest')
+    @action(detail=True, methods=["post"], url_path="invest")
     def invest_to_project(self, request, pk=None):
         """
         This function allows adding an investor to a project.
@@ -222,17 +315,23 @@ class ProjectViewSet(viewsets.ViewSet):
         investor = get_object_or_404(Investor, user=user, is_active=True)
 
         if project.investors.filter(id=investor.id).exists():
-            return Response({
-                'detail': f'Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}.'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "detail": f"Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         project.investors.add(investor)
 
-        return Response({
-            'detail': f'Investor {user.first_name} {user.last_name} has been added to project {project.project_name}.'
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "detail": f"Investor {user.first_name} {user.last_name} has been added to project {project.project_name}."
+            },
+            status=status.HTTP_200_OK,
+        )
 
-    @action(detail=True, methods=['post'], url_path='add_subscriber')
+    @action(detail=True, methods=["post"], url_path="add_subscriber")
     def add_subscriber(self, request, pk=None):
         """
         Add a subscriber to the project.
@@ -254,20 +353,33 @@ class ProjectViewSet(viewsets.ViewSet):
 
             if project.subscribers.filter(id=subscriber.id).exists():
                 project.subscribers.remove(subscriber)
-                return Response({
-                    'detail': f'Investor {user.first_name} {user.last_name} successfully unsubscribed from the project '
-                              f'{project.project_name}.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        "detail": f"Investor {user.first_name} {user.last_name} successfully unsubscribed from the project "
+                        f"{project.project_name}."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             project.subscribers.add(subscriber)
 
-            project_subscription_signal.send(sender=Project, project_id=project.id, subscriber_id=subscriber.id)
+            project_subscription_signal.send(
+                sender=Project, project_id=project.id, subscriber_id=subscriber.id
+            )
 
-            return Response({'message': f'Investor {user.first_name} {user.last_name} successfully subscribed to '
-                                        f'the project {project.project_name}'}, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "message": f"Investor {user.first_name} {user.last_name} successfully subscribed to "
+                    f"the project {project.project_name}"
+                },
+                status=status.HTTP_200_OK,
+            )
         except Project.DoesNotExist:
-            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
-    @action(detail=False, methods=['post'], url_path='compare_projects')
+    @action(detail=False, methods=["post"], url_path="compare_projects")
     def compare_projects(self, request):
         """
         Compare multiple projects.
@@ -286,21 +398,23 @@ class ProjectViewSet(viewsets.ViewSet):
         """
 
         try:
-            project_ids = request.data.get('project_ids', [])
+            project_ids = request.data.get("project_ids", [])
             projects = Project.objects.filter(pk__in=project_ids)
 
             if len(project_ids) < 2:
-                return Response({'error': 'At least two projects are required for comparison'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "At least two projects are required for comparison"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             differences = {}
             for i in range(len(projects)):
                 for j in range(i + 1, len(projects)):
                     project1 = projects[i]
                     project2 = projects[j]
-                    key = f'comparison_{i + 1}_{j + 1}'
+                    key = f"comparison_{i + 1}_{j + 1}"
                     differences[key] = calculate_difference(project1, project2)
 
             return Response(differences, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
