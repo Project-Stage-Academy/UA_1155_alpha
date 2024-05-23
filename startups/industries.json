@@ -33,5 +33,41 @@
         "fields": {
             "name": "Economics"
         }
+    },
+    {
+        "model": "startups.industry",
+        "pk": 6,
+        "fields": {
+            "name": "Alternative Energy"
+        }
+    },
+    {
+        "model": "startups.industry",
+        "pk": 7,
+        "fields": {
+            "name": "E-commerce"
+        }
+    },
+    {
+        "model": "startups.industry",
+        "pk": 8,
+        "fields": {
+            "name": "Agriculture"
+        }
+    },
+    {
+        "model": "startups.industry",
+        "pk": 9,
+        "fields": {
+            "name": "Transportation"
+        }
+    },
+    {
+        "model": "startups.industry",
+        "pk": 10,
+        "fields": {
+            "name": "Entertainment"
+        }
     }
 ]
+
