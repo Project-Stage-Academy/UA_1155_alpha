@@ -1,5 +1,4 @@
 from django.contrib.sites.shortcuts import get_current_site
-from django.template.loader import render_to_string
 
 from forum.middleware import get_current_request
 from django.db.models.signals import post_save
@@ -8,7 +7,7 @@ from django.dispatch import receiver, Signal
 from investors.models import Investor
 from projects.models import Project
 from startups.models import Startup
-from .tasks import send_for_moderation, project_updating, project_subscription, project_creation_notification
+from .tasks import send_for_moderation, project_updating, project_subscription
 from .utils import Util
 
 project_updated_signal = Signal()

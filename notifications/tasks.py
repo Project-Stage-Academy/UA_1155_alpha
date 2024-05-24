@@ -1,9 +1,6 @@
 import os
-from smtplib import SMTPException
 
 from celery import shared_task
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
 
 from investors.models import Investor
@@ -125,37 +122,3 @@ def send_decline(self, model_name, contact_email):
 
     Util.send_email(sent_data)
     return "Decline notification task completed"
-
-
-@shared_task(bind=True)
-def project_creation_notification(self, investor_id, project_id, domain):
-    """
-    Celery task for notifying an investor about the creation of a new project.
-
-    Args:
-        self: The task instance.
-        investor_id (int): The ID of the investor to notify.
-        project_id (int): The ID of the newly created project.
-        domain (str): The domain name used to construct links in the notification email.
-
-    Returns:
-        str: A message indicating the completion of the task.
-    """
-    try:
-        investor = Investor.objects.get(id=investor_id)
-        project = Project.objects.get(id=project_id)
-        user = CustomUser.objects.get(id=investor.user_id)
-        notification = Notification.create_notification(recipient_type="investor", recipient_id=user.id,
-                                                        project_id=project_id, type_of_notification="project_creation",
-                                                        text=f"A new project {project.project_name} has been created", )
-
-        link = f"http://{domain}/api/projects/{project.id}"
-        sent_data = {"email_subject": "New Project Created",
-                     "email_body": f"Hello {user.first_name}!\n" + f"A new project {project.project_name} has been created.\n" + f"Link to the project: {link}",
-                     "to_email": investor.contact_email}
-        Util.send_email(sent_data)
-        return "Project creation notification task completed"
-    except (Investor.DoesNotExist, Project.DoesNotExist, CustomUser.DoesNotExist) as e:
-        # Handle the case if the investor, project, or user doesn't exist
-        print(f"Error: {e}")
-
