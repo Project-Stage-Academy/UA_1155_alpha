@@ -76,4 +76,4 @@ def project_created_receiver(sender, project_id, **kwargs):
     interested_investors = Investor.objects.filter(interests__name=project.industry.name)
 
     for investor in interested_investors:
-        project_creation_notification.delay(investor.id, project_id, current_site)
+        project_creation_notification.delay(investor_id=investor.id, project_id=project_id, domain=current_site)
