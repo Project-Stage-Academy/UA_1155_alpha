@@ -11,7 +11,7 @@ from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, Pro
 from projects.permissions import IsInvestor
 from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
-from notifications.signals import project_updated_signal, project_subscription_signal
+from notifications.signals import project_updated_signal, project_subscription_signal, project_updated_signal_interests
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -137,9 +137,14 @@ class ProjectViewSet(viewsets.ViewSet):
         for investor in project.subscribers.all():
             project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
 
+        interested_investors = Investor.objects.filter(interests__name=project.industry.name).distinct()
+
+        for investor in interested_investors:
+            project_updated_signal_interests.send(sender=Project, project_id=project.id, subscriber_id=investor.id)
+
         data = {
             'project_id': pk,
-            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
+            'message': f"Hello, here's a PUT method! You update ALL information about PROJECT # {pk}",
             'updated_data': request.data,
             'status': status.HTTP_200_OK
         }
@@ -177,13 +182,19 @@ class ProjectViewSet(viewsets.ViewSet):
         for investor in project.subscribers.all():
             project_updated_signal.send(sender=Project, investor_id=investor.id, project_id=project.id)
 
+        interested_investors = Investor.objects.filter(interests__name=project.industry.name).distinct()
+
+        for investor in interested_investors:
+            project_updated_signal_interests.send(sender=Project, project_id=project.id, subscriber_id=investor.id)
+
         data = {
             'project_id': pk,
-            'message': f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
+            'message': f"Hello, here's a PATCH method! You update SOME information about PROJECT # {pk}",
             'updated_data': request.data,
             'status': status.HTTP_200_OK
         }
         return Response(data, status=status.HTTP_200_OK)
+
 
     def destroy(self, request, pk=None):
         # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/

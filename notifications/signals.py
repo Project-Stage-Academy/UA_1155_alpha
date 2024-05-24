@@ -1,4 +1,6 @@
 from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+
 from forum.middleware import get_current_request
 from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
@@ -6,12 +8,12 @@ from django.dispatch import receiver, Signal
 from investors.models import Investor
 from projects.models import Project
 from startups.models import Startup
-from .models import Notification
-from .tasks import send_for_moderation, project_updating, project_subscription
-from forum.celery import send_email_notification
+from .tasks import send_for_moderation, project_updating, project_subscription, project_creation_notification
+from .utils import Util
 
 project_updated_signal = Signal()
 project_subscription_signal = Signal()
+project_updated_signal_interests = Signal()
 
 
 @receiver(post_save, sender=Startup)
@@ -48,21 +50,37 @@ def project_subscription_receiver(sender, project_id, subscriber_id, **kwargs):
     project_subscription.delay(project_id, subscriber_id, current_site)
 
 
-def match_project_to_investor(project, investor):
-    project_industries = set(project.industries.values_list('id', flat=True))
-    investor_interests = set(investor.interests.values_list('id', flat=True))
-    return bool(project_industries & investor_interests)
+@receiver(project_updated_signal_interests)
+def project_updated_receiver_interests(sender, project_id, **kwargs):
+    """
+    Signal handler to perform actions when a project is updated and investor's interests match project's industry.
+    """
+    request = get_current_request()
+    current_site = get_current_site(request).domain if request else "localhost:8000/"
+
+    project = Project.objects.get(id=project_id)
+    interested_investors = Investor.objects.filter(interests__name=project.industry.name)
+
+    for investor in interested_investors:
+        project_updating.delay(investor.id, project_id, current_site)
 
 
-def send_notification(investor, project, is_new):
-    subject = "New Project" if is_new else "Project Update"
-    message = f"The project '{project.name}' in your area of interest has been {'created' if is_new else 'updated'}."
-    notification = Notification.objects.create(recipient=investor.user, message=message)
-    send_email_notification.delay(subject, message, [investor.contact_email])
+@receiver(post_save, sender=Project)
+def project_creation_notification(sender, instance, created, **kwargs):
+    """
+    Signal handler to perform actions when a new project is created.
+    """
+    try:
+        request = get_current_request()
+        domain = get_current_site(request).domain if request else "localhost:8000/"
+        interested_investors = Investor.objects.filter(interests__name=instance.industry.name)
+        for investor in interested_investors:
+            subject = f"New Project Created: {instance.project_name}"
+            sent_data = {"email_subject": "Project Created",
+                         "email_body": f"Hello {investor.user.first_name}!\n" + f"The new project "
+                         f"{instance.project_name} has been created.\n" + f"Link to the project: {domain}",
+                         "to_email": investor.contact_email}
+            Util.send_email(sent_data)
+    except Exception as e:
+        print(f"Error in project_creation_notification: {e}")
 
-
-def notify_investors_about_project(project, is_new):
-    investors = Investor.objects.filter(is_active=True, is_verified=True)
-    for investor in investors:
-        if match_project_to_investor(project, investor):
-            send_notification(investor, project, is_new)
