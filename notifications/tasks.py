@@ -1,6 +1,7 @@
 import os
 
 from celery import shared_task
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from investors.models import Investor
@@ -128,3 +129,29 @@ def send_decline(self, model_name, contact_email, data_id):
 
     Util.send_email(sent_data)
     return "Decline notification task completed"
+
+
+@shared_task(bind=True)
+def project_creation_notification(self, investor_id, project_id, domain):
+    """
+    Celery task to notify an investor about the creation of a new project.
+    """
+    try:
+        investor = Investor.objects.get(id=investor_id)
+        project = Project.objects.get(id=project_id)
+        subject = f"New Project Created: {project.project_name}"
+        message = (
+            f"Hello {investor.user.first_name}!\n"
+            f"A new project '{project.project_name}' has been created in the {project.industry.name} industry.\n"
+            f"Link to the project: http://{domain}/api/projects/{project_id}/\n"
+            f"Best regards,\nYour Project Team"
+        )
+        Util.send_email({
+            'email_subject': subject,
+            'email_body': message,
+            'to_email': investor.user.email
+        })
+        return "Project creating task completed"
+
+    except (Investor.DoesNotExist, Project.DoesNotExist) as e:
+        print(f"Error: {e}")
