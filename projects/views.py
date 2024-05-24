@@ -1,7 +1,7 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from investors.models import Investor
-from notifications.signals import project_subscription_signal, project_updated_signal
+from notifications.signals import project_subscription_signal, project_updated_signal, project_updated_interests_signal
 from notifications.tasks import project_subscription, project_updating
 from projects.models import Location, Project
 from projects.permissions import IsInvestor
@@ -198,6 +198,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 sender=Project, investor_id=investor.id, project_id=project.id
             )
 
+        interested_investors = Investor.objects.filter(interests__name=project.industry.name).distinct()
+
+        for investor in interested_investors:
+            project_updated_interests_signal.send(sender=Project, project_id=project.id, subscriber_id=investor.id)
+
         data = {
             "project_id": pk,
             "message": f"Hello, here's a PUT method! You update ALL information about PROJECT № {pk}",
@@ -268,9 +273,14 @@ class ProjectViewSet(viewsets.ViewSet):
                 sender=Project, investor_id=investor.id, project_id=project.id
             )
 
+        interested_investors = Investor.objects.filter(interests__name=project.industry.name).distinct()
+
+        for investor in interested_investors:
+            project_updated_interests_signal.send(sender=Project, project_id=project.id, subscriber_id=investor.id)
+
         data = {
             "project_id": pk,
-            "message": f"Hello, here's a PATCH method! You update ALL information about PROJECT № {pk}",
+            "message": f"Hello, here's a PATCH method! You update SOME information about PROJECT № {pk}",
             "updated_data": request.data,
             "status": status.HTTP_200_OK,
         }
