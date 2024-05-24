@@ -94,8 +94,9 @@ We are committed to delivering a platform that is not just a marketplace for ide
  7) Run "python manage.py makemigrations" - to create migrations for DB
  8) Run "python manage.py migrate" - to apply those migrations 
  9) Run "python manage.py loaddata startups/industries.json" - to fill idustries table
- 10) Run "python manage.py runserver" 
- 11) Open second terminal and run "celery -A forum  worker -l info -P gevent" - to run celery
+ 10) Run "python manage.py loaddata projects/locations.json" - to fill locations table
+ 11) Run "python manage.py runserver" 
+ 12) Open second terminal and run "celery -A forum  worker -l info -P gevent" - to run celery
 
 ## To see all project endpoins:
 
