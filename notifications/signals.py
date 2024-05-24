@@ -6,12 +6,13 @@ from django.dispatch import receiver, Signal
 from investors.models import Investor
 from projects.models import Project
 from startups.models import Startup
-from .tasks import send_for_moderation, project_updating, project_subscription
+from .tasks import send_for_moderation, project_updating, project_subscription, project_creation_notification
 from .utils import Util
 
 project_updated_signal = Signal()
 project_subscription_signal = Signal()
 project_updated_interests_signal = Signal()
+project_created_signal = Signal()
 
 
 @receiver(post_save, sender=Startup)
@@ -62,3 +63,17 @@ def project_updated_interests_receiver(sender, project_id, **kwargs):
     for investor in interested_investors:
         project_updating.delay(investor.id, project_id, current_site)
 
+
+@receiver(project_created_signal)
+def project_created_receiver(sender, project_id, **kwargs):
+    """
+    Signal handler to perform actions when a project is created and investor's interests match project's industry.
+    """
+    request = get_current_request()
+    current_site = get_current_site(request).domain if request else "localhost:8000/"
+
+    project = Project.objects.get(id=project_id)
+    interested_investors = Investor.objects.filter(interests__name=project.industry.name)
+
+    for investor in interested_investors:
+        project_creation_notification.delay(investor.id, project_id, current_site)

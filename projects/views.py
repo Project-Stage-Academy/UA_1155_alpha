@@ -1,7 +1,7 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from investors.models import Investor
-from notifications.signals import project_subscription_signal, project_updated_signal, project_updated_interests_signal
+from notifications.signals import project_subscription_signal, project_updated_signal, project_updated_interests_signal, project_created_signal
 from notifications.tasks import project_subscription, project_updating
 from projects.models import Location, Project
 from projects.permissions import IsInvestor
@@ -128,14 +128,17 @@ class ProjectViewSet(viewsets.ViewSet):
         project_info["location"] = location.id
         serializer = ProjectSerializer(data=project_info)
         if serializer.is_valid():
-            serializer.save(startup=startup)
+            project = serializer.save(startup=startup)
             data = {
                 "message": "You successfully created new project",
                 "project_info": project_info,
-                "status": status.HTTP_200_OK,
-            }
+                "status": status.HTTP_200_OK}
+
+            project_created_signal.send(sender=Project, project_id=project.id)
+
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def update(self, request, pk):
         """
