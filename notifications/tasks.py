@@ -7,7 +7,7 @@ from investors.models import Investor
 from projects.models import Project
 from startups.models import Startup
 from users.models import CustomUser
-from .models import Notification
+from .models import ProjectNotification, Notification
 from .utils import Util, get_serializer, get_model_by_name
 
 
@@ -28,7 +28,7 @@ def project_updating(self, investor_id, project_id, domain):
     project = Project.objects.get(id=project_id)
     investor = Investor.objects.get(id=investor_id)
     user = CustomUser.objects.get(id=investor.user_id)
-    notification = Notification.create_notification(recipient_type="investor", recipient_id=user.id,
+    notification = ProjectNotification.create_notification(recipient_type="investor", recipient_id=user.id,
                                                     project_id=project_id, type_of_notification="project_updating",
                                                     text=f"Project {project.project_name} has been updated", )
 
@@ -59,7 +59,7 @@ def project_subscription(self, project_id, subscriber_id, domain):
     project = Project.objects.get(id=project_id)
     startup = Startup.objects.get(id=project.startup_id)
     recipient_user = startup.owner
-    notification = Notification.create_notification(recipient_type="startup", recipient_id=recipient_user.id,
+    notification = ProjectNotification.create_notification(recipient_type="startup", recipient_id=recipient_user.id,
                                                     project_id=project_id, type_of_notification="investor_subscription",
                                                     text=f"Investor {subscriber_user.first_name} {subscriber_user.last_name} subscribed to " + f"Project with id {project_id}")
     link = f"http://{domain}/api/projects/{project.id}"
@@ -105,20 +105,26 @@ def send_for_moderation(self, model_name, data_id, domain):
 
 
 @shared_task(bind=True)
-def send_approve(self, model_name, contact_email):
+def send_approve(self, model_name, contact_email, data_id):
     sent_data = {"email_subject": "Moderation success",
                  "email_body": f"Congratulations, your {model_name} profile passed moderation!",
                  "to_email": contact_email, }
+
+    Notification.create_notification(recipient_type=model_name.lower(), recipient_id=data_id,
+                                     text=f"{model_name} profile with id={data_id} passed moderation")
 
     Util.send_email(sent_data)
     return "Approve notification task completed"
 
 
 @shared_task(bind=True)
-def send_decline(self, model_name, contact_email):
+def send_decline(self, model_name, contact_email, data_id):
     sent_data = {"email_subject": "Moderation failed",
                  "email_body": f"Unfortunately, your {model_name} profile did not pass moderation.",
                  "to_email": contact_email, }
+
+    Notification.create_notification(recipient_type=model_name.lower(), recipient_id=data_id,
+                                     text=f"{model_name} profile with id={data_id} did not pass moderation")
 
     Util.send_email(sent_data)
     return "Decline notification task completed"
