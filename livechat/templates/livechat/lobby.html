@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="https://icons.iconarchive.com/icons/studiomx/web/256/Earth-icon.png" id="favicon"
+          type="image/x-icon">
+    <title>Lobby</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'livechat/css/styles.css' %}">
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5">Let's chat, {{ username }}</h1>
+    <div style="margin: 1ch">
+        <h3>Participants</h3>
+        <ul id="participants" class="list-group">
+            {% for user in participants %}
+                <li class="list-group-item" id="participant_{{ user.id }}">
+                    {{ user.first_name }} {{ user.last_name }}
+                    <span id="status_{{ user.id }}"></span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div id="messages" class="mt-4" style="max-height: 400px; min-height: 400px; overflow-y: auto; margin-bottom: 2ch">
+    </div>
+    <form id="form" style="margin-bottom: 3ch">
+        <div class="input-group">
+            <input type="text" class="form-control" name="message" placeholder="Type your message"/>
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">Send</button>
+            </div>
+        </div>
+    </form>
+    <div class="mb-3">
+        <div class="input-group">
+            <input class="form-control" type="file" id="formFile" accept="image/*,video/*,audio/*">
+            <div class="input-group-append">
+                <button onclick="sendFile()" class="btn btn-primary">Send File</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let url = `ws://${window.location.host}/ws/chat/{{ chat_name }}/?token={{ token }}`;
+
+        const chatSocket = new WebSocket(url);
+        const messagesContainer = document.getElementById('messages');
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        let new_messages = 0;
+        chatSocket.onmessage = function (e) {
+            let data = JSON.parse(e.data);
+            console.log('Data', data);
+
+            if (data.type === 'chat_history' || data.type === 'chat' || data.type === 'image' || data.type === 'audio' || data.type === 'video' ) {
+                if ((data.type === 'chat' || data.type === 'image' || data.type === 'audio' || data.type === 'video' ) && document.visibilityState === 'hidden' && data.sender_id != '{{ sender_id }}') {
+                    new_messages++;
+                    document.title = new_messages + " new msg";
+                    document.getElementById('favicon').href = 'https://icons.iconarchive.com/icons/studiomx/web/256/Earth-Alert-icon.png';
+                }
+                document.addEventListener("visibilitychange", function () {
+                    if (document.visibilityState !== 'hidden') {
+                        new_messages = 0;
+                        document.title = "Lobby";
+                        document.getElementById('favicon').href = 'https://icons.iconarchive.com/icons/studiomx/web/256/Earth-icon.png';
+                    }
+                });
+
+                let messages = document.getElementById('messages');
+                let messageClass = data.sender_id == '{{ sender_id }}' ? 'sent' : 'received';
+
+                if (data.type === 'chat' || data.type === 'chat_history') {
+                    console.log(data);
+                    if (data.audio) {
+                        messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.text}</p>
+                            <audio controls>
+
+                                <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                    } else if (data.video) {
+                        messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.text}</p>
+                            <video controls style="max-width: 450px; max-height: 300px;">
+                                <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                            </video>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                } else if (data.image) {
+                        messages.insertAdjacentHTML('beforeend',
+                            `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <img src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                    } else if (data.message)  {
+                            messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.message}</p>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                    }
+                } else if (data.type === 'image') {
+                    messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2 message ${messageClass}" >
+                        <img  src="data:image/png;base64,${data.image}" style="max-width: 300px; max-height: 300px;"/>
+                        <div class="message-info">
+                            <span class="font-weight-bold">${data.username}</span>
+                            <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                } else if (data.type === 'audio') {
+                    messages.insertAdjacentHTML('beforeend',
+                    `<div class="alert alert-info mt-2 message ${messageClass}" >
+
+                        <p>${data.text}</p>
+                        <audio controls>
+                            <source src="data:audio/mpeg;base64,${data.audio}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div class="message-info">
+                            <span class="font-weight-bold">${data.username}</span>
+                            <span class="text-muted">${data.timestamp}</span>
+                        </div>
+                    </div>`);
+                } else if (data.type === 'video') {
+                    messages.insertAdjacentHTML('beforeend',
+                        `<div class="alert alert-info mt-2 message ${messageClass}" >
+                            <p>${data.text}</p>
+                            <video controls style="max-width: 450px; max-height: 300px;">
+                                <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                            </video>
+                            <div class="message-info">
+                                <span class="font-weight-bold">${data.username}</span>
+                                <span class="text-muted">${data.timestamp}</span>
+                            </div>
+                        </div>`);
+                }
+                scrollToBottom();
+            }
+
+            if (data.type === 'status_update') {
+                let userId = data.user_id;
+                let status = data.status;
+
+                let participantStatus = document.getElementById(`status_${userId}`);
+                if (participantStatus) {
+                    participantStatus.innerText = status;
+                    if (status === 'Online') {
+                        participantStatus.classList.remove('offline', 'away');
+                        participantStatus.classList.add('online');
+                    } else if (status === 'Offline') {
+                        participantStatus.classList.remove('online', 'away');
+                        participantStatus.classList.add('offline');
+                    } else if (status === 'Away') {
+                        participantStatus.classList.remove('online', 'offline');
+                        participantStatus.classList.add('away');
+                    }
+                }
+            }
+        };
+        let form = document.getElementById('form')
+        form.addEventListener('submit', (e) => {
+            e.preventDefault()
+            let message = e.target.message.value
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'username': '{{ username }}',
+                'sender_id': '{{ sender_id }}'
+            }))
+            form.reset()
+        })
+
+        function sendFile() {
+            const input = document.getElementById('formFile');
+            const file = input.files[0];
+            const fileTitle = file.name;
+            if (file) {
+                const reader = new FileReader()
+
+                reader.onload = function (e) {
+                    const fileData = e.target.result.split(',')[1];
+                    const fileType = file.type.split('/')[0];
+                    const message = JSON.stringify({
+                        file: fileData,
+                        'name': fileTitle,
+                        'type': fileType,
+                        'username': '{{ username }}',
+                        'sender_id': '{{ sender_id }}'
+                    });
+                    chatSocket.send(message)
+                    input.value = '';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

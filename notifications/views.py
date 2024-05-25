@@ -1,10 +1,13 @@
+from django.http import HttpResponse
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from notifications.models import Notification
-from rest_framework.decorators import action
 
-from .serializers import NotificationSerializer
+from notifications.models import ProjectNotification, Notification
+from .serializers import ProjectNotificationSerializer
+from .tasks import send_approve, send_decline
+from .utils import get_model_by_name
 
 
 class NotificationsViewSet(viewsets.ViewSet):
@@ -42,11 +45,11 @@ class NotificationsViewSet(viewsets.ViewSet):
         """
         user = request.user
 
-        notifications = Notification.get_unread_notifications(recipient_id=user.id, is_read=False)
+        notifications = ProjectNotification.get_unread_notifications(recipient_id=user.id, is_read=False)
 
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = NotificationSerializer(notifications, many=True)
+        serializer = ProjectNotificationSerializer(notifications, many=True)
         for notification in notifications:
             notification.is_read = True
             notification.save()
@@ -67,9 +70,41 @@ class NotificationsViewSet(viewsets.ViewSet):
         """
         user = request.user
 
-        notifications = Notification.get_all_notifications(recipient_id=user.id)
+        notifications = ProjectNotification.get_all_notifications(recipient_id=user.id)
+
+        print(ProjectNotification.objects.all())
+        print(Notification.objects.all())
 
         if not notifications:
             return Response({"message": "You do not have new notifications."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = NotificationSerializer(notifications, many=True)
+        serializer = ProjectNotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def approve(request, model_name, data_id):
+    model = get_model_by_name(model_name)
+    instance = model.objects.get(pk=data_id)
+
+    instance.is_verified = True
+    instance.save()
+
+    if model_name == 'Project':
+        contact_email = instance.startup.contact_email
+    else:
+        contact_email = instance.contact_email
+
+    send_approve(model_name, contact_email, data_id)
+    return HttpResponse(f"{model_name} profile #{data_id} passed moderation approval")
+
+
+def decline(request, model_name, data_id):
+    model = get_model_by_name(model_name)
+    instance = model.objects.get(pk=data_id)
+
+    if model_name == 'Project':
+        contact_email = instance.startup.contact_email
+    else:
+        contact_email = instance.contact_email
+
+    send_decline(model_name, contact_email, data_id)
+    return HttpResponse(f"{model_name} profile #{data_id} did not pass moderation approval")

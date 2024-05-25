@@ -1,10 +1,10 @@
 from rest_framework_mongoengine.serializers import DocumentSerializer
 
-from notifications.models import Notification
+from notifications.models import ProjectNotification
 
 
-class NotificationSerializer(DocumentSerializer):
+class ProjectNotificationSerializer(DocumentSerializer):
     class Meta:
-        model = Notification
+        model = ProjectNotification
         fields = ["project_id", "send_at", "text"]
 

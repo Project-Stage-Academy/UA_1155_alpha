@@ -1,0 +1,177 @@
+[
+    {
+        "model": "projects.location",
+        "pk": 1,
+        "fields": {
+            "name": "Cherkasy Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 2,
+        "fields": {
+            "name": "Chernihiv Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 3,
+        "fields": {
+            "name": "Chernivtsi Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 4,
+        "fields": {
+            "name": "Dnipropetrovsk Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 5,
+        "fields": {
+            "name": "Donetsk Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 6,
+        "fields": {
+            "name": "Ivano-Frankivsk Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 7,
+        "fields": {
+            "name": "Kharkiv Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 8,
+        "fields": {
+            "name": "Kherson Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 9,
+        "fields": {
+            "name": "Khmelnytskyi Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 10,
+        "fields": {
+            "name": "Kirovohrad Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 11,
+        "fields": {
+            "name": "Kyiv Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 12,
+        "fields": {
+            "name": "Luhansk Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 13,
+        "fields": {
+            "name": "Lviv Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 14,
+        "fields": {
+            "name": "Mykolaiv Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 15,
+        "fields": {
+            "name": "Odesa Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 16,
+        "fields": {
+            "name": "Poltava Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 17,
+        "fields": {
+            "name": "Rivne Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 18,
+        "fields": {
+            "name": "Sumy Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 19,
+        "fields": {
+            "name": "Ternopil Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 20,
+        "fields": {
+            "name": "Vinnytsia Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 21,
+        "fields": {
+            "name": "Volyn Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 22,
+        "fields": {
+            "name": "Zakarpattia Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 23,
+        "fields": {
+            "name": "Zaporizhzhia Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 24,
+        "fields": {
+            "name": "Zhytomyr Oblast"
+        }
+    },
+    {
+        "model": "projects.location",
+        "pk": 25,
+        "fields": {
+            "name": "Crimean Oblast"
+        }
+    }
+]

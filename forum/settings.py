@@ -38,6 +38,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -56,6 +57,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "notifications",
     "rest_framework_mongoengine",
+    "channels",
+    "livechat",
 ]
 
 MIDDLEWARE = [
@@ -66,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'forum.middleware.RequestMiddleware',
 ]
 
 ROOT_URLCONF = "forum.urls"
@@ -87,6 +91,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "forum.wsgi.application"
+ASGI_APPLICATION = "forum.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv("REDIS_URL_FOR_CHANNELS"), 6379)],
+        },
+    },
+}
 
 AUTH_USER_MODEL = "users.CustomUser"
 
@@ -140,7 +154,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
