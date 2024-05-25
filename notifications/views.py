@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from notifications.models import ProjectNotification, Notification
 from rest_framework.decorators import action
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import NotificationSerializer, ProjectNotificationSerializer
+from .serializers import ProjectNotificationSerializer
 from .swagger_auto_schema_settings import new_notifications_response, all_notifications_response
 from .tasks import send_approve, send_decline
 from .utils import get_model_by_name
