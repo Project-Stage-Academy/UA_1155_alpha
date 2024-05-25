@@ -64,3 +64,10 @@ class Project(models.Model):
     class Meta:
         db_table = "projects"
         app_label = "projects"
+
+
+class Investment(models.Model):
+    investor = models.ForeignKey("investors.Investor", on_delete=models.CASCADE)
+    project = models.ForeignKey("projects.Project", on_delete=models.CASCADE)
+    amount_invested = models.DecimalField(max_digits=10, decimal_places=2)
+    investment_date = models.DateTimeField(db_default=Now())
