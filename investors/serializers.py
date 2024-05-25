@@ -59,7 +59,7 @@ class InvestorCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Investor
-        fields = ['user', 'location', 'contact_phone', 'contact_email', 'investment_amount', 'interests',
+        fields = ['user', 'contact_phone', 'contact_email', 'investment_amount', 'interests',
                   'number_for_investor_validation', 'is_active']
 
     def create(self, validated_data):

@@ -94,8 +94,9 @@ We are committed to delivering a platform that is not just a marketplace for ide
  7) Run "python manage.py makemigrations" - to create migrations for DB
  8) Run "python manage.py migrate" - to apply those migrations 
  9) Run "python manage.py loaddata startups/industries.json" - to fill idustries table
- 10) Run "python manage.py runserver" 
- 11) Open second terminal and run "celery -A forum  worker -l info -P gevent" - to run celery
+ 10) Run "python manage.py loaddata projects/locations.json" - to fill locations table
+ 11) Run "python manage.py runserver" 
+ 12) Open second terminal and run "celery -A forum  worker -l info -P gevent" - to run celery
 
 ## To see all project endpoins:
 
@@ -111,7 +112,7 @@ Here you can see all endpoints, json examples for requests and responses
 </a>
 
 [![@YuliaShap](https://avatars.githubusercontent.com/u/81677984?s=200&u=70db613ceba8b7cd7d3bd4c84636c99acc8e1119&v=4)](https://github.com/YuliaShap)
-[![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
+[![@AlexanderSychev2005](https://avatars.githubusercontent.com/u/49594203?v=4&s=200)](https://github.com/AlexanderSychev2005)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam) 
 [![@lhalam](https://avatars3.githubusercontent.com/u/3837059?s=100&v=4)](https://github.com/lhalam)
