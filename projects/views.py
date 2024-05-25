@@ -1,30 +1,18 @@
-from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import get_object_or_404
 from django.http import Http404
-from investors.models import Investor
-from notifications.signals import project_subscription_signal, project_updated_signal, project_updated_interests_signal, project_created_signal
-from notifications.tasks import project_subscription, project_updating
-from projects.models import Location, Project
-from projects.permissions import IsInvestor
-from projects.serializers import (
-    ProjectSerializer,
-    ProjectSerializerUpdate,
-    ProjectViewSerializer,
-)
-from projects.utils import calculate_difference, filter_projects
+from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from investors.models import Investor
-from projects.models import Investment, Project
-from projects.serializers import InvestToProjectSerializer, ProjectSerializerUpdate, ProjectSerializer, \
+from notifications.signals import project_created_signal, project_subscription_signal, project_updated_interests_signal, \
+    project_updated_signal
+from projects.models import Location, Project
+from projects.permissions import IsInvestor
+from projects.serializers import InvestToProjectSerializer, ProjectSerializer, ProjectSerializerUpdate, \
     ProjectViewSerializer
-from projects.permissions import InvestorPermissionDenied, IsInvestor
-from projects.utils import calculate_investment, filter_projects, calculate_difference
-from startups.models import Startup, Industry
-from notifications.tasks import project_updating, project_subscription
+from projects.utils import calculate_difference, calculate_investment, filter_projects
 from startups.models import Industry, Startup
 
 
@@ -150,7 +138,6 @@ class ProjectViewSet(viewsets.ViewSet):
 
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def update(self, request, pk):
         """
@@ -313,12 +300,6 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="my")
     def get_my_projects(self, request):
         user = self.request.user
-        investors_projects = Project.objects.filter(
-            investors__id=user.id, is_active=True
-        )
-        serializer = ProjectViewSerializer(
-            investors_projects, many=True, context={"request": request}
-        )
         investors_projects = Project.objects.filter(investors__user=user, is_active=True)
         serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -377,7 +358,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 return Response(
                     {
                         "detail": f"Investor {user.first_name} {user.last_name} successfully unsubscribed from the project "
-                        f"{project.project_name}."
+                                  f"{project.project_name}."
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -391,7 +372,7 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(
                 {
                     "message": f"Investor {user.first_name} {user.last_name} successfully subscribed to "
-                    f"the project {project.project_name}"
+                               f"the project {project.project_name}"
                 },
                 status=status.HTTP_200_OK,
             )
