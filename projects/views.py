@@ -119,6 +119,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 {"message": "Please create a startup first"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if not startup.is_verified:
+            return Response(
+                {"message": "Please wait for startup moderation first"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         industry_name = request.data.get("industry")
         industry = get_object_or_404(Industry, name=industry_name)
         location_name = request.data.get("location")
