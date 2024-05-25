@@ -67,7 +67,10 @@ class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):
         # Implementation of GET METHOD - ExampLE URL: /api/projects/
         # Getting ALL projects logic
-        queryset_projects = Project.objects.filter(is_active=True)
+        if request.user.is_investor:
+            queryset_projects = Project.objects.filter(is_active=True, is_verified=True)
+        else:
+            queryset_projects = Project.objects.filter(is_active=True)
         query_params = request.query_params
         if query_params:
             filtered_query_data = {
