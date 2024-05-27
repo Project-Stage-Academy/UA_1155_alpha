@@ -1,6 +1,7 @@
 from django.db import models
-from django.db.models.functions import Now
 from users.models import CustomUser
+from django.utils import timezone
+
 
 
 class Industry(models.Model):
@@ -11,6 +12,7 @@ class Industry(models.Model):
 
     class Meta:
         db_table = "industries"
+
 
 
 class Startup(models.Model):
@@ -28,11 +30,16 @@ class Startup(models.Model):
         blank=True,
     )
     contact_phone = models.CharField(max_length=128, unique=True)
-    contact_email = models.CharField(max_length=128, unique=True)
+    contact_email = models.EmailField(max_length=128, unique=True)
     number_for_startup_validation = models.IntegerField(null=True)
     is_verified = models.BooleanField(default=False)
-    registration_date = models.DateTimeField(default=Now())
+    registration_date = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = "startups"
+        db_table = 'startups'
+        app_label = 'startups'
+
+    def __str__(self):
+        return self.startup_name
+
