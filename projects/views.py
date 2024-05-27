@@ -326,8 +326,8 @@ class ProjectViewSet(viewsets.ViewSet):
         """
         try:
             user = request.user
-            project = get_object_or_404(Project, is_active=True, id=pk)
-            investor = get_object_or_404(Investor, user=user, is_active=True)
+            project = get_object_or_404(Project, is_active=True, is_verified=True, id=pk)
+            investor = get_object_or_404(Investor, user=user, is_active=True, is_verified=True)
             serializer = InvestToProjectSerializer(data=request.data,
                                                    context={'project': project, 'investor': investor})
             serializer.is_valid(raise_exception=True)
