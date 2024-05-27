@@ -70,6 +70,7 @@ class InvestorViewSet(viewsets.ViewSet):
         investor = get_object_or_404(Investor, id=pk)
         serializer = InvestorSerializer(investor, data=request.data, partial=False)
         if serializer.is_valid():
+            serializer.validated_data['is_verified'] = False
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
@@ -80,6 +81,7 @@ class InvestorViewSet(viewsets.ViewSet):
         partial = request.method == 'PATCH'
         serializer = InvestorSerializer(investor, data=request.data, partial=partial)
         if serializer.is_valid():
+            serializer.validated_data['is_verified'] = False
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
