@@ -65,7 +65,10 @@ class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):
         # Implementation of GET METHOD - ExampLE URL: /api/projects/
         # Getting ALL projects logic
-        queryset_projects = Project.objects.filter(is_active=True)
+        if request.user.is_investor:
+            queryset_projects = Project.objects.filter(is_active=True, is_verified=True)
+        else:
+            queryset_projects = Project.objects.filter(is_active=True)
         query_params = request.query_params
         if query_params:
             filtered_query_data = {
@@ -115,6 +118,11 @@ class ProjectViewSet(viewsets.ViewSet):
         if not startup:
             return Response(
                 {"message": "Please create a startup first"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not startup.is_verified:
+            return Response(
+                {"message": "Please wait for startup moderation first"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         industry_name = request.data.get("industry")
@@ -318,8 +326,8 @@ class ProjectViewSet(viewsets.ViewSet):
         """
         try:
             user = request.user
-            project = get_object_or_404(Project, is_active=True, id=pk)
-            investor = get_object_or_404(Investor, user=user, is_active=True)
+            project = get_object_or_404(Project, is_active=True, is_verified=True, id=pk)
+            investor = get_object_or_404(Investor, user=user, is_active=True, is_verified=True)
             serializer = InvestToProjectSerializer(data=request.data,
                                                    context={'project': project, 'investor': investor})
             serializer.is_valid(raise_exception=True)
