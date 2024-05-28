@@ -1,29 +1,21 @@
-from django.contrib.sites.shortcuts import get_current_site
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from investors.models import Investor
-from notifications.signals import project_subscription_signal, project_updated_signal, project_updated_interests_signal, project_created_signal
-from notifications.tasks import project_subscription, project_updating
-from projects.models import Location, Project
-from projects.permissions import IsInvestor
-from projects.serializers import (
-    ProjectSerializer,
-    ProjectSerializerUpdate,
-    ProjectViewSerializer,
-)
-from projects.utils import calculate_difference, filter_projects
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from investors.models import Investor
-from projects.models import Project
-from projects.serializers import ProjectSerializerUpdate, ProjectSerializer, ProjectViewSerializer
+from projects.models import Project, Location
 from projects.permissions import IsInvestor
-from projects.utils import filter_projects, calculate_difference
 from startups.models import Startup, Industry
 from notifications.tasks import project_updating, project_subscription
 from drf_yasg import openapi
+from notifications.signals import project_created_signal, project_subscription_signal, project_updated_interests_signal, \
+    project_updated_signal
+from projects.serializers import InvestToProjectSerializer, ProjectSerializer, ProjectSerializerUpdate, \
+    ProjectViewSerializer
+from projects.utils import calculate_difference, calculate_investment, filter_projects
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -84,7 +76,10 @@ class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):
         # Implementation of GET METHOD - ExampLE URL: /api/projects/
         # Getting ALL projects logic
-        queryset_projects = Project.objects.filter(is_active=True)
+        if request.user.is_investor:
+            queryset_projects = Project.objects.filter(is_active=True, is_verified=True)
+        else:
+            queryset_projects = Project.objects.filter(is_active=True)
         query_params = request.query_params
         if query_params:
             filtered_query_data = {
@@ -155,6 +150,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 {"message": "Please create a startup first"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if not startup.is_verified:
+            return Response(
+                {"message": "Please wait for startup moderation first"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         industry_name = request.data.get("industry")
         industry = get_object_or_404(Industry, name=industry_name)
         location_name = request.data.get("location")
@@ -165,6 +165,8 @@ class ProjectViewSet(viewsets.ViewSet):
         serializer = ProjectSerializer(data=project_info)
         if serializer.is_valid():
             project = serializer.save(startup=startup)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(startup=startup)
             data = {
                 "message": "You successfully created new project",
                 "project_info": project_info,
@@ -374,12 +376,8 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='my')
     def get_my_projects(self, request):
         user = self.request.user
-        investors_projects = Project.objects.filter(
-            investors__id=user.id, is_active=True
-        )
-        serializer = ProjectViewSerializer(
-            investors_projects, many=True, context={"request": request}
-        )
+        investors_projects = Project.objects.filter(investors__user=user, is_active=True)
+        serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
@@ -396,37 +394,29 @@ class ProjectViewSet(viewsets.ViewSet):
         """
         This function allows adding an investor to a project.
         The user must be authenticated and have an active investor linked to their account.
-        The investor is added to the project only if the project is active and does not already contain this investor
+        The investor is added to the project only if the project is active.
 
         :param self: Allow an instance of a class to access its attributes and methods
         :param request: Get the user from the request
         :param pk: The primary key of the project.
         :return: Response: A response with a detailed message about the result of the operation.
-        Examples:
-        Use this method by sending a POST request to the URL: /api/projects/12/invest
-        where 12 is the ID of the project you want to add an investor to.
         """
-
-        user = request.user
-        project = get_object_or_404(Project, is_active=True, id=pk)
-        investor = get_object_or_404(Investor, user=user, is_active=True)
-
-        if project.investors.filter(id=investor.id).exists():
-            return Response(
-                {
-                    "detail": f"Investor {user.first_name} {user.last_name} is already an investor in project {project.project_name}."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        project.investors.add(investor)
-
-        return Response(
-            {
-                "detail": f"Investor {user.first_name} {user.last_name} has been added to project {project.project_name}."
-            },
-            status=status.HTTP_200_OK,
-        )
+        try:
+            user = request.user
+            project = get_object_or_404(Project, is_active=True, is_verified=True, id=pk)
+            investor = get_object_or_404(Investor, user=user, is_active=True, is_verified=True)
+            serializer = InvestToProjectSerializer(data=request.data,
+                                                   context={'project': project, 'investor': investor})
+            serializer.is_valid(raise_exception=True)
+            investment_amount = serializer.validated_data['investment_amount']
+            result = calculate_investment(investor, project, investment_amount)
+            if not project.investors.filter(id=investor.id).exists():
+                project.investors.add(investor)
+            return Response(result, status=status.HTTP_200_OK)
+        except Http404 as e:
+            return Response({
+                'detail': f'{str(e)}'
+            }, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
         operation_summary="Add a subscriber to the project",
@@ -462,7 +452,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 return Response(
                     {
                         "detail": f"Investor {user.first_name} {user.last_name} successfully unsubscribed from the project "
-                        f"{project.project_name}."
+                                  f"{project.project_name}."
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -476,7 +466,7 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(
                 {
                     "message": f"Investor {user.first_name} {user.last_name} successfully subscribed to "
-                    f"the project {project.project_name}"
+                               f"the project {project.project_name}"
                 },
                 status=status.HTTP_200_OK,
             )

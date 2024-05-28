@@ -1,6 +1,9 @@
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+from investors.models import Investor
 from rest_framework import serializers
 
-from .models import Project
+from .models import Investment, Project
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -16,6 +19,25 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         project = Project.objects.create(**validated_data)
         return project
+
+    def validate(self, data):
+        self.validate_budget(data)
+        return data
+
+    @staticmethod
+    def validate_budget(data):
+        budget_needed = data.get('budget_needed')
+        budget_ready = data.get('budget_ready')
+        if budget_ready and budget_needed:
+            budget_needed = float(budget_needed)
+            budget_ready = float(budget_ready)
+            if budget_ready > budget_needed:
+                raise serializers.ValidationError(
+                    {
+                        "status": "failed",
+                        "message": "Budget ready cannot be greater than budget needed"
+                    }
+                )
 
 
 class ProjectSerializerUpdate(serializers.ModelSerializer):
@@ -56,15 +78,7 @@ class ProjectSerializerUpdate(serializers.ModelSerializer):
         return instance
 
     def validate(self, data):
-        budget_needed = data.get("budget_needed")
-        budget_ready = data.get("budget_ready")
-        if budget_ready and budget_needed and budget_ready > budget_needed:
-            raise serializers.ValidationError(
-                {
-                    "status": "failed",
-                    "message": "Budget ready cannot be greater than budget needed",
-                }
-            )
+        ProjectSerializer.validate_budget(data)
         return data
 
 
@@ -75,6 +89,7 @@ class ProjectViewSerializer(serializers.ModelSerializer):
     """
 
     industry = serializers.SerializerMethodField()
+    invested_amount = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
 
     class Meta:
@@ -87,6 +102,16 @@ class ProjectViewSerializer(serializers.ModelSerializer):
             return obj.industry.name
         return None
 
+    def get_invested_amount(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'is_investor') and request.user.is_investor:
+            user = request.user
+            investor = get_object_or_404(Investor, user=user, is_active=True)
+            investment = Investment.objects.filter(investor=investor, project=obj).aggregate(
+                total_investment=Sum('amount_invested'))
+            return investment['total_investment'] if investment['total_investment'] is not None else 0
+        return None
+
     @staticmethod
     def get_location(obj):
         if obj.location:
@@ -95,13 +120,9 @@ class ProjectViewSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        request = self.context.get("request")
-        if (
-            request
-            and hasattr(request.user, "is_investor")
-            and request.user.is_investor
-        ):
-            fields_to_exclude = ["updated_at", "registration_date"]
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'is_investor') and request.user.is_investor:
+            fields_to_exclude = ['updated_at', 'registration_date']
             for field in fields_to_exclude:
                 if field in data:
                     del data[field]
@@ -110,3 +131,32 @@ class ProjectViewSerializer(serializers.ModelSerializer):
             fields_to_display = ["project_name", "description", "industry", "location"]
             filtered_data = {key: data[key] for key in fields_to_display}
             return filtered_data
+
+
+class InvestToProjectSerializer(serializers.Serializer):
+    investment_amount = serializers.DecimalField(required=True, max_digits=100, decimal_places=2)
+
+    def validate_investment_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError({
+                "status": "failed",
+                "message": "Investment amount must be greater than zero."
+            })
+        return value
+
+    def validate(self, data):
+        errors = False
+        msg = ""
+        investor = self.context.get('investor')
+        investors_money = float(investor.investment_amount)
+        investment_amount = float(data['investment_amount'])
+        if investment_amount > investors_money and not errors:
+            msg = "Not enough money for investing. Please - top up the balance."
+            errors = True
+        if errors:
+            raise serializers.ValidationError({
+                "status": "failed",
+                "message": msg
+            })
+        return data
+

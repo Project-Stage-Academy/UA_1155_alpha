@@ -39,7 +39,7 @@ class ProjectViewSetTest(TestCase):
                 'is_active': True,
         }
 
-        
+
     def test_update_project_success(self):
         '''
         Test for positive case of working PUT method in Project
@@ -49,7 +49,7 @@ class ProjectViewSetTest(TestCase):
         response = self.view(request, pk=self.project.id)
         self.assertEqual(Project.objects.get(pk=self.project.id).description, self.data['description'])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
     def test_update_not_authorized(self):
         '''
         Test for negative case of working PUT method in Project because of not-authorized user
@@ -57,7 +57,7 @@ class ProjectViewSetTest(TestCase):
         request = self.factory.put(f'{self.url}{self.project.id}/', self.data, format='json')
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        
+
     def test_update_project_not_exist(self):
         '''
         Test for negative case of working PUT method in Project because of not existing project
@@ -66,7 +66,7 @@ class ProjectViewSetTest(TestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id+1)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
     def test_update_project_not_active(self):
         '''
         Test for negative case of working PUT method in Project because of not active project
@@ -76,7 +76,7 @@ class ProjectViewSetTest(TestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_update_project_wrong_industry(self):
         '''
         Test for negative case of working PUT method in Project because of wrong industry
@@ -87,7 +87,7 @@ class ProjectViewSetTest(TestCase):
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.data.get('error'), 'Industry does not exist')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_update_project_none_industry(self):
         '''
         Test for negative case of working PUT method in Project because of none industry
@@ -118,7 +118,7 @@ class ProjectViewSetTest(TestCase):
         request = self.factory.patch(f'{self.url}{self.project.id}/', self.partial_data, format='json')
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        
+
     def test_partial_update_project_not_exist(self):
         '''
         Test for negative case of working PATCH method in Project because of not existing project
@@ -127,7 +127,7 @@ class ProjectViewSetTest(TestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id+1)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
     def test_partial_update_project_not_active(self):
         '''
         Test for negative case of working PATCH method in Project because of not active project
@@ -137,7 +137,7 @@ class ProjectViewSetTest(TestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_partial_update_project_wrong_industry(self):
         '''
         Test for negative case of working PATCH method in Project because of wrong industry
@@ -147,7 +147,7 @@ class ProjectViewSetTest(TestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, pk=self.project.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_partial_update_project_none_industry(self):
         '''
         Test for negative case of working PATCH method in Project because of none industry
