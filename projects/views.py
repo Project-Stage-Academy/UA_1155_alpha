@@ -4,16 +4,18 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from drf_yasg.utils import swagger_auto_schema
 from investors.models import Investor
+from projects.models import Project, Location
+from projects.permissions import IsInvestor
+from startups.models import Startup, Industry
+from notifications.tasks import project_updating, project_subscription
+from drf_yasg import openapi
 from notifications.signals import project_created_signal, project_subscription_signal, project_updated_interests_signal, \
     project_updated_signal
-from projects.models import Location, Project
-from projects.permissions import IsInvestor
 from projects.serializers import InvestToProjectSerializer, ProjectSerializer, ProjectSerializerUpdate, \
     ProjectViewSerializer
 from projects.utils import calculate_difference, calculate_investment, filter_projects
-from startups.models import Industry, Startup
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -62,6 +64,15 @@ class ProjectViewSet(viewsets.ViewSet):
         else:
             return [IsAuthenticated()]
 
+    @swagger_auto_schema(
+        operation_summary="Retrieve a list of all projects",
+        operation_description="Retrieve a list of all projects with optional filtering.",
+        tags=["Projects"],
+        responses={
+            200: ProjectViewSerializer(),
+            400: "Bad Request"
+        }
+    )
     def list(self, request):
         # Implementation of GET METHOD - ExampLE URL: /api/projects/
         # Getting ALL projects logic
@@ -84,6 +95,15 @@ class ProjectViewSet(viewsets.ViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary="Retrieve information about a specific project by its ID",
+        operation_description="Retrieve detailed information about a specific project by its ID.",
+        tags=["Projects"],
+        responses={
+            200: ProjectViewSerializer(),
+            404: "Not Found"
+        }
+    )
     def retrieve(self, request, pk=None):
         # Implementation of GET METHOD for one project - ExampLE URL: /api/projects/2
         # Getting ONE project with id=project logic
@@ -101,6 +121,16 @@ class ProjectViewSet(viewsets.ViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary="Create a new project",
+        operation_description="Create a new project with the provided data.",
+        tags=["Projects"],
+        request_body=ProjectSerializer(),
+        responses={
+            201: ProjectViewSerializer(),
+            400: "Bad Request"
+        }
+    )
     def create(self, request):
         """
         Create a new project (POST /api/projects/)
@@ -147,6 +177,16 @@ class ProjectViewSet(viewsets.ViewSet):
             return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary="Fully update an existing project by its ID",
+        operation_description="Fully update an existing project with the provided data.",
+        tags=["Projects"],
+        request_body=ProjectSerializerUpdate(),
+        responses={
+            200: "Project updated successfully",
+            400: "Bad Request"
+        }
+    )
     def update(self, request, pk):
         """
         Update an existing project with all fields required
@@ -221,6 +261,16 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary="Partially update an existing project by its ID",
+        operation_description="Partially update an existing project with the provided data.",
+        tags=["Projects"],
+        request_body=ProjectSerializerUpdate(),
+        responses={
+            200: "Project updated successfully",
+            400: "Bad Request"
+        }
+    )
     def partial_update(self, request, pk):
         """
         Update an existing project without all fields required
@@ -296,6 +346,15 @@ class ProjectViewSet(viewsets.ViewSet):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_summary="Delete a project by its ID",
+        operation_description="Delete a project by its ID.",
+        tags=["Projects"],
+        responses={
+            204: "Project deleted successfully",
+            404: "Not Found"
+        }
+    )
     def destroy(self, request, pk=None):
         # Implementation of DELETE METHOD for one project - ExampLE URL: /api/projects/4/
         # Do not forget about SLASH at the end of URL
@@ -305,14 +364,32 @@ class ProjectViewSet(viewsets.ViewSet):
         project.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=["get"], url_path="my")
+    @swagger_auto_schema(
+        operation_summary="Retrieve projects associated with the authenticated user",
+        operation_description="Retrieve projects associated with the authenticated user.",
+        tags=["Projects"],
+        responses={
+            200: ProjectViewSerializer(many=True),
+            400: "Bad Request"
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='my')
     def get_my_projects(self, request):
         user = self.request.user
         investors_projects = Project.objects.filter(investors__user=user, is_active=True)
         serializer = ProjectViewSerializer(investors_projects, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="invest")
+    @swagger_auto_schema(
+        operation_summary="Add an investor to a project",
+        operation_description="Add an investor to a project.",
+        tags=["Projects"],
+        responses={
+            200: "Investor added successfully",
+            400: "Bad Request"
+        }
+    )
+    @action(detail=True, methods=['post'], url_path='invest')
     def invest_to_project(self, request, pk=None):
         """
         This function allows adding an investor to a project.
@@ -341,6 +418,15 @@ class ProjectViewSet(viewsets.ViewSet):
                 'detail': f'{str(e)}'
             }, status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        operation_summary="Add a subscriber to the project",
+        operation_description="Add a subscriber to the specified project.",
+        tags=["Projects"],
+        responses={
+            200: "Subscriber added successfully",
+            400: "Bad Request"
+        }
+    )
     @action(detail=True, methods=["post"], url_path="add_subscriber")
     def add_subscriber(self, request, pk=None):
         """
@@ -389,7 +475,24 @@ class ProjectViewSet(viewsets.ViewSet):
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-    @action(detail=False, methods=["post"], url_path="compare_projects")
+
+    @swagger_auto_schema(
+        operation_summary="Compare multiple projects",
+        tags=["Projects"],
+        operation_description="Compare multiple projects based on their attributes.",
+        ags=["Projects"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'project_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_INTEGER))
+            }
+        ),
+        responses={
+            200: "Comparison successful",
+            400: "Bad Request"
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='compare_projects')
     def compare_projects(self, request):
         """
         Compare multiple projects.

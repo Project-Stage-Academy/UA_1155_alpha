@@ -5,7 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from notifications.models import ProjectNotification, Notification
+from rest_framework.decorators import action
+from drf_yasg.utils import swagger_auto_schema
 from .serializers import ProjectNotificationSerializer
+from .swagger_auto_schema_settings import new_notifications_response, all_notifications_response
 from .tasks import send_approve, send_decline
 from .utils import get_model_by_name
 
@@ -30,7 +33,12 @@ class NotificationsViewSet(viewsets.ViewSet):
       partial_update operations).
     """
     permission_classes = [IsAuthenticated]
-
+    @swagger_auto_schema(
+        method='get',
+        tags=["NOTIFICATIONS"],
+        operation_description="Retrieve and mark as read all new (unread) notifications for the current user.",
+        responses=new_notifications_response
+    )
     @action(detail=False, methods=['get'], url_path='new')
     def get_my_new_notifications(self, request):
         """
@@ -56,6 +64,12 @@ class NotificationsViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        method='get',
+        tags=["NOTIFICATIONS"],
+        operation_description="Retrieve all notifications for the current user.",
+        responses=all_notifications_response
+    )
     @action(detail=False, methods=['get'], url_path='all')
     def get_my_all_notifications(self, request):
         """
